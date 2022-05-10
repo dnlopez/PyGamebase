@@ -486,7 +486,11 @@ class Header3(QWidget):
 
         #self.setStyleSheet("* { border: 1px solid red; }");
 
-        # State used while resizing columns by mouse dragging
+        # Resizing columns by mouse dragging
+        self.installEventFilter(self)
+        #  Receive mouse move events even if button isn't held down
+        self.setMouseTracking(True)
+        #  State used while resizing
         self.resize_columnNo = None
         self.resize_mouseToEdgeOffset = None
 
@@ -497,104 +501,17 @@ class Header3(QWidget):
         class HeaderButton(QPushButton):
             def __init__(self, i_text, i_hasBorder, i_parent=None):
                 QPushButton.__init__(self, i_text, i_parent)
+
                 if not i_hasBorder:
                     self.setStyleSheet("QPushButton { border: none; }");
                     self.setFlat(True)
                     self.setFocusPolicy(Qt.NoFocus)
                     #self.setStyleSheet("QPushButton { background-color: red; color: black;}");
 
-            def mousePressEvent(self, i_event):
-                # If near left edge of button
-                if abs(i_event.x()) <= Header3.resizeMargin:
-                    # Get details of column that was clicked on
-                    columnNo, column = getColumnByHeaderButton(self)
-
-                    # Move to the column before it, but if no previous column then bail
-                    if columnNo <= 0:
-                        return
-                    columnNo -= 1
-                    column = g_columns[columnNo]
-
-                    self.parent().resize_columnNo = columnNo
-
-                    # Get horizontal distance from mouse to the right-edge of the button being resized
-                    button = column["headerButton"]
-                    buttonBottomRightGlobalPos = button.mapToGlobal(QPoint(button.size().width(), button.size().height()))
-                    self.parent().resize_mouseToEdgeOffset = buttonBottomRightGlobalPos.x() - i_event.globalPos().x()
-
-                    # Grab subsequent mouse events (until button is released)
-                    button.grabMouse()
-
-                # Else if near right edge of button
-                elif abs(i_event.x() - self.width()) <= Header3.resizeMargin:
-                    # Get details of column that was clicked on
-                    columnNo, column = getColumnByHeaderButton(self)
-
-                    self.parent().resize_columnNo = columnNo
-
-                    # Get horizontal distance from mouse to the right-edge of the button being resized
-                    button = column["headerButton"]
-                    buttonBottomRightGlobalPos = button.mapToGlobal(QPoint(button.size().width(), button.size().height()))
-                    self.parent().resize_mouseToEdgeOffset = buttonBottomRightGlobalPos.x() - i_event.globalPos().x()
-
-                    # Grab subsequent mouse events (until button is released)
-                    button.grabMouse()
-
-                # Else if not near a horizontal edge,
-                # fall back to default behaviour
-                else:
-                    QPushButton.mousePressEvent(self, i_event)
-
-            def mouseMoveEvent(self, i_event):
-                # Run default behaviour
-                QPushButton.mouseMoveEvent(self, i_event)
-
-                # If not currently resizing,
-                # then set cursor to arrow shape if near a draggable vertical edge
-                if self.parent().resize_columnNo == None:
-                    columnNo, column = getColumnByHeaderButton(self)
-                    resize_columnNo = columnNo - 1
-
-                    if (resize_columnNo >= 0 and abs(i_event.x()) <= Header3.resizeMargin) or abs(i_event.x() - self.width()) <= Header3.resizeMargin:
-                        self.setCursor(Qt.SizeHorCursor)
-                    else:
-                        self.unsetCursor()
-
-                # Else if currently resizing,
-                # do the resize
-                else:
-                    # Get new width
-                    newRightEdge = i_event.globalPos().x() + self.parent().resize_mouseToEdgeOffset
-                    button = g_columns[self.parent().resize_columnNo]["headerButton"]
-                    newWidth = button.mapFromGlobal(QPoint(newRightEdge, i_event.pos().y())).x()
-                    if newWidth < Header3.minimumColumnWidth:
-                        newWidth = Header3.minimumColumnWidth
-                    # Resize button
-                    g_columns[self.parent().resize_columnNo]["width"] = newWidth
-                    button.resize(newWidth, button.height())
-                    # Move buttons after it
-                    x = button.geometry().x() + button.geometry().width()
-                    for column in g_columns[self.parent().resize_columnNo + 1:]:
-                        button = column["headerButton"]
-                        button.move(x, button.y())
-                        x += button.width()
-                    # Move lineedits as well
-                    self.parent().repositionLineEdits()
-                    #
-                    tableView.horizontalHeader().resizeSection(self.parent().resize_columnNo, newWidth)
-
-            def mouseReleaseEvent(self, i_event):
-                # If currently resizing,
-                # stop
-                if self.parent().resize_columnNo != None:
-                    button = g_columns[self.parent().resize_columnNo]["headerButton"]
-                    button.releaseMouse()
-                    #
-                    self.parent().resize_columnNo = None
-                # Else if not currently resizing,
-                # fall back to default behaviour
-                else:
-                    QPushButton.mouseReleaseEvent(self, i_event)
+                # Receive mouse move events even if button isn't held down
+                # and install event filter to let parent Header3 see all events first
+                self.setMouseTracking(True)
+                self.installEventFilter(self.parent())
 
         # Create widgets (HeaderButton and QLineEdit objects) for columns
         global g_columns
@@ -603,7 +520,6 @@ class Header3(QWidget):
             # Create button
             column["headerButton"] = HeaderButton(column["headingText"], column["filterable"], self)
             # Set its basic properties (apart from position)
-            column["headerButton"].setMouseTracking(True)
             if column["filterable"]:
                 column["headerButton"].clicked.connect(functools.partial(self.button_onClicked, columnNo))
 
@@ -652,6 +568,90 @@ class Header3(QWidget):
 
     def lineEdit_onEditingFinished(self, i_columnNo):
         self.filterChange.emit(i_columnNo)
+
+    # + Resizing columns by mouse dragging {{{
+
+    def _columnBoundaryAtPixelX(self, i_x):
+        x = 0
+
+        for columnNo, column in enumerate(g_columns):
+            columnEdgeX = x + column["headerButton"].width()
+            if abs(i_x - columnEdgeX) <= Header3.resizeMargin:
+                return columnNo, column
+
+            x += column["headerButton"].width()
+
+        return None, None
+
+    def eventFilter(self, i_watched, i_event):
+        #print(i_event.type())
+
+        if i_event.type() == QEvent.MouseMove:
+            # If not currently resizing,
+            # then depending on whether cursor is near a draggable vertical edge,
+            # set cursor shape
+            if self.resize_columnNo == None:
+                mousePos = i_watched.mapTo(self, i_event.pos())
+                columnNo, _ = self._columnBoundaryAtPixelX(mousePos.x())
+                if columnNo != None:
+                    self.setCursor(Qt.SizeHorCursor)
+                else:
+                    self.unsetCursor()
+            # Else if currently resizing,
+            # do the resize
+            else:
+                # Get new width
+                newRightEdge = i_event.globalPos().x() + self.resize_mouseToEdgeOffset
+                button = g_columns[self.resize_columnNo]["headerButton"]
+                newWidth = button.mapFromGlobal(QPoint(newRightEdge, i_event.pos().y())).x()
+                if newWidth < Header3.minimumColumnWidth:
+                    newWidth = Header3.minimumColumnWidth
+                # Resize button
+                g_columns[self.resize_columnNo]["width"] = newWidth
+                button.resize(newWidth, button.height())
+
+                # Move buttons after it
+                x = button.geometry().x() + button.geometry().width()
+                for column in g_columns[self.resize_columnNo + 1:]:
+                    button = column["headerButton"]
+                    button.move(x, button.y())
+                    x += button.width()
+                # Move lineedits as well
+                self.repositionLineEdits()
+                #
+                tableView.horizontalHeader().resizeSection(self.resize_columnNo, newWidth)
+
+        elif i_event.type() == QEvent.MouseButtonPress:
+            # If pressed the left button
+            if i_event.button() == Qt.MouseButton.LeftButton:
+                # If cursor is near a draggable vertical edge
+                mousePos = i_watched.mapTo(self, i_event.pos())
+                columnNo, column = self._columnBoundaryAtPixelX(mousePos.x())
+                if columnNo != None:
+                    #
+                    self.resize_columnNo = columnNo
+
+                    # Get horizontal distance from mouse to the draggable vertical edge (ie. the right edge of the button being resized)
+                    button = column["headerButton"]
+                    buttonBottomRight = button.mapTo(self, QPoint(button.size().width(), button.size().height()))
+                    self.resize_mouseToEdgeOffset = buttonBottomRight.x() - mousePos.x()
+
+                    #
+                    return True
+
+        elif i_event.type() == QEvent.MouseButtonRelease:
+            # If released the left button
+            if i_event.button() == Qt.MouseButton.LeftButton:
+                # Stop resizing
+                self.resize_columnNo = None
+
+                #
+                return True
+
+        # Let event continue
+        return False
+
+    # + }}}
 
     def repositionHeaderButtons(self):
         x = 0
