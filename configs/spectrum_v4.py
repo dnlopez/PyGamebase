@@ -1,23 +1,29 @@
 # Python std
 import os.path
+import shutil
 import pprint
 
 # This program
 import utils
 
 
-config_title = "Spectrum v4"
-config_databaseFilePath = "/home/daniel/docs/code/js/gamebase/databases/SpeccyMania_v4.sqlite"
-config_screenshotsBaseDirPath = "/mnt/ve/games/Sinclair ZX Spectrum/Speccymania v4/zx_up_dax_PL/ZX Spectrum/Screenshots"
-config_extrasBaseDirPath = "/mnt/ve/games/Sinclair ZX Spectrum/Speccymania v4/zx_up_dax_PL/ZX Spectrum/Extras"
-
-#config_databaseFilePath = "/home/daniel/docs/code/js/gamebase/databases/SpeccyMania.sqlite"
-#config_screenshotBasePath = "/mnt/ve/games/Sinclair ZX Spectrum/Speccymania/SpeccyMania/Screenshots"
-#config_screenshotBasePath = "/mnt/ve/games/Sinclair ZX Spectrum/Speccymania/SpeccyMania/Extras"
+#
+import platform
+if platform.system() == "Windows":
+    driveBasePath = "E:"
+else:
+    driveBasePath = "/mnt/ve"
 
 
+#
+config_title = "Sinclair ZX Spectrum (Speccymania v4)";
+gamebaseBaseDirPath = driveBasePath + "/games/Sinclair ZX Spectrum/gamebases/Speccymania v4/zx_up_dax_PL/ZX Spectrum";
+config_databaseFilePath = gamebaseBaseDirPath + "/ZX Spectrum.sqlite";
+config_screenshotsBaseDirPath = gamebaseBaseDirPath + "/Screenshots";
+config_extrasBaseDirPath = gamebaseBaseDirPath + "/Extras";
 
-def runGameOnMachine(i_gameDescription, i_machineName, i_gameFilePaths):
+
+def runGameWithRezmame(i_gameDescription, i_machineName, i_gameFilePaths):
     """
     Params:
      i_gameDescription:
@@ -34,59 +40,31 @@ def runGameOnMachine(i_gameDescription, i_machineName, i_gameFilePaths):
     """
     executableAndArgs = ["rezmame.py", i_machineName]
 
-    nextFloppyDiskNo = 1
-    for gameFilePath in i_gameFilePaths:
-        # [".plusd" - or is it ".plusd.prg?"]
-        if utils.pathHasExtension(gameFilePath, ".ach") or \
-           utils.pathHasExtension(gameFilePath, ".frz") or \
-           utils.pathHasExtension(gameFilePath, ".plusd") or \
-           utils.pathHasExtension(gameFilePath, ".prg") or \
-           utils.pathHasExtension(gameFilePath, ".sem") or \
-           utils.pathHasExtension(gameFilePath, ".sit") or \
-           utils.pathHasExtension(gameFilePath, ".sna") or \
-           utils.pathHasExtension(gameFilePath, ".snp") or \
-           utils.pathHasExtension(gameFilePath, ".snx") or \
-           utils.pathHasExtension(gameFilePath, ".sp") or \
-           utils.pathHasExtension(gameFilePath, ".z80") or \
-           utils.pathHasExtension(gameFilePath, ".zx"):
-            executableAndArgs += ["-snapshot", gameFilePath]
+    # Assign game files to available MAME media slots
+    if i_machineName == "spectrum" or i_machineName == "spec128":
+        availableDevices = [
+            ["snapshot", [".ach", ".frz", ".plusd.prg", ".sem", ".sit", ".sna", ".snp", ".snx", ".sp", ".z80", ".zx"]],
+            ["quickload", [".raw", ".scr"]],
+            ["cassette", [".wav", ".tzx", ".tap", ".blk"]]
+        ]
+    elif i_machineName == "specpls3":
+        availableDevices = [
+            ["snapshot", [".ach", ".frz", ".plusd.prg", ".sem", ".sit", ".sna", ".snp", ".snx", ".sp", ".z80", ".zx"]],
+            ["quickload", [".raw", ".scr"]],
+            ["cassette", [".wav", ".tzx", ".tap", ".blk"]],
+            ["floppydisk1", [".mfi", ".dfi", ".hfe", ".mfm", ".td0", ".imd", ".d77", ".d88", ".1dd", ".cqm", ".cqi", ".dsk"]],
+            ["floppydisk2", [".mfi0", ".dfi", ".hfe", ".mfm", ".td0", ".imd", ".d77", ".d88", ".1dd", ".cqm", ".cqi", ".dsk"]]
+        ]
+    executableAndArgs.extend(utils.allocateGameFilesToMameMediaSlots(i_gameFilePaths, availableDevices))
 
-        elif utils.pathHasExtension(gameFilePath, ".raw") or \
-             utils.pathHasExtension(gameFilePath, ".scr"):
-            executableAndArgs += ["-quickload", gameFilePath]
-
-        elif utils.pathHasExtension(gameFilePath, ".tzx") or \
-             utils.pathHasExtension(gameFilePath, ".tap") or \
-             utils.pathHasExtension(gameFilePath, ".blk"):
-            executableAndArgs += ["-cassette", gameFilePath]
-
-        elif utils.pathHasExtension(gameFilePath, ".bin") or \
-             utils.pathHasExtension(gameFilePath, ".rom"):
-            executableAndArgs += ["-cartridge", gameFilePath]
-
-        elif utils.pathHasExtension(gameFilePath, ".d77") or \
-             utils.pathHasExtension(gameFilePath, ".d88") or \
-             utils.pathHasExtension(gameFilePath, ".1dd") or \
-             utils.pathHasExtension(gameFilePath, ".dfi") or \
-             utils.pathHasExtension(gameFilePath, ".imd") or \
-             utils.pathHasExtension(gameFilePath, ".ipf") or \
-             utils.pathHasExtension(gameFilePath, ".mfi") or \
-             utils.pathHasExtension(gameFilePath, ".mfm") or \
-             utils.pathHasExtension(gameFilePath, ".td0") or \
-             utils.pathHasExtension(gameFilePath, ".cqm") or \
-             utils.pathHasExtension(gameFilePath, ".cqi") or \
-             utils.pathHasExtension(gameFilePath, ".dsk"):
-            executableAndArgs += ["-floppydisk" + str(nextFloppyDiskNo), gameFilePath]
-            nextFloppyDiskNo += 1
-
-    #
-    if i_gameDescription != None:
-        executableAndArgs += ["--game-description", i_gameDescription]
+    if i_gameDescription:
+        executableAndArgs.extend(["--game-description", i_gameDescription])
 
     # Execute
+    print(executableAndArgs)
     utils.shellExecList(executableAndArgs)
 
-def runGame2(i_gameDescription, i_gameFilePaths):
+def runGameMenu(i_gameDescription, i_gameFilePaths):
     """
     Params:
      i_gameDescription:
@@ -95,10 +73,6 @@ def runGame2(i_gameDescription, i_gameFilePaths):
      i_gameFilePaths:
       (list of str)
     """
-    #"rezmame.py", "spectrum", "-snapshot", %f
-    #"rezmame.py", "spectrum", "-cartridge", %f
-    #"rezmame.py", "spectrum", "-cassette", %f
-
     method = utils.popupMenu([
         "rezmame spectrum",
         "rezmame spec128",
@@ -108,16 +82,15 @@ def runGame2(i_gameDescription, i_gameFilePaths):
         "rezep128emu_zx (Spectrum 48K)",
         "rezep128emu_zx (Spectrum 128K)"
     ])
-    #method = "ep128emu (Spectrum 48K)"
 
     if method == "rezmame spectrum":
-        runGameOnMachine(i_gameDescription, "spectrum", i_gameFilePaths)
+        runGameWithRezmame(i_gameDescription, "spectrum", i_gameFilePaths)
 
     elif method == "rezmame spec128":
-        runGameOnMachine(i_gameDescription, "spec128", i_gameFilePaths)
+        runGameWithRezmame(i_gameDescription, "spec128", i_gameFilePaths)
 
     elif method == "rezmame specpls3":
-        runGameOnMachine(i_gameDescription, "specpls3", i_gameFilePaths)
+        runGameWithRezmame(i_gameDescription, "specpls3", i_gameFilePaths)
 
     elif method == "fuse (Spectrum 48K)":
         executableAndArgs = ["fuse", "--machine", "48"] + i_gameFilePaths
@@ -187,15 +160,22 @@ def runGame2(i_gameDescription, i_gameFilePaths):
 def runGame(i_zipFilePath, i_zipMemberToRun = None, i_gameInfo = None):
     #print('runGame(' + pprint.pformat(i_zipFilePath) + ', ' + pprint.pformat(i_zipMemberToRun) + ', ' + pprint.pformat(i_gameInfo) + ')')
 
-    # Extract zip
-    basePath = "/mnt/ve/games/Sinclair ZX Spectrum/Speccymania v4/zx_up_dax_PL/ZX Spectrum/Games/"
+    basePath = gamebaseBaseDirPath + "/Games/"
     tempDirPath = "/tmp/gamebase"
-    zipMembers = utils.extractZip(basePath + i_zipFilePath, tempDirPath)
 
-    # Filter non-game files out of zip member list
-    gameFiles = [zipMember
-                 for zipMember in zipMembers
-                 if not (utils.pathHasExtension(zipMember, ".TXT") or utils.pathHasExtension(zipMember, ".SCR"))]
+    # If file is a zip
+    if utils.pathHasExtension(i_zipFilePath, ".ZIP"):
+        # Extract it
+        zipMembers = utils.extractZip(basePath + i_zipFilePath, tempDirPath)
+        # Filter non-game files out of zip member list
+        gameFiles = [zipMember
+                     for zipMember in zipMembers
+                     if not (utils.pathHasExtension(zipMember, ".TXT") or utils.pathHasExtension(zipMember, ".NFO") or utils.pathHasExtension(zipMember, ".SCR") or utils.pathHasExtension(zipMember, ".NIB"))]
+    # Else if file is not a zip
+    else:
+        # Copy it
+        shutil.copyfile(basePath + i_zipFilePath, tempDirPath + "/" + os.path.basename(i_zipFilePath))
+        gameFiles = [os.path.basename(i_zipFilePath)]
 
     #
     if i_zipMemberToRun == None:
@@ -207,18 +187,16 @@ def runGame(i_zipFilePath, i_zipMemberToRun = None, i_gameInfo = None):
         gameDescription += " (" + i_gameInfo["publisher"] + ")"
 
     #
-    runGame2(gameDescription, utils.joinPaths(tempDirPath, gameFiles))
+    runGameMenu(gameDescription, utils.joinPaths(tempDirPath, gameFiles))
 
-def runExtra(i_name, i_path, i_gameInfo = None):
-    #print('runExtra("' + i_name + '", "' + i_path + '", ...)')
+def runExtra(i_path, i_gameInfo = None):
+    #print('runExtra(' + pprint.pformat(i_path) + ', ' + pprint.pformat(i_gameInfo) + ')')
 
-    extrasBasePath = "/mnt/ve/games/Sinclair ZX Spectrum/Speccymania v4/zx_up_dax_PL/ZX Spectrum/Extras/"
-
-    # If zip file
+    # If file is a zip
     if utils.pathHasExtension(i_path, ".ZIP"):
-        # Extract zip
+        # Extract it
         tempDirPath = "/tmp/gamebase"
-        zipMembers = utils.extractZip(extrasBasePath + i_path, tempDirPath)
+        zipMembers = utils.extractZip(config_extrasBasePath + i_path, tempDirPath)
 
         # Get game description
         gameDescription = i_gameInfo["name"]
@@ -226,6 +204,6 @@ def runExtra(i_name, i_path, i_gameInfo = None):
             gameDescription += " (" + i_gameInfo["publisher"] + ")"
 
         #
-        runGame2(gameDescription, utils.joinPaths(tempDirPath, zipMembers))
+        runGameMenu(gameDescription, utils.joinPaths(tempDirPath, zipMembers))
     else:
-        utils.openInDefaultApplication(extrasBasePath + "/" + i_path)
+        utils.openInDefaultApplication(config_extrasBasePath + "/" + i_path)
