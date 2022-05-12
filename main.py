@@ -1042,9 +1042,17 @@ splitter = QSplitter(Qt.Vertical)
 gameTable_layout.addWidget(splitter)
 splitter.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
+def splitter_onSplitterMoved(i_pos, i_index):
+    # If detail pane has been dragged closed,
+    # call detailPane_hide() to keep track
+    if splitter.sizes()[1] == 0:
+        detailPane_hide()
+splitter.splitterMoved.connect(splitter_onSplitterMoved)
+
 # Create table
 tableView = MyTableView()
 splitter.addWidget(tableView)
+splitter.setStretchFactor(0, 0)  # Don't stretch table view when window is resized
 tableView.setItemDelegate(MyStyledItemDelegate())
 
 for columnNo, column in enumerate(g_columns):
@@ -1064,17 +1072,26 @@ class DetailPane(QWidget):
 detailPane_widget = DetailPane()
 detailPane_widget.setProperty("class", "detailPane")
 splitter.addWidget(detailPane_widget)
+splitter.setStretchFactor(1, 1)  # Do stretch detail pane when window is resized
 detailPane_layout = QHBoxLayout()
 detailPane_layout.setSpacing(0)
 detailPane_layout.setContentsMargins(0, 0, 0, 0)
 detailPane_widget.setLayout(detailPane_layout)
 
 def detailPane_show():
-    splitter.setSizes([200, splitter.geometry().height() - 200])
+    # Position splitter so that the table view shows exactly one row
+    topPaneHeight = 200  # Row height
+    if tableView.horizontalScrollBar().isVisible():
+        topPaneHeight += application.style().pixelMetric(QStyle.PM_ScrollBarExtent)  # Scrollbar height
+    splitter.setSizes([topPaneHeight, splitter.geometry().height() - topPaneHeight])
+    # Switch table view scroll mode so that an item will stay aligned at the top,
+    # to fit neatly into the area we resized above
     tableView.setVerticalScrollMode(QAbstractItemView.ScrollPerItem)
 
 def detailPane_hide():
+    # Hide detail pane
     splitter.setSizes([splitter.geometry().height(), 0])
+    # Stop forcibly aligning an item to the top of the table view
     tableView.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel)
 
 detailPane_margin = QPushButton("x")
