@@ -114,7 +114,7 @@ def runExtra(i_path, i_gameInfo = None):
     if utils.pathHasExtension(i_path, ".ZIP"):
         # Extract it
         tempDirPath = "/tmp/gamebase"
-        zipMembers = utils.extractZip(config_extrasBasePath + i_path, tempDirPath)
+        zipMembers = utils.extractZip(config_extrasBaseDirPath + i_path, tempDirPath)
 
         # Get game description
         gameDescription = i_gameInfo["name"]
@@ -124,4 +124,4 @@ def runExtra(i_path, i_gameInfo = None):
         #
         runGameMenu(gameDescription, utils.joinPaths(tempDirPath, zipMembers))
     else:
-        utils.openInDefaultApplication(config_extrasBasePath + "/" + i_path)
+        utils.openInDefaultApplication(config_extrasBaseDirPath + "/" + i_path)

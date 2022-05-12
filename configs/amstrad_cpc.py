@@ -204,13 +204,13 @@ def runGame(i_zipFilePath, i_zipMemberToRun = None, i_gameInfo = None):
 def runExtra(i_path, i_gameInfo = None):
     #print('runExtra(' + pprint.pformat(i_path) + ', ' + pprint.pformat(i_gameInfo) + ')')
 
-    extrasBasePath = "/mnt/ve/games/Sinclair ZX Spectrum/Speccymania v4/zx_up_dax_PL/ZX Spectrum/Extras/"
+    extrasBaseDirPath = "/mnt/ve/games/Sinclair ZX Spectrum/Speccymania v4/zx_up_dax_PL/ZX Spectrum/Extras/"
 
     # If zip file
     if utils.pathHasExtension(i_path, ".ZIP"):
         # Extract zip
         tempDirPath = "/tmp/gamebase"
-        zipMembers = utils.extractZip(extrasBasePath + i_path, tempDirPath)
+        zipMembers = utils.extractZip(extrasBaseDirPath + i_path, tempDirPath)
 
         # Get game description
         gameDescription = i_gameInfo["name"]
@@ -220,4 +220,4 @@ def runExtra(i_path, i_gameInfo = None):
         #
         runGame2(gameDescription, utils.joinPaths(tempDirPath, zipMembers))
     else:
-        utils.openInDefaultApplication(extrasBasePath + "/" + i_path)
+        utils.openInDefaultApplication(extrasBaseDirPath + "/" + i_path)

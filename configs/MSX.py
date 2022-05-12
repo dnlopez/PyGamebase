@@ -130,13 +130,13 @@ def runGame(i_zipFilePath, i_zipMemberToRun = None, i_gameInfo = None):
 def runExtra(i_path, i_gameInfo = None):
     #print('runExtra(' + pprint.pformat(i_path) + ', ' + pprint.pformat(i_gameInfo) + ')')
 
-    extrasBasePath = "/mnt/ve/games/MSX/gamebase/Extras/"
+    extrasBaseDirPath = "/mnt/ve/games/MSX/gamebase/Extras/"
 
     # If file is a zip
     if utils.pathHasExtension(i_path, ".ZIP"):
         # Extract it
         tempDirPath = "/tmp/gamebase"
-        zipMembers = utils.extractZip(extrasBasePath + i_path, tempDirPath)
+        zipMembers = utils.extractZip(extrasBaseDirPath + i_path, tempDirPath)
 
         # Get game description
         gameDescription = i_gameInfo["name"]
@@ -146,7 +146,7 @@ def runExtra(i_path, i_gameInfo = None):
         #
         runGameMenu(gameDescription, utils.joinPaths(tempDirPath, zipMembers))
     else:
-        utils.openInDefaultApplication(extrasBasePath + "/" + i_path)
+        utils.openInDefaultApplication(extrasBaseDirPath + "/" + i_path)
 
 
 msxGbScriptsLocation = "/home/daniel/docs/code/js/gamebase/databases/msx_gb_scripts"

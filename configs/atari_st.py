@@ -9,7 +9,7 @@ import utils
 config_title = "Atari ST"
 config_databaseFilePath = "/mnt/ve/games/Atari ST/Gamebase ST v4/Atari ST/Atari ST.sqlite"
 config_screenshotsBaseDirPath = "/mnt/ve/games/Atari ST/Gamebase ST v4/Atari ST/Screenshots"
-config_extrasBasePath = "/mnt/ve/games/Atari ST/Gamebase ST v4/Atari ST/Extras"
+config_extrasBaseDirPath = "/mnt/ve/games/Atari ST/Gamebase ST v4/Atari ST/Extras"
 
 
 def runGame2(i_gameDescription, i_gameFilePaths):
@@ -65,7 +65,7 @@ def runExtra(i_path, i_gameInfo = None):
 
         # Extract zip
         tempDirPath = "/tmp/gamebase"
-        zipMembers = utils.extractZip(config_extrasBasePath + i_path, tempDirPath)
+        zipMembers = utils.extractZip(config_extrasBaseDirPath + i_path, tempDirPath)
 
         # Get game description
         gameDescription = i_gameInfo["name"]
@@ -75,4 +75,4 @@ def runExtra(i_path, i_gameInfo = None):
         #
         runGame2(gameDescription, utils.joinPaths(tempDirPath, zipMembers))
     else:
-        utils.openInDefaultApplication(config_extrasBasePath + "/" + i_path)
+        utils.openInDefaultApplication(config_extrasBaseDirPath + "/" + i_path)

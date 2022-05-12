@@ -70,10 +70,10 @@ def runGame(i_zipFilePath, i_zipMemberToRun = None, i_gameInfo = None):
                          for zipMember in zipMembers
                          if not (utils.pathHasExtension(zipMember, ".TXT") or utils.pathHasExtension(zipMember, ".NFO") or utils.pathHasExtension(zipMember, ".SCR"))]
 
-        gameFileBasePath = tempDirPath
+        gameFileBaseDirPath = tempDirPath
     else:
         gameFilePaths = [i_zipFilePath]
-        gameFileBasePath = basePath
+        gameFileBaseDirPath = basePath
 
     #
     if i_zipMemberToRun == None:
@@ -85,18 +85,18 @@ def runGame(i_zipFilePath, i_zipMemberToRun = None, i_gameInfo = None):
         gameDescription += " (" + i_gameInfo["publisher"] + ")"
 
     #
-    runGame2(gameDescription, utils.joinPaths(gameFileBasePath, gameFilePaths))
+    runGame2(gameDescription, utils.joinPaths(gameFileBaseDirPath, gameFilePaths))
 
 def runExtra(i_path, i_gameInfo = None):
     #print('runExtra(' + pprint.pformat(i_path) + ', ' + pprint.pformat(i_gameInfo) + ')')
 
-    extrasBasePath = "/mnt/ve/games/Commodore VIC-20/Gamebase20_v03/Extras/"
+    extrasBaseDirPath = "/mnt/ve/games/Commodore VIC-20/Gamebase20_v03/Extras/"
 
     # If zip file
     if utils.pathHasExtension(i_path, ".ZIP"):
         # Extract zip
         tempDirPath = "/tmp/gamebase"
-        zipMembers = utils.extractZip(extrasBasePath + i_path, tempDirPath)
+        zipMembers = utils.extractZip(extrasBaseDirPath + i_path, tempDirPath)
 
         # Get game description
         gameDescription = i_gameInfo["name"]
@@ -106,4 +106,4 @@ def runExtra(i_path, i_gameInfo = None):
         #
         runGame2(gameDescription, utils.joinPaths(tempDirPath, zipMembers))
     else:
-        utils.openInDefaultApplication(extrasBasePath + "/" + i_path)
+        utils.openInDefaultApplication(extrasBaseDirPath + "/" + i_path)

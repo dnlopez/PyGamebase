@@ -225,8 +225,11 @@ def getScreenshotAbsolutePath(i_relativePath):
       (str)
 
     Returns:
-     (str)
+     Either (str)
+     or (None)
     """
+    if not hasattr(gamebase, "config_screenshotsBaseDirPath"):
+        return None
     return gamebase.config_screenshotsBaseDirPath + "/" + i_relativePath
 
 def getScreenshotUrl(i_relativePath):
@@ -236,10 +239,14 @@ def getScreenshotUrl(i_relativePath):
       (str)
 
     Returns:
-     (str)
+     Either (str)
+     or (None)
     """
     i_relativePath = i_relativePath.replace(" ", "%20")
     i_relativePath = i_relativePath.replace("#", "%23")
+    screenshotAbsolutePath = getScreenshotAbsolutePath(i_relativePath)
+    if screenshotAbsolutePath == None:
+        return None
     return "file://" + getScreenshotAbsolutePath(i_relativePath)
 
 # + }}}
@@ -425,7 +432,7 @@ def dbRow_getSupplementaryScreenshotPaths(i_row, i_simulateCount=None):
                 while True:
                     screenshotRelativePath = screenshotStem + "_" + str(screenshotNo) + imageExtension
                     screenshotAbsolutePath = getScreenshotAbsolutePath(screenshotRelativePath)
-                    if not os.path.exists(screenshotAbsolutePath):
+                    if screenshotAbsolutePath == None or not os.path.exists(screenshotAbsolutePath):
                         break
 
                     supplementaryScreenshotPaths.append(screenshotRelativePath)
@@ -689,8 +696,9 @@ class MyStyledItemDelegate(QStyledItemDelegate):
         if i_index.column() == 2:
             screenshotPath = dbRow_getScreenshotRelativePath(g_dbRows[i_index.row()])
             if screenshotPath != None:
-                pixmap = QPixmap(gamebase.config_screenshotsBaseDirPath + "/" + screenshotPath)
-                i_painter.drawPixmap(i_option.rect, pixmap)
+                if hasattr(gamebase, "config_screenshotsBaseDirPath"):
+                    pixmap = QPixmap(gamebase.config_screenshotsBaseDirPath + "/" + screenshotPath)
+                    i_painter.drawPixmap(i_option.rect, pixmap)
         else:
             QStyledItemDelegate.paint(self, i_painter, i_option, i_index)
 
@@ -913,7 +921,10 @@ mainWindow = QWidget()
 mainWindow.resize(800, 600)
 mainWindow.move(QApplication.desktop().rect().center() - mainWindow.rect().center())
 mainWindow.move(QApplication.desktop().rect().center() - mainWindow.rect().center())
-mainWindow.setWindowTitle(gamebase.config_title + " - GameBase")
+if hasattr(gamebase, "config_title"):
+    mainWindow.setWindowTitle(gamebase.config_title + " - GameBase")
+else:
+    mainWindow.setWindowTitle(param_configModuleFilePath + " - GameBase")
 
 mainWindow.setProperty("class", "mainWindow")
 
@@ -1092,7 +1103,9 @@ def detailPane_populate(i_rowNo):
     #
     supplementaryScreenshotRelativePaths = dbRow_getSupplementaryScreenshotPaths(row);
     for relativePath in supplementaryScreenshotRelativePaths:
-        html += '<img src="' + getScreenshotUrl(relativePath) + '">'
+        screenshotUrl = getScreenshotUrl(relativePath)
+        if screenshotUrl != None:
+            html += '<img src="' + screenshotUrl + '">'
 
     if "CloneOfName" in g_dbColumnNames and row[g_dbColumnNames.index("CloneOfName")] != None:
         html += '<p style="white-space: pre-wrap;">'
