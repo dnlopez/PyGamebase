@@ -905,6 +905,8 @@ else:
 # Create a top-level window by creating a widget with no parent
 mainWindow = QWidget()
 mainWindow.resize(800, 600)
+mainWindow.move(QApplication.desktop().rect().center() - mainWindow.rect().center())
+mainWindow.move(QApplication.desktop().rect().center() - mainWindow.rect().center())
 mainWindow.setWindowTitle(gamebase.config_title + " - GameBase")
 
 mainWindow.setProperty("class", "mainWindow")
