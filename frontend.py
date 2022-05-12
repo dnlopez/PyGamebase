@@ -23,10 +23,10 @@ def popupMenu(i_itemTexts):
         #menu.addAction(QAction(itemText)) #, None))
         actions.append(menu.addAction(itemText))
 
-    # Popup the menu
-    selectedAction = menu.exec_(QPoint(100, 100))#self.button.mapToGlobal(point))        
+    # Popup the menu at the current mouse position
+    selectedAction = menu.exec_(QApplication.desktop().cursor().pos())
 
-    #print(selectedAction)
+    # Return what was selected
     if selectedAction == None:
         return None
     else:
