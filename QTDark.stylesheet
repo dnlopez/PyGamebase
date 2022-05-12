@@ -22,6 +22,10 @@
 	COLOR_ACCENT   = #3D7848
 */
 
+.mainWindow {
+    background-color: black;
+}
+
 .Header3
 {
 	background: #191919;
@@ -31,15 +35,117 @@ QTableView
 {
 	background: #191919;
 	color: #DDDDDD;
-    gridline-color: grey;
+    gridline-color: #666;
+}
+
+QMenuBar
+{
+	background-color: #444;
+    border-top-width: 1px;
+    border-top-color: #666;
+    border-top-style: solid;
+    border-left-width: 1px;
+    border-left-color: #666;
+    border-left-style: solid;
+    border-right-width: 1px;
+    border-right-color: #222;
+    border-right-style: solid;
+    border-bottom-width: 1px;
+    border-bottom-color: #222;
+    border-bottom-style: solid;
+    margin-bottom: 1px;
+    color: #fff;
+}
+QMenuBar::item
+{
+	background-color: #444;
+    color: #fff;
+}
+
+/*
+Header3 QPushButton
+{
+	background-color: #444;
+    border-width: 2px;
+    border-color: #444;
+    border-style: outset;
+    color: #fff;
+}
+*/
+Header3 QPushButton
+{
+	background-color: #444;
+    border-top-width: 1px;
+    border-top-color: #666;
+    border-top-style: solid;
+    border-left-width: 1px;
+    border-left-color: #666;
+    border-left-style: solid;
+    border-right-width: 1px;
+    border-right-color: #222;
+    border-right-style: solid;
+    margin-right: 1px;
+    border-bottom-width: 1px;
+    border-bottom-color: #222;
+    border-bottom-style: solid;
+    margin-bottom: 1px;
+    color: #fff;
+}
+/*
+Header3 QPushButton
+{
+    color: #000;
+	background-color: rgb(192, 192, 192);
+    border-top-width: 1px;
+    border-top-style: solid;
+    border-top-color: rgb(255, 255, 255);
+    border-left-width: 1px;
+    border-left-style: solid;
+    border-left-color: rgb(255, 255, 255);
+    border-bottom-width: 2px;
+    border-bottom-style: solid;
+    border-bottom-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 rgb(128, 128, 128), stop: 1 rgb(64, 64, 64));
+    border-right-width: 2px;
+    border-right-style: solid;
+    border-right-color: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 0, stop: 0 rgb(128, 128, 128), stop: 1 rgb(64, 64, 64));
+}
+Header3 QPushButton
+{
+    color: #fff;
+	background-color: rgb(64, 64, 64);
+    border-top-width: 1px;
+    border-top-style: solid;
+    border-top-color: rgb(85, 85, 85);
+    border-left-width: 1px;
+    border-left-style: solid;
+    border-left-color: rgb(85, 85, 85);
+    border-bottom-width: 2px;
+    border-bottom-style: solid;
+    border-bottom-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 rgb(43, 43, 43), stop: 1 rgb(22, 22, 22));
+    border-right-width: 2px;
+    border-right-style: solid;
+    border-right-color: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 0, stop: 0 rgb(43, 43, 43), stop: 1 rgb(22, 22, 22));
+}
+*/
+
+Header3 QLineEdit
+{
+	background-color: rgb(34, 68, 34);
+    border-width: 1px;
+    border-color: #222;
+    border-style: solid;
+    color: rgb(204, 238, 204);
 }
 
 /*
 QPushButton
 {
-	background: #292929;
-    border: none;
+	background-color: #d4cfc7;
+    border-width: 2px;
+    border-color: #777;
+    border-style: outset;
 }
+	color: #fff;
 
 /*
 QTableView::item
