@@ -892,6 +892,12 @@ class MyTableView(QTableView):
         #    QHeaderView::section {padding-left: 0px; border: 0px}
         #""")
 
+    def scrollContentsBy(self, i_dx, i_dy):
+        # If the table view is scrolled horizontally,
+        # scroll external header by the same amount
+        QTableView.scrollContentsBy(self, i_dx, i_dy)
+        header.scroll(i_dx, 0)
+
     def requery(self):
         self.tableModel.modelReset.emit()
 
