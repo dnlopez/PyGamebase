@@ -1154,7 +1154,7 @@ ORDER BY
 
     # For each non-image, insert a link
     if len(nonImageRows) > 0:
-        html += '<p id="nonImageExtras">'
+        html += '<div id="nonImageExtras">'
 
         for nonImageRowNo, nonImageRow in enumerate(nonImageRows):
             #var label = nonImageRow.Name + " (" + nonImageRow.Path + ")";
@@ -1168,26 +1168,26 @@ ORDER BY
             html += nonImageRow[extrasColumnNames.index("Name")]
             html += '</a>'
 
-        html += "</p>"
+        html += "</div>"
 
 
     # For each image, insert an image
     if len(imageRows) > 0:
-        html += '<p id="imageExtras">'
+        html += '<div id="imageExtras">'
 
         for imageRowNo, imageRow in enumerate(imageRows):
             print("imageRow: " + str(imageRow))
             #var cell = document.createElement("div");
 
             html += '<a href="extra:///' + imageRow[extrasColumnNames.index("Path")] + '" style="display: inline-block; text-align: center; border: 1px solid red;">'
-            html += '<img src="file://' + gamebase.config_extrasBaseDirPath + "/" + imageRow[extrasColumnNames.index("Path")] + '" style="height: 300px;"></img>'
-            #html += '<img src="https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_92x30dp.png" style="height: 300px;"></img>'
+            html += '<img src="file://' + gamebase.config_extrasBaseDirPath + "/" + imageRow[extrasColumnNames.index("Path")] + '" style="height: 300px;">'
+            #html += '<img src="https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_92x30dp.png" style="height: 300px;">'
             html += '<div>' + imageRow[extrasColumnNames.index("Name")] + '</div>'
             html += '</a>'
 
             #cell.appendChild(link);
 
-        html += "</p>"
+        html += "</div>"
 
     print(html)
 
