@@ -996,6 +996,7 @@ for columnNo, column in enumerate(g_columns):
 
 # Create detail pane
 detailPane_widget = QWidget()
+detailPane_widget.setProperty("class", "detailPane")
 splitter.addWidget(detailPane_widget)
 detailPane_layout = QHBoxLayout()
 detailPane_layout.setSpacing(0)
@@ -1027,6 +1028,7 @@ detailPane_margin.setFixedWidth(g_columns[0]["width"])
 #detailPane_margin_layout.addWidget(QPushButton())
 
 detailPane_webEngineView = QWebEngineView()
+detailPane_webEngineView.setProperty("class", "webEngineView")
 detailPane_layout.addWidget(detailPane_webEngineView)
 
 def detailPane_populate(i_rowNo):
@@ -1038,6 +1040,8 @@ def detailPane_populate(i_rowNo):
     row = g_dbRows[i_rowNo]
 
     html = ""
+
+    html += '<link rel="stylesheet" type="text/css" href="file:///home/daniel/docs/code/python/gamebase/detail_pane.css">'
 
     #
     supplementaryScreenshotRelativePaths = dbRow_getSupplementaryScreenshotPaths(row);
@@ -1164,7 +1168,7 @@ ORDER BY
                 #container.appendChild(document.createTextNode(" | "));
                 html += '<span style="margin-left: 8px; margin-right: 8px; border-left: 1px dotted #666;"></span>'
 
-            html += '<a href="extra:///' + nonImageRow[extrasColumnNames.index("Path")] + '" style="border: 1px solid red;">'
+            html += '<a href="extra:///' + nonImageRow[extrasColumnNames.index("Path")] + '>'
             html += nonImageRow[extrasColumnNames.index("Name")]
             html += '</a>'
 
@@ -1179,7 +1183,7 @@ ORDER BY
             print("imageRow: " + str(imageRow))
             #var cell = document.createElement("div");
 
-            html += '<a href="extra:///' + imageRow[extrasColumnNames.index("Path")] + '" style="display: inline-block; text-align: center; border: 1px solid red;">'
+            html += '<a href="extra:///' + imageRow[extrasColumnNames.index("Path")] + '" style="display: inline-block; text-align: center;">'
             html += '<img src="file://' + gamebase.config_extrasBaseDirPath + "/" + imageRow[extrasColumnNames.index("Path")] + '" style="height: 300px;">'
             #html += '<img src="https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_92x30dp.png" style="height: 300px;">'
             html += '<div>' + imageRow[extrasColumnNames.index("Name")] + '</div>'
@@ -1216,6 +1220,8 @@ ORDER BY
                 return True
     webEnginePage = WebEnginePage(detailPane_webEngineView)
     webEnginePage.setHtml(html, QUrl("file:///"))
+    # Let background of application show through to stop white flash on page loads
+    webEnginePage.setBackgroundColor(Qt.transparent)
 
     # Load web engine page into the web engine view
     #webEnginePage.setView(detailPane_webEngineView)
@@ -1223,6 +1229,7 @@ ORDER BY
 
 # Create statusbar
 label_statusbar = QLabel()
+label_statusbar.setProperty("class", "statusbar")
 #mainWindow_layout.addSpacing(8)
 mainWindow_layout.addWidget(label_statusbar)
 label_statusbar.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)

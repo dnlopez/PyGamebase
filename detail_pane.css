@@ -1,0 +1,15 @@
+body {
+    background-color: black;
+    color: white;
+    padding: 16px;
+}
+
+img {
+    margin: 16px;
+    padding: 8px;
+    border: 1px dotted #666;
+}
+
+a {
+    color: #08f;
+}
