@@ -30,7 +30,7 @@ def runGameOnMachine(i_gameDescription, i_machineName, i_gameFilePaths, i_gemusT
        "rezopenmsx (NTSC)"
        "rezopenmsx (PAL)"
      i_gameFilePaths:
-      (list of string)
+      (list of str)
      i_gemusText:
       (str)
     """

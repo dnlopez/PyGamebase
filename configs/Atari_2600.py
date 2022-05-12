@@ -22,7 +22,7 @@ def runGameOnMachine(i_gameDescription, i_machineName, i_gameFilePaths):
       or (None)
      i_machineName:
       (string)
-      eg.
+      One of
        "rezmame a2600"
        "rezstella (NTSC)"
        "rezstella (PAL)"
@@ -52,7 +52,7 @@ def runGame2(i_gameDescription, i_gameFilePaths):
       Either (str)
       or (None)
      i_gameFilePaths:
-      (list of string)
+      (list of str)
     """
     method = utils.popupMenu([
         "rezmame a2600",

@@ -25,9 +25,10 @@ def runGameOnMachine(i_gameDescription, i_machineName, i_gameFilePaths):
       or (None)
      i_machineName:
       (str)
-      eg.
+      One of
        "spectrum"
        "spec128"
+       "specpls3"
      i_gameFilePaths:
       (list of str)
     """
@@ -92,7 +93,7 @@ def runGame2(i_gameDescription, i_gameFilePaths):
       Either (str)
       or (None)
      i_gameFilePaths:
-      (list of string)
+      (list of str)
     """
     #"rezmame.py", "spectrum", "-snapshot", %f
     #"rezmame.py", "spectrum", "-cartridge", %f

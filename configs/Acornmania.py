@@ -31,7 +31,7 @@ def runGameOnMachine(i_gameDescription, i_machineName, i_gameFilePaths):
     """
     executableAndArgs = ["rezmame.py", i_machineName]
 
-    # Assign game files by extension to available MAME devices
+    # Assign game files to available MAME media slots
     availableDevices = [
         ["printout", [".prn"]],
         ["cassette", [".wav"]],

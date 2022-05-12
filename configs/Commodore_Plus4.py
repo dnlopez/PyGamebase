@@ -19,7 +19,7 @@ def runGameOnMachine(i_gameDescription, i_machineName, i_gameFilePaths):
       or (None)
      i_machineName:
       (string)
-      eg.
+      One of
        "plus4"
      i_gameFilePaths:
       (array of string)
@@ -48,7 +48,7 @@ def runGame2(i_gameDescription, i_gameFilePaths):
       Either (str)
       or (None)
      i_gameFilePaths:
-      (list of string)
+      (list of str)
     """
     runGameOnMachine(i_gameDescription, "plus4", i_gameFilePaths)
 

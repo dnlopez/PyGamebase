@@ -51,7 +51,7 @@ def runGame2(i_gameDescription, i_gameFilePaths):
       Either (str)
       or (None)
      i_gameFilePaths:
-      (list of string)
+      (list of str)
     """
     runGameOnMachine(i_gameDescription, "vic20", i_gameFilePaths)
 

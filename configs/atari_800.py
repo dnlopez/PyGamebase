@@ -19,7 +19,7 @@ def runGameOnMachine(i_gameDescription, i_machineName, i_gameFilePaths):
       or (None)
      i_machineName:
       (string)
-      eg.
+      One of
        "rezatari800.py pal"
        "rezatari800.py ntsc"
        "atari++"
@@ -64,7 +64,7 @@ def runGame2(i_gameDescription, i_gameFilePaths):
       Either (str)
       or (None)
      i_gameFilePaths:
-      (list of string)
+      (list of str)
     """
     method = utils.popupMenu([
         "rezatari800.py pal",
