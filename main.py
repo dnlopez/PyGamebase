@@ -1100,13 +1100,15 @@ def detailPane_populate(i_rowNo):
 
     html += '<link rel="stylesheet" type="text/css" href="file:///home/daniel/docs/code/python/gamebase/detail_pane.css">'
 
-    #
-    supplementaryScreenshotRelativePaths = dbRow_getSupplementaryScreenshotPaths(row);
+    # Insert screenshots after the first one
+    supplementaryScreenshotRelativePaths = dbRow_getSupplementaryScreenshotPaths(row)
     for relativePath in supplementaryScreenshotRelativePaths:
         screenshotUrl = getScreenshotUrl(relativePath)
         if screenshotUrl != None:
             html += '<img src="' + screenshotUrl + '">'
 
+    # If this game is a clone,
+    # insert a link to the original
     if "CloneOfName" in g_dbColumnNames and row[g_dbColumnNames.index("CloneOfName")] != None:
         html += '<p style="white-space: pre-wrap;">'
         html += 'Clone of: '
@@ -1134,60 +1136,52 @@ def detailPane_populate(i_rowNo):
         #});
         html += '</p>'
 
+    # Insert memo text
     if row[g_dbColumnNames.index("MemoText")] != None:
         html += '<p style="white-space: pre-wrap;">'
         html += row[g_dbColumnNames.index("MemoText")]
         html += '</p>'
 
+    # Insert comment
     if row[g_dbColumnNames.index("Comment")] != None:
         html += '<p style="white-space: pre-wrap;">'
         html += row[g_dbColumnNames.index("Comment")]
         html += '</p>'
 
+    # Insert weblink(s)
     if "WebLink_Name" in g_dbColumnNames and row[g_dbColumnNames.index("WebLink_Name")] != None:
-        #var url = row.WebLink_URL;
-        #
-        #var container = document.createElement("p");
-        #container.appendChild(document.createTextNode(row.WebLink_Name + ": "));
-        #
-        #var link = document.createElement("a");
-        #link.setAttribute("href", url);
-        #//link.setAttribute("target", "_blank");
-        #link.appendChild(document.createTextNode(url));
+        html += '<p style="white-space: pre-wrap;">'
+
+        html += row[g_dbColumnNames.index("WebLink_Name")] + ": "
+        url = row[g_dbColumnNames.index("WebLink_URL")]
+        html += '<a target="_blank" href="' + url + '">'
+        html += url
+        html += '</a>'
         #link.addEventListener("click", function (i_event) {
         #    i_event.preventDefault();
         #    electron.shell.openExternal(this.href);
         #});
-        #container.appendChild(link);
-        #g_detailPane.appendChild(container);
-        #
-        #if (row.WebLink_Name == "WOS")
-        #{
-        #    url = url.replace("http://www.worldofspectrum.org/infoseekid.cgi?id=", "https://spectrumcomputing.co.uk/entry/");
-        #
-        #    //container.appendChild(document.createTextNode(" | "));
-        #    var separator = document.createElement("span");
-        #    separator.style.marginLeft = "8px";
-        #    separator.style.marginRight = "8px";
-        #    separator.style.borderLeft = "1px dotted #666";
-        #
-        #    container.appendChild(separator);
-        #
-        #    container.appendChild(document.createTextNode("Spectrum Computing: "));
-        #
-        #    var link = document.createElement("a");
-        #    link.setAttribute("href", url);
-        #    //link.setAttribute("target", "_blank");
-        #    link.appendChild(document.createTextNode(url));
-        #    link.addEventListener("click", function (i_event) {
-        #        i_event.preventDefault();
-        #        electron.shell.openExternal(this.href);
-        #    });
-        #    container.appendChild(link);
-        pass
 
+        # If it's a World Of Spectrum link then insert a corresponding Spectrum Computing link
+        if "WebLink_Name" in g_dbColumnNames and row[g_dbColumnNames.index("WebLink_Name")] == "WOS":
+            # Separator
+            html += '<span style="margin-left: 8px; margin-right: 8px; border-left: 1px dotted #666;"></span>'
+            # Label
+            html += 'Spectrum Computing: '
+            # Link
+            url = url.replace("http://www.worldofspectrum.org/infoseekid.cgi?id=", "https://spectrumcomputing.co.uk/entry/")
+            html += '<a target="_blank" href="' + url + '">'
+            html += url
+            html += '</a>'
+            html += '</span>'
+            #link.addEventListener("click", function (i_event) {
+            #    i_event.preventDefault();
+            #    electron.shell.openExternal(this.href);
+            #});
 
-    #
+        html += '</p>'
+
+    # Get extras
     sql = """
 SELECT
  Extras.EX_Id,
@@ -1227,7 +1221,7 @@ ORDER BY
                 #container.appendChild(document.createTextNode(" | "));
                 html += '<span style="margin-left: 8px; margin-right: 8px; border-left: 1px dotted #666;"></span>'
 
-            html += '<a href="extra:///' + nonImageRow[extrasColumnNames.index("Path")] + '>'
+            html += '<a href="extra:///' + nonImageRow[extrasColumnNames.index("Path")] + '">'
             html += nonImageRow[extrasColumnNames.index("Name")]
             html += '</a>'
 
@@ -1239,7 +1233,7 @@ ORDER BY
         html += '<div id="imageExtras">'
 
         for imageRowNo, imageRow in enumerate(imageRows):
-            print("imageRow: " + str(imageRow))
+            #print("imageRow: " + str(imageRow))
             #var cell = document.createElement("div");
 
             html += '<a href="extra:///' + imageRow[extrasColumnNames.index("Path")] + '" style="display: inline-block; text-align: center;">'
