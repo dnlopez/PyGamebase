@@ -1051,7 +1051,17 @@ for columnNo, column in enumerate(g_columns):
     tableView.horizontalHeader().resizeSection(columnNo, column["width"])
 
 # Create detail pane
-detailPane_widget = QWidget()
+class DetailPane(QWidget):
+    def __init__(self):
+        QWidget.__init__(self)
+        QShortcut(QKeySequence("Escape"), self, activated=self.escapeShortcut_onActivated)
+        #QShortcut(QKeySequence("Page Up"), self, activated=self.pageUpShortcut_onActivated)
+    def escapeShortcut_onActivated(self):
+        detailPane_hide()
+    #def pageUpShortcut_onActivated(self):
+    #    detailPane_hide()
+
+detailPane_widget = DetailPane()
 detailPane_widget.setProperty("class", "detailPane")
 splitter.addWidget(detailPane_widget)
 detailPane_layout = QHBoxLayout()
