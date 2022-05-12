@@ -932,22 +932,62 @@ menuBar = QMenuBar()
 mainWindow_layout.addWidget(menuBar)
 
 def menu_file_openDatabaseInExternalProgram_onTriggered(i_checked):
-    print("trigger")
-    #import utils
-    #utils.openInDefaultApplication(gamebase.config_databaseFilePath)
+    openInDefaultApplication([gamebase.config_databaseFilePath])
+
+# [currently just for menu_file_openDatabaseInExternalProgram_onTriggered()]
+def openInDefaultApplication(i_filePaths):
+    """
+    Params:
+     i_filePaths:
+      Either (str)
+      or (list of str)
+    """
+    # Choose launcher command
+    import platform
+    #  If on macOS
+    if platform.system() == "Darwin":
+        executableAndArgs = ["open"]
+    #  Else if on Windows
+    elif platform.system() == "Windows":
+        executableAndArgs = ["start"]
+    #  Else assume a Linux variant
+    else:
+        executableAndArgs = ["xdg-open"]
+
+    # Append file paths
+    if type(i_filePaths) == str:
+        executableAndArgs.append(i_filePaths)
+    else:  # if an array
+        executableAndArgs.extend(i_filePaths)
+
+    # [shellExecList()]
+
+    # Quote arguments if necessary
+    import shlex
+    executableAndArgs = [shlex.quote(arg)  for arg in executableAndArgs]
+
+    # Convert to string
+    executableAndArgs = " ".join(executableAndArgs)
+
+    # [Use "...String()" function]
+    # Start program
+    import subprocess
+    popen = subprocess.Popen(executableAndArgs,
+                             shell=True,
+                             stdout=sys.stdout.fileno(), stderr=sys.stderr.fileno())
 
 menu = QMenu(mainWindow)
 #menu.addAction("File")
 #menuBar.addMenu(menu)
-fileMenu_action = menuBar.addMenu("File")
-action = fileMenu_action.addAction("Open database in external program")
+fileMenu_action = menuBar.addMenu("&File")
+action = fileMenu_action.addAction("Open &database in external program")
 action.triggered.connect(menu_file_openDatabaseInExternalProgram_onTriggered)
 fileMenu_action.addAction("New")
 fileMenu_action.addAction("Open")
 fileMenu_action.addAction("Save")
 fileMenu_action.addSeparator()
 fileMenu_action.addAction("Quit")
-editMenu_action = menuBar.addMenu("Edit")
+editMenu_action = menuBar.addMenu("&Edit")
 editMenu_action.addAction("Copy")
 #menuBar.addMenu("View")
 #menuBar.addMenu("Help")
