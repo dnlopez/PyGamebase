@@ -27,7 +27,7 @@ def openInDefaultApplication(i_filePaths):
     Params:
      i_filePaths:
       Either (str)
-      or (list of string)
+      or (list of str)
     """
     # Choose launcher command
     #  If on macOS
@@ -88,7 +88,7 @@ def pathHasExtension(i_path, i_extensions, i_caseSensitive = False):
       Either (str)
        eg.
         ".txt"
-      or (list of string)
+      or (list of str)
        Return True if path has any one of these extensions.
        eg.
         [".txt", ".doc"]
@@ -351,7 +351,7 @@ class Gemus():
          i_fieldName:
           (str)
          i_values:
-          (list of string)
+          (list of str)
 
         Returns:
          (bool)

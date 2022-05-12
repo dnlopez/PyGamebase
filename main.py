@@ -406,7 +406,7 @@ def dbRow_getSupplementaryScreenshotPaths(i_row, i_simulateCount=None):
       or (None)
 
     Returns:
-     (list of string)
+     (list of str)
      Paths of images, relative to the 'Screenshots' folder.
     """
     # If there's not already a cached value,
