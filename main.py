@@ -516,11 +516,10 @@ class Header3(QWidget):
         # Create widgets (HeaderButton and QLineEdit objects) for columns
         global g_columns
         for columnNo, column in enumerate(g_columns):
-            #if column["filterable"]:
-            # Create button
-            column["headerButton"] = HeaderButton(column["headingText"], column["filterable"], self)
-            # Set its basic properties (apart from position)
             if column["filterable"]:
+                # Create button
+                column["headerButton"] = HeaderButton(column["headingText"], column["filterable"], self)
+                # Set its basic properties (apart from position)
                 column["headerButton"].clicked.connect(functools.partial(self.button_onClicked, columnNo))
 
             if column["filterable"]:
@@ -575,13 +574,13 @@ class Header3(QWidget):
         x = 0
 
         for columnNo, column in enumerate(g_columns):
-            columnEdgeX = x + column["headerButton"].width()
+            columnEdgeX = x + column["width"]
             if abs(i_x - columnEdgeX) <= Header3.resizeMargin:
-                return columnNo, column
+                return columnNo, column, columnEdgeX
 
-            x += column["headerButton"].width()
+            x += column["width"]
 
-        return None, None
+        return None, None, None
 
     def eventFilter(self, i_watched, i_event):
         #print(i_event.type())
@@ -591,8 +590,10 @@ class Header3(QWidget):
             # then depending on whether cursor is near a draggable vertical edge,
             # set cursor shape
             if self.resize_columnNo == None:
+                # Get mouse pos relative to Header3
                 mousePos = i_watched.mapTo(self, i_event.pos())
-                columnNo, _ = self._columnBoundaryAtPixelX(mousePos.x())
+                #
+                columnNo, _, _ = self._columnBoundaryAtPixelX(mousePos.x())
                 if columnNo != None:
                     self.setCursor(Qt.SizeHorCursor)
                 else:
@@ -600,48 +601,48 @@ class Header3(QWidget):
             # Else if currently resizing,
             # do the resize
             else:
+                # Get mouse pos relative to Header3
+                mousePos = i_watched.mapTo(self, i_event.pos())
                 # Get new width
-                newRightEdge = i_event.globalPos().x() + self.resize_mouseToEdgeOffset
-                button = g_columns[self.resize_columnNo]["headerButton"]
-                newWidth = button.mapFromGlobal(QPoint(newRightEdge, i_event.pos().y())).x()
+                newRightEdge = mousePos.x() + self.resize_mouseToEdgeOffset
+                columnLeft = sum([column["width"]  for column in g_columns[0 : self.resize_columnNo]])
+                newWidth = newRightEdge - columnLeft
                 if newWidth < Header3.minimumColumnWidth:
                     newWidth = Header3.minimumColumnWidth
-                # Resize button
-                g_columns[self.resize_columnNo]["width"] = newWidth
-                button.resize(newWidth, button.height())
+                # Resize column
+                column = g_columns[self.resize_columnNo]
+                column["width"] = newWidth
 
-                # Move buttons after it
-                x = button.geometry().x() + button.geometry().width()
-                for column in g_columns[self.resize_columnNo + 1:]:
-                    button = column["headerButton"]
-                    button.move(x, button.y())
-                    x += button.width()
-                # Move lineedits as well
+                # Move/resize buttons and lineedits
+                self.repositionHeaderButtons()
                 self.repositionLineEdits()
                 #
                 tableView.horizontalHeader().resizeSection(self.resize_columnNo, newWidth)
 
+                return True
+
         elif i_event.type() == QEvent.MouseButtonPress:
             # If pressed the left button
             if i_event.button() == Qt.MouseButton.LeftButton:
-                # If cursor is near a draggable vertical edge
+                # Get mouse pos relative to Header3
                 mousePos = i_watched.mapTo(self, i_event.pos())
-                columnNo, column = self._columnBoundaryAtPixelX(mousePos.x())
+                # If cursor is near a draggable vertical edge
+                columnNo, column, edgeX = self._columnBoundaryAtPixelX(mousePos.x())
                 if columnNo != None:
                     #
                     self.resize_columnNo = columnNo
 
                     # Get horizontal distance from mouse to the draggable vertical edge (ie. the right edge of the button being resized)
-                    button = column["headerButton"]
-                    buttonBottomRight = button.mapTo(self, QPoint(button.size().width(), button.size().height()))
-                    self.resize_mouseToEdgeOffset = buttonBottomRight.x() - mousePos.x()
+                    #button = column["headerButton"]
+                    #buttonBottomRight = button.mapTo(self, QPoint(button.size().width(), button.size().height()))
+                    self.resize_mouseToEdgeOffset = edgeX - mousePos.x()
 
                     #
                     return True
 
         elif i_event.type() == QEvent.MouseButtonRelease:
-            # If released the left button
-            if i_event.button() == Qt.MouseButton.LeftButton:
+            # If currently resizing and released the left button
+            if self.resize_columnNo != None and i_event.button() == Qt.MouseButton.LeftButton:
                 # Stop resizing
                 self.resize_columnNo = None
 
@@ -657,8 +658,9 @@ class Header3(QWidget):
         x = 0
         y = 0
         for columnNo, column in enumerate(g_columns):
-            button = column["headerButton"]
-            button.setGeometry(x, y, column["width"], 30)
+            if column["filterable"]:
+                button = column["headerButton"]
+                button.setGeometry(x, y, column["width"], 30)
             x += column["width"]
 
     def repositionLineEdits(self):
