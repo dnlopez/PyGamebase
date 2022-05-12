@@ -1022,7 +1022,6 @@ gameTable.setLayout(gameTable_layout)
 
 # Create header
 header = Header3()
-header.setGeometry(0, 0, 10000, 100)  # TODO resize this exactly instead of excessively, not that it matters
 header.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 gameTable_layout.addWidget(header)
 
