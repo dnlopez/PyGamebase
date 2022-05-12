@@ -104,8 +104,8 @@ def runGame(i_zipFilePath, i_zipMemberToRun = None, i_gameInfo = None):
     #
     runGame2(gameDescription, utils.joinPaths(tempDirPath, gameFiles))
 
-def runExtra(i_name, i_path, i_gameInfo = None):
-    #print('runExtra("' + i_name + '", "' + i_path + '", ...)')
+def runExtra(i_path, i_gameInfo = None):
+    #print('runExtra(' + pprint.pformat(i_path) + ', ' + pprint.pformat(i_gameInfo) + ')')
 
     extrasBasePath = "/mnt/gear/games/Atari 800/Gamebase Atari 800XL (v9 DAX)/Atari 800XL/Extras/"
 

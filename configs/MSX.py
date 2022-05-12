@@ -128,7 +128,7 @@ def runGame(i_zipFilePath, i_zipMemberToRun = None, i_gameInfo = None):
     runGameMenu(gameDescription, utils.joinPaths(tempDirPath, gameFiles), i_gameInfo["Gemus"])
 
 def runExtra(i_path, i_gameInfo = None):
-    #print('runExtra("' + i_path + '", ...)')
+    #print('runExtra(' + pprint.pformat(i_path) + ', ' + pprint.pformat(i_gameInfo) + ')')
 
     extrasBasePath = "/mnt/ve/games/MSX/gamebase/Extras/"
 

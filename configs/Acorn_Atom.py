@@ -18,7 +18,7 @@ emulatorCommand = ["rezmame.py", "atom", "-flop1"]#, "$gameFiles"]
 
 
 def runGame(i_zipFilePath, i_zipMemberToRun = None, i_gameInfo = None):
-    print('runGame(' + pprint.pformat(i_zipFilePath) + ', ' + pprint.pformat(i_zipMemberToRun) + ', ' + pprint.pformat(i_gameInfo) + ')')
+    #print('runGame(' + pprint.pformat(i_zipFilePath) + ', ' + pprint.pformat(i_zipMemberToRun) + ', ' + pprint.pformat(i_gameInfo) + ')')
 
     basePath = gamebaseBaseDirPath + "/Games/"
     tempDirPath = "/tmp/gamebase"
@@ -45,7 +45,7 @@ def runGame(i_zipFilePath, i_zipMemberToRun = None, i_gameInfo = None):
 
 
 def runExtra(i_path, i_gameInfo = None):
-    #print('runExtra("' + i_path + '", ...)')
+    #print('runExtra(' + pprint.pformat(i_path) + ', ' + pprint.pformat(i_gameInfo) + ')')
 
     # If file is a zip
     if utils.pathHasExtension(i_path, ".ZIP"):

@@ -89,8 +89,8 @@ def runGame(i_zipFilePath, i_zipMemberToRun = None, i_gameInfo = None):
     #
     runGame2(gameDescription, utils.joinPaths(tempDirPath, [os.path.basename(romFilePath)]))
 
-def runExtra(i_name, i_path, i_gameInfo = None):
-    #print('runExtra("' + i_name + '", "' + i_path + '", ...)')
+def runExtra(i_path, i_gameInfo = None):
+    #print('runExtra(' + pprint.pformat(i_path) + ', ' + pprint.pformat(i_gameInfo) + ')')
 
     # If zip file
     if utils.pathHasExtension(i_path, ".ZIP"):
