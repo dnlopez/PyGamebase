@@ -7,10 +7,20 @@ import pprint
 import utils
 
 
+# Dan's local system
+import platform
+if platform.system() == "Windows":
+    driveBasePath = "E:"
+else:
+    driveBasePath = "/mnt/ve"
+
+
+# Frontend configuration
 config_title = "MSX"
-config_databaseFilePath = "/home/daniel/docs/code/js/gamebase/databases/MSX.sqlite"
-config_screenshotsBaseDirPath = "/mnt/ve/games/MSX/gamebase/Screenshots"
-config_extrasBaseDirPath = "/mnt/ve/games/MSX/gamebase/Extras/"
+gamebaseBaseDirPath = driveBasePath + "/games/MSX/gamebases/gamebase"
+config_databaseFilePath = gamebaseBaseDirPath + "/MSX.sqlite"
+config_screenshotsBaseDirPath = gamebaseBaseDirPath + "/Screenshots"
+config_extrasBaseDirPath = gamebaseBaseDirPath + "/Extras"
 
 
 
@@ -95,7 +105,7 @@ def runGameMenu(i_gameDescription, i_gameFilePaths, i_gemusText=""):
 def runGame(i_zipFilePath, i_zipMemberToRun = None, i_gameInfo = None):
     #print('runGame(' + pprint.pformat(i_zipFilePath) + ', ' + pprint.pformat(i_zipMemberToRun) + ', ' + pprint.pformat(i_gameInfo) + ')')
 
-    basePath = "/mnt/ve/games/MSX/gamebase/Games/"
+    basePath = gamebaseBaseDirPath + "/Games/"
     tempDirPath = "/tmp/gamebase"
 
     # If file is a zip
@@ -130,13 +140,11 @@ def runGame(i_zipFilePath, i_zipMemberToRun = None, i_gameInfo = None):
 def runExtra(i_path, i_gameInfo = None):
     #print('runExtra(' + pprint.pformat(i_path) + ', ' + pprint.pformat(i_gameInfo) + ')')
 
-    extrasBaseDirPath = "/mnt/ve/games/MSX/gamebase/Extras/"
-
     # If file is a zip
     if utils.pathHasExtension(i_path, ".ZIP"):
         # Extract it
         tempDirPath = "/tmp/gamebase"
-        zipMembers = utils.extractZip(extrasBaseDirPath + i_path, tempDirPath)
+        zipMembers = utils.extractZip(config_extrasBaseDirPath + i_path, tempDirPath)
 
         # Get game description
         gameDescription = i_gameInfo["name"]
@@ -146,7 +154,7 @@ def runExtra(i_path, i_gameInfo = None):
         #
         runGameMenu(gameDescription, utils.joinPaths(tempDirPath, zipMembers))
     else:
-        utils.openInDefaultApplication(extrasBaseDirPath + "/" + i_path)
+        utils.openInDefaultApplication(config_extrasBaseDirPath + "/" + i_path)
 
 
 msxGbScriptsLocation = "/home/daniel/docs/code/js/gamebase/databases/msx_gb_scripts"

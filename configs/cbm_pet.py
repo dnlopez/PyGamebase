@@ -7,10 +7,20 @@ import pprint
 import utils
 
 
+# Dan's local system
+import platform
+if platform.system() == "Windows":
+    driveBasePath = "E:"
+else:
+    driveBasePath = "/mnt/ve"
+
+
+# Frontend configuration
 config_title = "Commodore PET"
-config_databaseFilePath = "/home/daniel/docs/code/js/gamebase/databases/CBM_PET.sqlite"
-config_screenshotsBaseDirPath = "/mnt/ve/games/Commodore PET/Gamebase_PET/Screenshots"
-config_extrasBaseDirPath = "/mnt/ve/games/Commodore PET/Gamebase_PET/Extras/"
+gamebaseBaseDirPath = driveBasePath + "/games/Commodore PET/gamebases/Gamebase_PET"
+config_databaseFilePath = gamebaseBaseDirPath + "/CBM_PET.sqlite"
+config_screenshotsBaseDirPath = gamebaseBaseDirPath + "/Screenshots"
+config_extrasBaseDirPath = gamebaseBaseDirPath + "/Extras"
 
 
 def runGameOnMachine(i_gameDescription, i_machineName, i_gameFilePaths):
@@ -57,7 +67,7 @@ def runGameMenu(i_gameDescription, i_gameFilePaths):
 def runGame(i_zipFilePath, i_zipMemberToRun = None, i_gameInfo = None):
     #print('runGame(' + pprint.pformat(i_zipFilePath) + ', ' + pprint.pformat(i_zipMemberToRun) + ', ' + pprint.pformat(i_gameInfo) + ')')
 
-    basePath = "/mnt/ve/games/Commodore PET/Gamebase_PET/FILES/"
+    basePath = gamebaseBaseDirPath + "/FILES/"
     tempDirPath = "/tmp/gamebase"
 
     # If file is a zip

@@ -7,7 +7,7 @@ import pprint
 import utils
 
 
-#
+# Dan's local system
 import platform
 if platform.system() == "Windows":
     driveBasePath = "E:"
@@ -15,7 +15,7 @@ else:
     driveBasePath = "/mnt/ve"
 
 
-#
+# Frontend configuration
 config_title = "Sinclair ZX Spectrum (Speccymania v5)"
 gamebaseBaseDirPath = driveBasePath + "/games/Sinclair ZX Spectrum/gamebases/Speccymania v5/Sinclair ZX Spectrum"
 config_databaseFilePath = gamebaseBaseDirPath + "/SpeccyMania_v5.sqlite"

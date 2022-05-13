@@ -7,8 +7,17 @@ import pprint
 import utils
 
 
+# Dan's local system
+import platform
+if platform.system() == "Windows":
+    driveBasePath = "G:"
+else:
+    driveBasePath = "/mnt/gear"
+
+
+# Frontend configuration
 config_title = "Commodore C64 (Gamebase64 v18)"
-gamebaseBaseDirPath = "/mnt/gear/games/Commodore C64/gamebases/GameBase64_V18/GBC_v18"
+gamebaseBaseDirPath = driveBasePath + "/games/Commodore C64/gamebases/GameBase64_V18/GBC_v18"
 config_databaseFilePath = gamebaseBaseDirPath + "/GBC_v18.sqlite"
 config_screenshotsBaseDirPath = gamebaseBaseDirPath + "/Screenshots"
 config_extrasBaseDirPath = gamebaseBaseDirPath + "/Extras"

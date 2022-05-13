@@ -7,8 +7,17 @@ import pprint
 import utils
 
 
+# Dan's local system
+import platform
+if platform.system() == "Windows":
+    driveBasePath = "E:"
+else:
+    driveBasePath = "/mnt/ve"
+
+
+# Frontend configuration
 config_title = "Acorn BBC Micro and Electron (Acornmania)"
-gamebaseBaseDirPath = "/mnt/ve/games/Acorn BBC Micro/gamebases/Acornmania/GB_Acornmania"
+gamebaseBaseDirPath = driveBasePath + "/games/Acorn BBC Micro/gamebases/Acornmania/GB_Acornmania"
 config_databaseFilePath = gamebaseBaseDirPath + "/GB_Acornmania.sqlite"
 config_screenshotsBaseDirPath = gamebaseBaseDirPath + "/Screenshots"
 config_extrasBaseDirPath = gamebaseBaseDirPath + "/Extras"

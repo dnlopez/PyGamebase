@@ -1,14 +1,26 @@
 # Python std
 import os.path
+import shutil
 import pprint
 
 # This program
 import utils
 
 
-config_databaseFilePath = "/home/daniel/docs/code/js/gamebase/databases/Vic20_v03.sqlite"
-config_screenshotsBaseDirPath = "/mnt/ve/games/Commodore VIC-20/Gamebase20_v03/Screenshots"
-config_extrasBaseDirPath = "/mnt/ve/games/Commodore Plus 4/Commodore Plus4_up_dax_Poland/Commodore Plus4/Extras/"
+# Dan's local system
+import platform
+if platform.system() == "Windows":
+    driveBasePath = "E:"
+else:
+    driveBasePath = "/mnt/ve"
+
+
+# Frontend configuration
+config_title = "Commodore VIC-20 v03"
+gamebaseBaseDirPath = driveBasePath + "/games/Commodore VIC-20/gamebases/Gamebase20_v03/Vic20_v03"
+config_databaseFilePath = gamebaseBaseDirPath + "/Vic20_v03.sqlite"
+config_screenshotsBaseDirPath = gamebaseBaseDirPath + "/Screenshots"
+config_extrasBaseDirPath = gamebaseBaseDirPath + "/Extras"
 
 
 def runGameOnMachine(i_gameDescription, i_machineName, i_gameFilePaths):
@@ -58,7 +70,7 @@ def runGame2(i_gameDescription, i_gameFilePaths):
 def runGame(i_zipFilePath, i_zipMemberToRun = None, i_gameInfo = None):
     #print('runGame(' + pprint.pformat(i_zipFilePath) + ', ' + pprint.pformat(i_zipMemberToRun) + ', ' + pprint.pformat(i_gameInfo) + ')')
 
-    basePath = "/mnt/ve/games/Commodore VIC-20/Gamebase20_v03/Games/"
+    basePath = gamebaseBaseDirPath + "/Games/"
 
     if utils.pathHasExtension(i_zipFilePath, ".ZIP"):
         # Extract zip
@@ -90,13 +102,11 @@ def runGame(i_zipFilePath, i_zipMemberToRun = None, i_gameInfo = None):
 def runExtra(i_path, i_gameInfo = None):
     #print('runExtra(' + pprint.pformat(i_path) + ', ' + pprint.pformat(i_gameInfo) + ')')
 
-    extrasBaseDirPath = "/mnt/ve/games/Commodore VIC-20/Gamebase20_v03/Extras/"
-
     # If zip file
     if utils.pathHasExtension(i_path, ".ZIP"):
         # Extract zip
         tempDirPath = "/tmp/gamebase"
-        zipMembers = utils.extractZip(extrasBaseDirPath + i_path, tempDirPath)
+        zipMembers = utils.extractZip(config_extrasBaseDirPath + i_path, tempDirPath)
 
         # Get game description
         gameDescription = i_gameInfo["name"]
@@ -106,4 +116,4 @@ def runExtra(i_path, i_gameInfo = None):
         #
         runGame2(gameDescription, utils.joinPaths(tempDirPath, zipMembers))
     else:
-        utils.openInDefaultApplication(extrasBaseDirPath + "/" + i_path)
+        utils.openInDefaultApplication(config_extrasBaseDirPath + "/" + i_path)

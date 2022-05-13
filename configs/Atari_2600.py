@@ -7,8 +7,17 @@ import pprint
 import utils
 
 
+# Dan's local system
+import platform
+if platform.system() == "Windows":
+    driveBasePath = "E:"
+else:
+    driveBasePath = "/mnt/ve"
+
+
+# Frontend configuration
 config_title = "Atari 2600"
-gamebaseBaseDirPath = "/mnt/ve/games/Atari 2600/gamebases/Atari 2600"
+gamebaseBaseDirPath = driveBasePath + "/games/Atari 2600/gamebases/Atari 2600"
 config_databaseFilePath = gamebaseBaseDirPath + "/Atari_2600.sqlite"
 config_screenshotsBaseDirPath = gamebaseBaseDirPath + "/Screenshots"
 config_extrasBaseDirPath = gamebaseBaseDirPath + "/Extras"

@@ -1,15 +1,26 @@
 # Python std
 import os.path
+import shutil
 import pprint
 
 # This program
 import utils
 
 
-config_databaseFilePath = "/home/daniel/docs/code/js/gamebase/databases/Amstrad CPC.sqlite"
-config_screenshotsBaseDirPath = "/mnt/ve/games/Amstrad CPC/[CPC]AmstradMania_v7_upload_by_DAX_0714/Amstrad CPC/Screenshots"
-config_extrasBaseDirPath = "/mnt/ve/games/Amstrad CPC/[CPC]AmstradMania_v7_upload_by_DAX_0714/Amstrad CPC/Extras"
+# Dan's local system
+import platform
+if platform.system() == "Windows":
+    driveBasePath = "E:"
+else:
+    driveBasePath = "/mnt/ve"
 
+
+# Frontend configuration
+config_title = "Amstrad CPC v7"
+gamebaseBaseDirPath = driveBasePath + "/games/Amstrad CPC/gamebases/[CPC]AmstradMania_v7_upload_by_DAX_0714/Amstrad CPC"
+config_databaseFilePath = gamebaseBaseDirPath + "/Amstrad CPC_v7.sqlite"
+config_screenshotsBaseDirPath = gamebaseBaseDirPath + "/Screenshots"
+config_extrasBaseDirPath = gamebaseBaseDirPath + "/Extras"
 
 
 def runGameOnMachine(i_gameDescription, i_machineName, i_gameFilePaths):
@@ -109,7 +120,8 @@ def runGame2(i_gameDescription, i_gameFilePaths):
 
         # According to MAME, cpc464p requires a cartridge
         #executableAndArgs += ["-cart", "sysuk"]
-        executableAndArgs += ["-cart", "/mnt/ve/games/Amstrad CPC/[CPC]AmstradMania_v7_upload_by_DAX_0714/Amstrad CPC/Emulators/WinAPE/ROM/CPC_PLUS.CPR"]
+        executableAndArgs += ["-cart", gamebaseBaseDirPath + "/Emulators/WinAPE/ROM/CPC_PLUS.CPR"]
+
         #
         executableAndArgs.append("-floppydisk1")
         executableAndArgs.append(i_gameFilePaths[0])
@@ -180,7 +192,7 @@ def runGame(i_zipFilePath, i_zipMemberToRun = None, i_gameInfo = None):
     #print('runGame(' + pprint.pformat(i_zipFilePath) + ', ' + pprint.pformat(i_zipMemberToRun) + ', ' + pprint.pformat(i_gameInfo) + ')')
 
     # Extract zip
-    basePath = "/mnt/ve/games/Amstrad CPC/[CPC]AmstradMania_v7_upload_by_DAX_0714/Amstrad CPC/Games/"
+    basePath = gamebaseBaseDirPath + "/Games/"
     tempDirPath = "/tmp/gamebase"
     zipMembers = utils.extractZip(basePath + i_zipFilePath, tempDirPath)
 
@@ -204,13 +216,11 @@ def runGame(i_zipFilePath, i_zipMemberToRun = None, i_gameInfo = None):
 def runExtra(i_path, i_gameInfo = None):
     #print('runExtra(' + pprint.pformat(i_path) + ', ' + pprint.pformat(i_gameInfo) + ')')
 
-    extrasBaseDirPath = "/mnt/ve/games/Sinclair ZX Spectrum/Speccymania v4/zx_up_dax_PL/ZX Spectrum/Extras/"
-
     # If zip file
     if utils.pathHasExtension(i_path, ".ZIP"):
         # Extract zip
         tempDirPath = "/tmp/gamebase"
-        zipMembers = utils.extractZip(extrasBaseDirPath + i_path, tempDirPath)
+        zipMembers = utils.extractZip(config_extrasBaseDirPath + i_path, tempDirPath)
 
         # Get game description
         gameDescription = i_gameInfo["name"]
@@ -220,4 +230,4 @@ def runExtra(i_path, i_gameInfo = None):
         #
         runGame2(gameDescription, utils.joinPaths(tempDirPath, zipMembers))
     else:
-        utils.openInDefaultApplication(extrasBaseDirPath + "/" + i_path)
+        utils.openInDefaultApplication(config_extrasBaseDirPath + "/" + i_path)

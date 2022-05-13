@@ -1,15 +1,26 @@
 # Python std
 import os.path
+import shutil
 import pprint
 
 # This program
 import utils
 
 
+# Dan's local system
+import platform
+if platform.system() == "Windows":
+    driveBasePath = "E:"
+else:
+    driveBasePath = "/mnt/ve"
+
+
+# Frontend configuration
 config_title = "Atari ST"
-config_databaseFilePath = "/mnt/ve/games/Atari ST/Gamebase ST v4/Atari ST/Atari ST.sqlite"
-config_screenshotsBaseDirPath = "/mnt/ve/games/Atari ST/Gamebase ST v4/Atari ST/Screenshots"
-config_extrasBaseDirPath = "/mnt/ve/games/Atari ST/Gamebase ST v4/Atari ST/Extras"
+gamebaseBaseDirPath = driveBasePath + "/games/Atari ST/gamebases/Gamebase ST v4/Atari ST"
+config_databaseFilePath = gamebaseBaseDirPath + "/Atari ST.sqlite"
+config_screenshotsBaseDirPath = gamebaseBaseDirPath + "/Screenshots"
+config_extrasBaseDirPath = gamebaseBaseDirPath + "/Extras"
 
 
 def runGame2(i_gameDescription, i_gameFilePaths):
@@ -35,7 +46,7 @@ def runGame(i_zipFilePath, i_zipMemberToRun = None, i_gameInfo = None):
     #print('runGame(' + pprint.pformat(i_zipFilePath) + ', ' + pprint.pformat(i_zipMemberToRun) + ', ' + pprint.pformat(i_gameInfo) + ')')
 
     # Extract zip
-    basePath = "/mnt/ve/games/Atari ST/Gamebase ST v4/Atari ST/Games/"
+    basePath = gamebaseBaseDirPath + "/Games/"
     tempDirPath = "/tmp/gamebase"
     zipMembers = utils.extractZip(basePath + i_zipFilePath, tempDirPath)
 

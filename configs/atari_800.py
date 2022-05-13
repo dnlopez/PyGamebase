@@ -1,14 +1,26 @@
 # Python std
 import os.path
+import shutil
 import pprint
 
 # This program
 import utils
 
 
-config_databaseFilePath = "/home/daniel/docs/code/js/gamebase/databases/Atari 800XL.sqlite"
-config_screenshotsBaseDirPath = "/mnt/gear/games/Atari 800/Gamebase Atari 800XL (v9 DAX)/Atari 800XL/screenshots"
-config_extrasBaseDirPath = "/mnt/gear/games/Atari 800/Gamebase Atari 800XL (v9 DAX)/Atari 800XL/Extras/"
+# Dan's local system
+import platform
+if platform.system() == "Windows":
+    driveBasePath = "G:"
+else:
+    driveBasePath = "/mnt/gear"
+
+
+# Frontend configuration
+config_title = "Atari 800 v12"
+gamebaseBaseDirPath = driveBasePath + "/games/Atari 800/gamebases/Atari 800 v12"
+config_databaseFilePath = gamebaseBaseDirPath + "/Atari 800 v12.sqlite"
+config_screenshotsBaseDirPath = gamebaseBaseDirPath + "/screenshots"
+config_extrasBaseDirPath = gamebaseBaseDirPath + "/Extras"
 
 
 def runGameOnMachine(i_gameDescription, i_machineName, i_gameFilePaths):
@@ -83,7 +95,7 @@ def runGame(i_zipFilePath, i_zipMemberToRun = None, i_gameInfo = None):
     #print('runGame(' + pprint.pformat(i_zipFilePath) + ', ' + pprint.pformat(i_zipMemberToRun) + ', ' + pprint.pformat(i_gameInfo) + ')')
 
     # Extract zip
-    basePath = "/mnt/gear/games/Atari 800/Gamebase Atari 800XL (v9 DAX)/Atari 800XL/Games/"
+    basePath = gamebaseBaseDirPath + "/Games/"
     tempDirPath = "/tmp/gamebase"
     zipMembers = utils.extractZip(basePath + i_zipFilePath, tempDirPath)
 
@@ -107,13 +119,11 @@ def runGame(i_zipFilePath, i_zipMemberToRun = None, i_gameInfo = None):
 def runExtra(i_path, i_gameInfo = None):
     #print('runExtra(' + pprint.pformat(i_path) + ', ' + pprint.pformat(i_gameInfo) + ')')
 
-    extrasBaseDirPath = "/mnt/gear/games/Atari 800/Gamebase Atari 800XL (v9 DAX)/Atari 800XL/Extras/"
-
     # If zip file
     if utils.pathHasExtension(i_path, ".ZIP"):
         # Extract zip
         tempDirPath = "/tmp/gamebase"
-        zipMembers = utils.extractZip(extrasBaseDirPath + i_path, tempDirPath)
+        zipMembers = utils.extractZip(config_extrasBaseDirPath + i_path, tempDirPath)
 
         # Get game description
         gameDescription = i_gameInfo["name"]
@@ -123,7 +133,7 @@ def runExtra(i_path, i_gameInfo = None):
         #
         runGame2(gameDescription, utils.joinPaths(tempDirPath, zipMembers))
     else:
-        utils.openInDefaultApplication(extrasBaseDirPath + "/" + i_path)
+        utils.openInDefaultApplication(config_extrasBaseDirPath + "/" + i_path)
 
 
 """

@@ -7,10 +7,20 @@ import pprint
 import utils
 
 
+# Dan's local system
+import platform
+if platform.system() == "Windows":
+    driveBasePath = "E:"
+else:
+    driveBasePath = "/mnt/ve"
+
+
+# Frontend configuration
 config_title = "Tomy Tutor"
-config_databaseFilePath = "/mnt/ve/games/Tomy Tutor/gamebase/Tomy Tutor.sqlite"
-config_screenshotsBaseDirPath = "/mnt/ve/games/Tomy Tutor/gamebase/Screenshots"
-config_extrasBaseDirPath = "/mnt/ve/games/Tomy Tutor/gamebase/Extras"
+gamebaseBaseDirPath = driveBasePath + "/games/Tomy Tutor/gamebases/Tomy Tutor"
+config_databaseFilePath = gamebaseBaseDirPath + "/Tomy Tutor.sqlite"
+config_screenshotsBaseDirPath = gamebaseBaseDirPath + "/Screenshots"
+config_extrasBaseDirPath = gamebaseBaseDirPath + "/Extras"
 
 
 def runGameWithRezmame(i_gameDescription, i_machineName, i_gameFilePaths):
@@ -70,7 +80,7 @@ def runGameMenu(i_gameDescription, i_gameFilePaths):
 def runGame(i_zipFilePath, i_zipMemberToRun = None, i_gameInfo = None):
     #print('runGame(' + pprint.pformat(i_zipFilePath) + ', ' + pprint.pformat(i_zipMemberToRun) + ', ' + pprint.pformat(i_gameInfo) + ')')
 
-    basePath = "/mnt/ve/games/Tomy Tutor/gamebase/Games/"
+    basePath = gamebaseBaseDirPath + "/Games/"
     tempDirPath = "/tmp/gamebase"
 
     # If file is a zip

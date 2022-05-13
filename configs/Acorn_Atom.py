@@ -7,8 +7,17 @@ import pprint
 import utils
 
 
+# Dan's local system
+import platform
+if platform.system() == "Windows":
+    driveBasePath = "E:"
+else:
+    driveBasePath = "/mnt/ve"
+
+
+# Frontend configuration
 config_title = "Acorn Atom"
-gamebaseBaseDirPath = "/mnt/ve/games/Acorn Atom/gamebases/Acorn Atom"
+gamebaseBaseDirPath = driveBasePath + "/games/Acorn Atom/gamebases/Acorn Atom"
 config_databaseFilePath = gamebaseBaseDirPath + "/Acorn Atom.sqlite"
 config_screenshotsBaseDirPath = gamebaseBaseDirPath + "/Screenshots"
 config_extrasBaseDirPath = gamebaseBaseDirPath + "/Extras"
