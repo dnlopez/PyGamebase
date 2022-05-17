@@ -1263,7 +1263,8 @@ ORDER BY
             #var cell = document.createElement("div");
 
             html += '<a href="extra:///' + imageRow[extrasColumnNames.index("Path")] + '" style="display: inline-block; text-align: center;">'
-            html += '<img src="file://' + gamebase.config_extrasBaseDirPath + "/" + imageRow[extrasColumnNames.index("Path")] + '" style="height: 300px;">'
+            if hasattr(gamebase, "config_extrasBaseDirPath"):
+                html += '<img src="file://' + gamebase.config_extrasBaseDirPath + "/" + imageRow[extrasColumnNames.index("Path")] + '" style="height: 300px;">'
             #html += '<img src="https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_92x30dp.png" style="height: 300px;">'
             html += '<div>' + imageRow[extrasColumnNames.index("Name")] + '</div>'
             html += '</a>'
