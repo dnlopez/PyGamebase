@@ -320,7 +320,7 @@ FROM
 
     for column in g_columns:
         if column["filterable"]:
-            value = column["filterControl"].text()
+            value = column["headerFilter"].text()
             value = value.strip()
             if value != "":
                 # TODO: escape '%', "'" etc in value
@@ -521,7 +521,57 @@ class Header3(QWidget):
                 self.setMouseTracking(True)
                 self.installEventFilter(self.parent())
 
-        # Create widgets (HeaderButton and QLineEdit objects) for columns
+        class HeaderFilter(QWidget):
+            # Emitted after the text is changed
+            textChange = Signal()
+
+            def __init__(self, i_parent=None):
+                QWidget.__init__(self, i_parent)
+
+                self.layout = QHBoxLayout(self)
+                self.setLayout(self.layout)
+                self.layout.setSpacing(0)
+                self.layout.setContentsMargins(0, 0, 0, 0)
+
+                self.lineEdit = QLineEdit(self)
+                self.lineEdit.setFixedHeight(30)
+                self.layout.addWidget(self.lineEdit)
+                self.layout.setStretch(0, 1)
+                self.lineEdit.editingFinished.connect(self.lineEdit_onEditingFinished)
+
+                self.clearButton = QPushButton("", self)
+                self.clearButton.setIcon(self.style().standardIcon(QStyle.SP_DialogCloseButton))
+                self.clearButton.setStyleSheet("QPushButton { border: none; }");
+                #self.clearButton.setFlat(True)
+                self.clearButton.setFixedHeight(30)
+                self.clearButton.setFixedWidth(30)
+                self.clearButton.setVisible(False)
+                self.layout.addWidget(self.clearButton)
+                self.layout.setStretch(1, 0)
+                self.clearButton.clicked.connect(self.clearButton_onClicked)
+
+                self.lineEdit.textEdited.connect(self.lineEdit_onTextEdited)
+
+            def lineEdit_onEditingFinished(self):
+                self.textChange.emit()
+
+            def lineEdit_onTextEdited(self, i_text):
+                # Hide or show clear button depending on whether there's text
+                self.clearButton.setVisible(i_text != "")
+
+            def clearButton_onClicked(self):
+                self.lineEdit.setText("")
+                self.clearButton.setVisible(False)
+                self.textChange.emit()
+
+            def text(self):
+                """
+                Returns:
+                 (str)
+                """
+                return self.lineEdit.text()
+
+        # Create widgets (HeaderButton and HeaderFilter objects) for columns
         global g_columns
         for columnNo, column in enumerate(g_columns):
             if column["filterable"]:
@@ -532,9 +582,9 @@ class Header3(QWidget):
 
             if column["filterable"]:
                 # Create lineedit
-                column["filterControl"] = QLineEdit(self)
+                column["headerFilter"] = HeaderFilter(self)
                 # Set its basic properties (apart from position)
-                column["filterControl"].editingFinished.connect(functools.partial(self.lineEdit_onEditingFinished, columnNo))
+                column["headerFilter"].textChange.connect(functools.partial(self.lineEdit_onTextChange, columnNo))
 
         # Initially set all widget positions
         self.repositionHeaderButtons()
@@ -573,7 +623,7 @@ class Header3(QWidget):
         queryDb()
         tableView.requery()
 
-    def lineEdit_onEditingFinished(self, i_columnNo):
+    def lineEdit_onTextChange(self, i_columnNo):
         self.filterChange.emit(i_columnNo)
 
     # + Resizing columns by mouse dragging {{{
@@ -675,12 +725,12 @@ class Header3(QWidget):
         #for columnNo, column in enumerate(g_columns):
         #    if column["filterable"]:
         #        button = column["headerButton"]
-        #        column["filterControl"].setGeometry(button.geometry().left(), button.geometry().bottom(), button.width(), 30)
+        #        column["headerFilter"].setGeometry(button.geometry().left(), button.geometry().bottom(), button.width(), 30)
         x = 0
         y = 30
         for columnNo, column in enumerate(g_columns):
             if column["filterable"]:
-                column["filterControl"].setGeometry(x, y, column["width"], 30)
+                column["headerFilter"].setGeometry(x, y, column["width"], 30)
             x += column["width"]
 
 
@@ -1151,9 +1201,9 @@ def detailPane_populate(i_rowNo):
         #        if (column.filterable)
         #        {
         #            if (column.id == "name")
-        #                column.filterControl.setValue(i_row.CloneOfName);
+        #                column.headerFilter.setValue(i_row.CloneOfName);
         #            else
-        #                column.filterControl.setValue("");
+        #                column.headerFilter.setValue("");
         #        }
         #    }
         #
