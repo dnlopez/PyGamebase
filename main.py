@@ -1124,7 +1124,7 @@ def detailPane_populate(i_rowNo):
 
     html = ""
 
-    html += '<link rel="stylesheet" type="text/css" href="file:///home/daniel/docs/code/python/gamebase/detail_pane.css">'
+    html += '<link rel="stylesheet" type="text/css" href="file://' + os.path.dirname(os.path.realpath(__file__)).replace("\\", "/") + '/detail_pane.css">'
 
     # Insert screenshots after the first one
     supplementaryScreenshotRelativePaths = dbRow_getSupplementaryScreenshotPaths(row)
