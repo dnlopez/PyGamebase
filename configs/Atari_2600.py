@@ -52,7 +52,7 @@ def runGameOnMachine(i_gameDescription, i_machineName, i_gameFilePaths):
         executableAndArgs += ["--game-description", i_gameDescription]
 
     # Execute
-    utils.shellExecList(executableAndArgs)
+    utils.shellStartTask(executableAndArgs)
 
 def runGame2(i_gameDescription, i_gameFilePaths):
     """

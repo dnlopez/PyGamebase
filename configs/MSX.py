@@ -65,7 +65,7 @@ def runGameOnMachine(i_gameDescription, i_machineName, i_gameFilePaths, i_gemusT
 
     # Execute
     print(executableAndArgs)
-    utils.shellExecList(executableAndArgs)
+    utils.shellStartTask(executableAndArgs)
 
 """
 function runGame_gemus(i_gameFilePaths, i_gemusText)

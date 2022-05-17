@@ -62,7 +62,7 @@ def runGameWithRezmame(i_gameDescription, i_machineName, i_gameFilePaths):
 
     # Execute
     print(executableAndArgs)
-    utils.shellExecList(executableAndArgs)
+    utils.shellStartTask(executableAndArgs)
 
 def runGameMenu(i_gameDescription, i_gameFilePaths):
     """
@@ -94,11 +94,11 @@ def runGameMenu(i_gameDescription, i_gameFilePaths):
 
     elif method == "fuse (Spectrum 48K)":
         executableAndArgs = ["fuse", "--machine", "48"] + i_gameFilePaths
-        utils.shellExecList(executableAndArgs)
+        utils.shellStartTask(executableAndArgs)
 
     elif method == "fuse (Spectrum 128K)":
         executableAndArgs = ["fuse", "--machine", "128"] + i_gameFilePaths
-        utils.shellExecList(executableAndArgs)
+        utils.shellStartTask(executableAndArgs)
 
     elif method == "rezep128emu_zx (Spectrum 48K)":
         executableAndArgs = ["rezep128emu_zx.py"]
@@ -111,7 +111,7 @@ def runGameMenu(i_gameDescription, i_gameFilePaths):
         if i_gameDescription != None:
             executableAndArgs += ["--game-description", i_gameDescription]
 
-        utils.shellExecList(executableAndArgs)
+        utils.shellStartTask(executableAndArgs)
 
     elif method == "rezep128emu_zx (Spectrum 128K)":
         executableAndArgs = ["rezep128emu_zx.py"]
@@ -124,7 +124,7 @@ def runGameMenu(i_gameDescription, i_gameFilePaths):
         if i_gameDescription != None:
             executableAndArgs += ["--game-description", i_gameDescription]
 
-        utils.shellExecList(executableAndArgs)
+        utils.shellStartTask(executableAndArgs)
 
     #elif method == "ep128emu (Spectrum 48K)":
     #    # assuming a single file
@@ -139,7 +139,7 @@ def runGameMenu(i_gameDescription, i_gameFilePaths):
     #        executableAndArgs.append("tape.imageFile=" + i_gameFilePaths[0])
     #
     #    print(executableAndArgs)
-    #    utils.shellExecList(executableAndArgs)
+    #    utils.shellStartTask(executableAndArgs)
     #    #dan.process.shellStartString(" ".join(executableAndArgs))
     #
     #elif method == "ep128emu (Spectrum 128K)":
@@ -155,7 +155,7 @@ def runGameMenu(i_gameDescription, i_gameFilePaths):
     #    else:
     #        executableAndArgs.append("tape.imageFile=" + i_gameFilePaths[0])
     #
-    #    utils.shellExecList(executableAndArgs)
+    #    utils.shellStartTask(executableAndArgs)
 
 def runGame(i_zipFilePath, i_zipMemberToRun = None, i_gameInfo = None):
     #print('runGame(' + pprint.pformat(i_zipFilePath) + ', ' + pprint.pformat(i_zipMemberToRun) + ', ' + pprint.pformat(i_gameInfo) + ')')

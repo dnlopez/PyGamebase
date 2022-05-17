@@ -60,7 +60,7 @@ def runGameOnMachine(i_gameDescription, i_machineName, i_gameFilePaths):
 
     # Execute
     print(executableAndArgs)
-    utils.shellExecList(executableAndArgs)
+    utils.shellStartTask(executableAndArgs)
 
 def runGameMenu(i_gameDescription, i_gameFilePaths):
     """

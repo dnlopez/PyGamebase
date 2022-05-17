@@ -4,6 +4,7 @@ import os
 import sys
 import platform
 import subprocess
+import shutil
 
 
 
@@ -47,7 +48,7 @@ def openInDefaultApplication(i_filePaths):
         executableAndArgs.extend(i_filePaths)
 
     # Execute
-    shellExecList(executableAndArgs)
+    shellStartProcess(executableAndArgs)
 
 
 
@@ -171,85 +172,230 @@ def extractZip(i_zipFilePath, i_destDirPath):
 
 # + }}}
 
-# + Running {{{
+# + Quoting arguments for different shells {{{
 
-# Python std
 import shlex
 if hasattr(shlex, "quote"):
-    python_quote = shlex.quote  # since Python 3.3
+    quoteArgumentForBash = shlex.quote  # since Python 3.3
 else:
     import pipes
-    python_quote = pipes.quote  # before Python 3.3
+    quoteArgumentForBash = pipes.quote  # before Python 3.3
 
-def shellExecList(i_executableAndArguments):
+def quoteArgumentForWindowsCmd(i_arg):
+    return i_arg.replace("^", "^^") \
+                .replace("(", "^(") \
+                .replace(")", "^)") \
+                .replace("%", "^%") \
+                .replace("!", "^!") \
+                .replace('"', '^"') \
+                .replace('<', "^<") \
+                .replace('>', "^>") \
+                .replace('&', "^&") \
+                .replace(" ", '" "')
+
+import platform
+if platform.system() == "Windows":
+    quoteArgumentForNativeShell = quoteArgumentForWindowsCmd
+else:
+    quoteArgumentForNativeShell = quoteArgumentForBash
+
+# + }}}
+
+# + Running {{{
+
+# For processes that you don't need to see logged in the GUI's "Subprocess output" window
+# (eg. simply unarchiving or copying some files - though Python does also have internal libraries for those things):
+#
+#  startProcess() (with wrappers: directStartProcess(), shellStartProcess())
+#   Start a subprocess, not waiting for it to finish.
+#  runProcess() (with wrappers: directRunProcess(), shellRunProcess())
+#   Start a subprocess, wait for it to finish, and receive back its output and exit code.
+#
+# For processes whose output you would like to see logged in the GUI's "Subprocess output" window
+# (eg. running an emulator):
+#
+#  startTask() (with wrappers: directStartTask(), shellStartTask())
+#   Start a subprocess, not waiting for it to finish.
+
+def startProcess(i_viaShell, i_executableAndArguments):
     """
-    [like dan.process.shellStartList()]
-
-    Start a program in a shell,
-    specifying the executable name and arguments as a string.
+    Start a subprocess.
 
     Params:
+     i_viaShell:
+      (bool)
+      False:
+       Run directly, ie. not via a shell.
+       [According to Python subprocess.Popen(), the executable might still be searched for in the $PATH]
+      True:
+       Run via the native shell, eg. bash on POSIX, or cmd on Windows.
      i_executableAndArguments:
-      (list of str)
-      The first element is the executable name, and the remaining elements are the executable arguments.
-      Any sublists are flattened to their elements before the above interpretation takes place.
-      If a name or argument contains any special shell characters like spaces, quotes, backslashes or parentheses, those will be quoted before reaching the shell.
+      Either (list of str)
+       The first element is the executable name, and the remaining elements are the executable arguments.
+       Any sublists will be flattened to their elements before the above interpretation takes place.
+       If individual elements contain any spaces, quotes or any such shell-sensitive characters,
+       those characters will be (if i_viaShell is False) passed unmodified to the process, or (if i_viaShell is True) escaped, as appropriate.
+       If you want to use shell features (with i_viaShell being True) like environment variables ($VARNAME) or redirection (>FILENAME) you must pass a string instead.
+      or (str)
+       Executable name and arguments, seperated by whitespace.
+       Any spaces (or quotes or backslashes) that belong to a name or argument must be either escaped (by preceding with a backslash) or enclosed in quotes.
+       (If i_viaShell == True, this argument type is the most direct and the splitting is done by the shell itself;
+       else if i_viaShell == False, the Python function shlex.split() will be called to split the arguments to a list for subprocess.Popen().)
 
     Returns:
      (subprocess.Popen)
-     The Popen object for the started process.
     """
-    # Flatten sublists
-    i_executableAndArguments = flattenList(i_executableAndArguments)
+    #print("startProcess(" + str(i_viaShell) + ", " + str(i_executableAndArguments))
 
-    # Quote arguments if necessary
-    i_executableAndArguments = [python_quote(arg)  for arg in i_executableAndArguments]
+    # If running directly (not via a shell),
+    # Python's subprocess.Popen() works best with a list,
+    # so do our own conversions to that
+    if not i_viaShell:
+        # If we have a string then split it with shlex.split()
+        # else if we have a list then flatten it
+        if isinstance(i_executableAndArguments, str):
+            i_executableAndArguments = shlex.split(i_executableAndArguments)
+        else:
+            i_executableAndArguments = flattenList(i_executableAndArguments)
+    # Else if running via a shell,
+    # Python's subprocess.Popen() works best with a string,
+    # so do our own conversions to that
+    else:
+        # If we have a string then nothing to do,
+        # else if we have a list then quote and join the arguments
+        if not isinstance(i_executableAndArguments, str):
+            i_executableAndArguments = " ".join([quoteArgumentForNativeShell(arg)  for arg in i_executableAndArguments])
 
-    # Convert to string
-    i_executableAndArguments = " ".join(i_executableAndArguments)
-
-    # [Use "...String()" function]
-    # Start program
+    # Start program with stderr merged into stdout and stdout readable through a pipe
     import subprocess
     popen = subprocess.Popen(i_executableAndArguments,
-                             shell=True,
-                             stdout=sys.stdout.fileno(), stderr=sys.stderr.fileno())
+                             shell=i_viaShell,
+                             stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
     # Return Popen object
     return popen
 
-def directExecList(i_executableAndArguments):
+def directStartProcess(i_executableAndArguments):
+    startProcess(False, i_executableAndArguments)
+
+def shellStartProcess(i_executableAndArguments):
+    startProcess(True, i_executableAndArguments)
+
+def runProcess(i_viaShell, i_executableAndArguments):
     """
-    [like dan.process.directStartList()]
-
-    Start a program directly,
-    specifying the executable name and arguments as a list.
-
-    Params:
-     i_executableAndArguments:
-      (list of str)
-      The first element is the executable name, and the remaining elements are the executable arguments.
-      Any sublists are flattened to their elements before the above interpretation takes place.
+    Start a subprocess and wait for it to finish,
+    returning its exit code and output.
 
     Returns:
-     (subprocess.Popen)
-     The Popen object for the started process.
-
-    Platform specifics:
-     On Unix, os.execvp()-like behavior is used to start the program, so the system PATH will be used.
-     On Windows, CreateProcess() is used to start the program.
+     (tuple)
+     Tuple has elements:
+      0:
+       (int)
+       The program's exit code.
+      1:
+       (Python 2: str, Python 3: bytes)
+       What the program wrote to stdout and stderr.
     """
-    # Flatten sublists
-    i_executableAndArguments = flattenList(i_executableAndArguments)
+    # Start process
+    popen = startProcess(i_viaShell, i_executableAndArguments)
 
-    # Start program
-    import subprocess
-    popen = subprocess.Popen(i_executableAndArguments,
-                             shell=False,
-                             stdout=sys.stdout.fileno(), stderr=sys.stderr.fileno())
+    # Wait for finish
+    stdOutput, errOutput = popen.communicate()
 
-    # Return Popen object
-    return popen
+    # Return exit code and output
+    return (popen.returncode, stdOutput)
+
+def directRunProcess(i_executableAndArguments):
+    runProcess(False, i_executableAndArguments)
+
+def shellRunProcess(i_executableAndArguments):
+    runProcess(True, i_executableAndArguments)
+
+
+# Python std
+import threading
+
+class Task():
+    """
+    Class to run a subprocess and asynchronously collect its output,
+    to show in the frontend's "Subprocess output" window.
+
+    After construction, see the following properties:
+     executableAndArgs:
+      (str)
+      The command that was run (essentially a copy of the constructor argument i_executableAndArguments).
+     popen:
+      Either (None)
+       The process failed to start
+      or (subprocess.Popen)
+       The process' Popen object.
+       This could be used to get the running process ID (popen.pid).
+     output:
+      (str)
+      The output (stdout and stderr combined) of the process so far.
+     returncode:
+      Either (None)
+       The subprocess has not exited yet
+      or (int)
+       The subprocess exited with this exit code.
+    """
+    stdbufPath = shutil.which("stdbuf")
+
+    def __init__(self, i_viaShell, i_executableAndArguments):
+        # Initialize output variables
+        self.executableAndArgs = None
+        self.popen = None
+        self.output = ""
+        self.returncode = None
+
+        # Start a subthread to start program and collect output
+        self.thread = threading.Thread(target=self.thread_main, args=(i_viaShell, i_executableAndArguments))
+        self.thread.start()
+
+    def thread_main(self, i_viaShell, i_executableAndArguments):
+        # If possible, turn off buffering in the program's standard streams
+        # so stdout and stderr are returned in the correct order
+        if Task.stdbufPath != None:
+            if isinstance(i_executableAndArguments, str):
+                i_executableAndArguments = Task.stdbufPath + " -i0 -o0 -e0 " + i_executableAndArguments
+            else:
+                i_executableAndArguments = [Task.stdbufPath, "-i0", "-o0", "-e0"] + i_executableAndArguments
+
+        # Save actual command line that is about to be run
+        self.executableAndArgs = i_executableAndArguments
+
+        # Start program
+        try:
+            self.popen = startProcess(i_viaShell, i_executableAndArguments)
+        except Exception as e:
+            import traceback
+            print(traceback.format_exc())
+            self.output = "\n".join(traceback.format_exception_only(e))
+            return
+
+        # Read output until streams close
+        for line in iter(self.popen.stdout.readline, b''):
+            line = line.decode("utf-8")
+            # Save the output
+            self.output += line
+            # Also send output to stdout as normal
+            sys.stdout.write(line)
+
+        # Wait for program to exit (usually immediately after streams closed above) and save exit code
+        self.returncode = self.popen.wait()
+
+        print("Process exited with code " + str(self.returncode))
+
+tasks = []
+
+def startTask(i_viaShell, i_executableAndArguments):
+    tasks.append(Task(i_viaShell, i_executableAndArguments))
+
+def directStartTask(i_executableAndArguments):
+    startTask(False, i_executableAndArguments)
+
+def shellStartTask(i_executableAndArguments):
+    startTask(True, i_executableAndArguments)
 
 # + }}}
 

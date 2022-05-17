@@ -50,7 +50,7 @@ def runGameOnMachine(i_gameDescription, i_machineName, i_gameFilePaths):
 
     print(executableAndArgs)
     # Execute
-    utils.shellExecList(executableAndArgs)
+    utils.shellStartTask(executableAndArgs)
 
 
 def runGame2(i_gameDescription, i_gameFilePaths):

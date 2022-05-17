@@ -16,7 +16,7 @@ from PySide2.QtWebEngineWidgets import *
 
 # This program
 import frontend
-
+import utils
 
 
 # + Parse command line {{{
@@ -1355,8 +1355,67 @@ openDb()
 queryDb()
 tableView.requery()
 
+# + Subprocess output {{{
 
+class Log(QPlainTextEdit):
+    def __init__(self, i_parent=None):
+        QPlainTextEdit.__init__(self, i_parent)
 
+        self.setWindowTitle("Subprocess Output")
+        self.setGeometry(50, 75, 600, 400)
+        #self.setWordWrapMode(QtGui.QTextOption.WrapAnywhere)
+        #self.setUndoRedoEnabled(False)
+        font = QFont("monospace")
+        font.setStyleHint(QFont.Monospace)
+        self.setFont(font)
+        #self.document().setDefaultFont(QFont("monospace", 10, QFont.Normal))
+
+        self.refresh_timer = QTimer(self)
+        self.refresh_timer.setInterval(500)
+        self.refresh_timer.timeout.connect(self.updateText)
+
+        self.updateText()
+
+    def setVisible(self, i_visible):
+        QPlainTextEdit.setVisible(self, i_visible)
+        if i_visible:
+            self.refresh_timer.start()
+        else:
+            self.refresh_timer.stop()
+
+    def updateText(self):
+        if len(utils.tasks) > 0:
+            # For AsyncSubprocess
+            #print(utils.tasks[-1].getState())
+            #mergedOutput = utils.tasks[-1].getMergedOutput()
+            #subprocessOutput_log.setPlainText(mergedOutput.decode("utf-8"))
+
+            task = utils.tasks[-1]
+
+            text = "Run: " + str(task.executableAndArgs)
+            if task.popen != None:
+                text += "\nPID: " + str(task.popen.pid)
+            text += "\n---\n"
+            text += task.output
+            if task.returncode != None:
+                text += "\n---\nProcess exited with code " + str(task.returncode)
+
+            self.setPlainText(text)
+        else:
+            self.setPlainText("")
+
+subprocessOutput_log = None
+def menu_file_showSubprocessOutput_onTriggered(i_checked):
+    global subprocessOutput_log
+    if subprocessOutput_log == None:
+        subprocessOutput_log = Log()
+
+    subprocessOutput_log.show()
+
+action = fileMenu_action.addAction("Show subprocess &output")
+action.triggered.connect(menu_file_showSubprocessOutput_onTriggered)
+
+# + }}}
 
 # Enter Qt application main loop
 exitCode = application.exec_()

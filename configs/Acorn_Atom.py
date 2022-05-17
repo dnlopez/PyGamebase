@@ -50,7 +50,7 @@ def runGame(i_zipFilePath, i_zipMemberToRun = None, i_gameInfo = None):
     #
     command = emulatorCommand[:]
     command.extend(utils.joinPaths(tempDirPath, gameFiles))
-    utils.shellExecList(command)
+    utils.shellStartTask(command)
 
 
 def runExtra(i_path, i_gameInfo = None):

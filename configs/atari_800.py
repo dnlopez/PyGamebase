@@ -67,7 +67,7 @@ def runGameOnMachine(i_gameDescription, i_machineName, i_gameFilePaths):
         executableAndArgs += i_gameFilePaths
 
     # Execute
-    utils.shellExecList(executableAndArgs)
+    utils.shellStartTask(executableAndArgs)
 
 def runGame2(i_gameDescription, i_gameFilePaths):
     """

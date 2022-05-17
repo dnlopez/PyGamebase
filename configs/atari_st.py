@@ -40,7 +40,7 @@ def runGame2(i_gameDescription, i_gameFilePaths):
     executableAndArgs += ["--", i_gameFilePaths[0]]
 
     # Execute
-    utils.shellExecList(executableAndArgs)
+    utils.shellStartTask(executableAndArgs)
 
 def runGame(i_zipFilePath, i_zipMemberToRun = None, i_gameInfo = None):
     #print('runGame(' + pprint.pformat(i_zipFilePath) + ', ' + pprint.pformat(i_zipMemberToRun) + ', ' + pprint.pformat(i_gameInfo) + ')')

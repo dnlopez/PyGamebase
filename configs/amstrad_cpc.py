@@ -89,7 +89,7 @@ def runGameOnMachine(i_gameDescription, i_machineName, i_gameFilePaths):
         executableAndArgs += ["--game-description", i_gameDescription]
 
     # Execute
-    utils.shellExecList(executableAndArgs)
+    utils.shellStartTask(executableAndArgs)
 
 def runGame2(i_gameDescription, i_gameFilePaths):
     """
@@ -132,7 +132,7 @@ def runGame2(i_gameDescription, i_gameFilePaths):
         if i_gameDescription != None:
             executableAndArgs += ["--game-description", i_gameDescription]
 
-        utils.shellExecList(executableAndArgs)
+        utils.shellStartTask(executableAndArgs)
 
     elif method == "rezmame gx4000 cart":
         executableAndArgs = ["rezmame.py"]
@@ -143,14 +143,14 @@ def runGame2(i_gameDescription, i_gameFilePaths):
         if i_gameDescription != None:
             executableAndArgs += ["--game-description", i_gameDescription]
 
-        utils.shellExecList(executableAndArgs)
+        utils.shellStartTask(executableAndArgs)
 
     elif method == "caprice":
         executableAndArgs = ["cap32"]
 
         executableAndArgs += i_gameFilePaths
 
-        utils.shellExecList(executableAndArgs)
+        utils.shellStartTask(executableAndArgs)
 
     elif method == "rezep128emu_cpc (Amstrad CPC 464, with tape)":
         executableAndArgs = ["rezep128emu_cpc.py"]
@@ -162,7 +162,7 @@ def runGame2(i_gameDescription, i_gameFilePaths):
         if i_gameDescription != None:
             executableAndArgs += ["--game-description", i_gameDescription]
 
-        utils.shellExecList(executableAndArgs)
+        utils.shellStartTask(executableAndArgs)
 
     elif method == "rezep128emu_cpc (Amstrad CPC 664, with disk)":
         executableAndArgs = ["rezep128emu_cpc.py"]
@@ -174,7 +174,7 @@ def runGame2(i_gameDescription, i_gameFilePaths):
         if i_gameDescription != None:
             executableAndArgs += ["--game-description", i_gameDescription]
 
-        utils.shellExecList(executableAndArgs)
+        utils.shellStartTask(executableAndArgs)
 
     elif method == "rezep128emu_cpc (Amstrad CPC 6128, with disk)":
         executableAndArgs = ["rezep128emu_cpc.py"]
@@ -186,7 +186,7 @@ def runGame2(i_gameDescription, i_gameFilePaths):
         if i_gameDescription != None:
             executableAndArgs += ["--game-description", i_gameDescription]
 
-        utils.shellExecList(executableAndArgs)
+        utils.shellStartTask(executableAndArgs)
 
 def runGame(i_zipFilePath, i_zipMemberToRun = None, i_gameInfo = None):
     #print('runGame(' + pprint.pformat(i_zipFilePath) + ', ' + pprint.pformat(i_zipMemberToRun) + ', ' + pprint.pformat(i_gameInfo) + ')')
