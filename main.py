@@ -1157,6 +1157,7 @@ def detailPane_populate(i_rowNo):
         #    }
         #
         #    queryDb();
+        #    tableView.requery()
         #    //showDetailPane(0);
         #    g_dynamicTable.scrollTop = 0;
         #});
@@ -1351,6 +1352,8 @@ mainWindow.show()
 
 openDb()
 queryDb()
+tableView.requery()
+
 
 
 
