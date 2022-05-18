@@ -1190,6 +1190,37 @@ class MyTableView(QTableView):
         # Restore initial scrollbar position
         self.horizontalScrollBar().setValue(initialValue)
 
+    def keyPressEvent(self, i_event):
+        # If pressed Ctrl+C
+        if i_event.key() == Qt.Key_C and (i_event.modifiers() & Qt.ControlModifier):
+            selectedIndexes = self.selectedIndexes()
+            if len(selectedIndexes) == 1:
+                QApplication.clipboard().setText(self.tableModel.data(selectedIndexes[0], Qt.DisplayRole))
+            elif len(selectedIndexes) > 1:
+                # Group selected cells by row
+                import itertools
+                indexGroups = itertools.groupby(sorted(selectedIndexes), lambda index: index.row())
+                # Extract text of each cell
+                textRows = []
+                for indexGroup in indexGroups:
+                    textRows.append([self.tableModel.data(index, Qt.DisplayRole)  for index in indexGroup[1]])
+                # Convert texts to CSV format
+                rowCsvs = []
+                for textRow in textRows:
+                    rowCsv = []
+                    for text in textRow:
+                        if isinstance(text, str):
+                            text = '"' + text.replace('"', '""') + '"'
+                        else:
+                            text = str(text)
+                        rowCsv.append(text)
+                    rowCsvs.append(rowCsv)
+                csv = "\n".join([",".join(rowCsv)  for rowCsv in rowCsvs])
+                # Copy CSV text to clipboard
+                QApplication.clipboard().setText(csv)
+        else:
+            super().keyPressEvent(i_event)
+
 # Create a Qt application
 # (or reuse old one if it already exists; ie. when re-running in REPL during development)
 if not QApplication.instance():
