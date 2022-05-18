@@ -41,6 +41,15 @@ QTableView
     gridline-color: #666;
 }
 
+QTableView::item::active:selected {
+    color: #fff;
+    background-color: #00c;
+}
+QTableView::item::selected {
+    color: #000;
+    background-color: #444;
+}
+
 QMenuBar
 {
 	background-color: #444;

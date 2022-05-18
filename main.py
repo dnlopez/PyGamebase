@@ -956,11 +956,20 @@ class MyStyledItemDelegate(QStyledItemDelegate):
     def __init__(self, i_parent=None):
         QStyledItemDelegate.__init__(self, i_parent)
 
+    def initStyleOption(self, i_option, i_index):
+        QStyledItemDelegate.initStyleOption(self, i_option, i_index)
+
+        # Default selection colours
+        i_option.palette.setColor(QPalette.Active, QPalette.Highlight, QColor.fromRgbF(0, 0, 0.75, 1))
+        i_option.palette.setColor(QPalette.Inactive, QPalette.Highlight, QColor.fromRgbF(0.8125, 0.8125, 0.8125, 1))
+        i_option.palette.setColor(QPalette.Active, QPalette.HighlightedText, QColor.fromRgbF(1, 1, 1, 1))
+        i_option.palette.setColor(QPalette.Inactive, QPalette.HighlightedText, QColor.fromRgbF(0, 0, 0, 1))
+
     def paint(self, i_painter, i_option, i_index):
         #print(i_painter, i_option, i_index)
 
-        if i_option.state & QStyle.State_Selected:
-            i_painter.fillRect(i_option.rect, i_option.palette.highlight())
+        #if i_option.state & QStyle.State_Selected:
+        #    i_painter.fillRect(i_option.rect, i_option.palette.highlight())
 
         if i_index.column() == 2:
             screenshotPath = dbRow_getScreenshotRelativePath(g_dbRows[i_index.row()])
