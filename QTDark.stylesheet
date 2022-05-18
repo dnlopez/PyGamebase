@@ -25,6 +25,9 @@
 .mainWindow {
     background-color: black;
 }
+.gameTable {
+    background-color: black;
+}
 
 .HeaderBar
 {

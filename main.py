@@ -1445,6 +1445,7 @@ editMenu_action.addAction("Copy")
 
 #
 gameTable = QWidget()
+gameTable.setProperty("class", "gameTable")
 mainWindow_layout.addWidget(gameTable)
 # Set background colour
 #gameTable.setStyleSheet("* { background-color: white; }")
