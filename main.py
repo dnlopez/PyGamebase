@@ -314,83 +314,90 @@ FROM
         sql += "\nLEFT JOIN Games AS CloneOfGame ON Games.CloneOf = CloneOfGame.GA_Id"
 
     # WHERE
-    filters = []
+    andGroups = []
 
-    for column in g_columns:
-        if column["filterable"]:
-            value = headerBar.headerFilters[column["id"]].text()
-            value = value.strip()
-            if value != "":
-                # If range operator
-                betweenValues = value.split("~")
-                if len(betweenValues) == 2 and stringLooksLikeNumber(betweenValues[0]) and stringLooksLikeNumber(betweenValues[1]):
-                    filters.append(column["qualifiedDbFieldName"] + " BETWEEN " + betweenValues[0] + " AND " + betweenValues[1])
+    for filterRow in headerBar.filterRows:
+        andTerms = []
 
-                # Else if regular expression
-                elif len(value) > 2 and value.startswith("/") and value.endswith("/"):
-                    # Get regexp
-                    value = value[1:-1]
+        for column in g_columns:
+            if column["filterable"]:
+                value = filterRow["columnFilterEdits"][column["id"]].text()
+                value = value.strip()
+                if value != "":
+                    # If range operator
+                    betweenValues = value.split("~")
+                    if len(betweenValues) == 2 and stringLooksLikeNumber(betweenValues[0]) and stringLooksLikeNumber(betweenValues[1]):
+                        andTerms.append(column["qualifiedDbFieldName"] + " BETWEEN " + betweenValues[0] + " AND " + betweenValues[1])
 
-                    # Format value as a string
-                    value = value.replace("'", "''")
-                    value = "'" + value + "'"
+                    # Else if regular expression
+                    elif len(value) > 2 and value.startswith("/") and value.endswith("/"):
+                        # Get regexp
+                        value = value[1:-1]
 
-                    #
-                    filters.append(column["qualifiedDbFieldName"] + " REGEXP " + value)
-                    # Format value as a string
-                    value = value.replace("'", "''")
-                    value = "'" + value + "'"
-
-                # Else if 2 character comparison operator
-                elif value.startswith(">=") or value.startswith("<=") or value.startswith("<>"):
-                    # Get operator and value
-                    operator = value[:2]
-                    value = value[2:]
-
-                    # If value doesn't look like a number, format it as a string
-                    if not stringLooksLikeNumber(value):
+                        # Format value as a string
                         value = value.replace("'", "''")
                         value = "'" + value + "'"
 
-                    #
-                    filters.append(column["qualifiedDbFieldName"] + " " + operator + " " + value)
-
-                # Else if 1 character comparison operator
-                elif value.startswith(">") or value.startswith("<") or value.startswith("="):
-                    # Get operator and value
-                    operator = value[:1]
-                    value = value[1:]
-
-                    # If value doesn't look like a number, format it as a string
-                    if not stringLooksLikeNumber(value):
+                        #
+                        andTerms.append(column["qualifiedDbFieldName"] + " REGEXP " + value)
+                        # Format value as a string
                         value = value.replace("'", "''")
                         value = "'" + value + "'"
 
-                    #
-                    filters.append(column["qualifiedDbFieldName"] + " " + operator + " " + value)
+                    # Else if 2 character comparison operator
+                    elif value.startswith(">=") or value.startswith("<=") or value.startswith("<>"):
+                        # Get operator and value
+                        operator = value[:2]
+                        value = value[2:]
 
-                # Else if LIKE expression (contains an unescaped %)
-                elif value.replace("\\%", "").find("%") != -1:
-                    # Format value as a string
-                    value = value.replace("'", "''")
-                    value = "'" + value + "'"
+                        # If value doesn't look like a number, format it as a string
+                        if not stringLooksLikeNumber(value):
+                            value = value.replace("'", "''")
+                            value = "'" + value + "'"
 
-                    #
-                    filters.append(column["qualifiedDbFieldName"] + " LIKE " + value + " ESCAPE '\\'")
+                        #
+                        andTerms.append(column["qualifiedDbFieldName"] + " " + operator + " " + value)
 
-                # Else if a plain string
-                else:
-                    value = "%" + value + "%"
+                    # Else if 1 character comparison operator
+                    elif value.startswith(">") or value.startswith("<") or value.startswith("="):
+                        # Get operator and value
+                        operator = value[:1]
+                        value = value[1:]
 
-                    # Format value as a string
-                    value = value.replace("'", "''")
-                    value = "'" + value + "'"
+                        # If value doesn't look like a number, format it as a string
+                        if not stringLooksLikeNumber(value):
+                            value = value.replace("'", "''")
+                            value = "'" + value + "'"
 
-                    #
-                    filters.append(column["qualifiedDbFieldName"] + " LIKE " + value + " ESCAPE '\\'")
+                        #
+                        andTerms.append(column["qualifiedDbFieldName"] + " " + operator + " " + value)
 
-    if len(filters) > 0:
-        sql += "\nWHERE " + (" AND ".join(filters))
+                    # Else if LIKE expression (contains an unescaped %)
+                    elif value.replace("\\%", "").find("%") != -1:
+                        # Format value as a string
+                        value = value.replace("'", "''")
+                        value = "'" + value + "'"
+
+                        #
+                        andTerms.append(column["qualifiedDbFieldName"] + " LIKE " + value + " ESCAPE '\\'")
+
+                    # Else if a plain string
+                    else:
+                        value = "%" + value + "%"
+
+                        # Format value as a string
+                        value = value.replace("'", "''")
+                        value = "'" + value + "'"
+
+                        #
+                        andTerms.append(column["qualifiedDbFieldName"] + " LIKE " + value + " ESCAPE '\\'")
+
+        if len(andTerms) > 0:
+            andGroups.append(andTerms)
+
+    if len(andGroups) > 0:
+        sql += "\nWHERE "
+        sql += " OR ".join(["(" + andGroupStr + ")"  for andGroupStr in [" AND ".join(andGroup)  for andGroup in andGroups]])
 
     # ORDER BY
     if headerBar.sort_columnNo != None:
@@ -526,8 +533,11 @@ class HeaderBar(QWidget):
     # Minimum number of pixels that a column can be resized to by dragging.
     minimumColumnWidth = 30
 
-    # Emitted after the text in one of the filter text boxes is changed
-    filterChange = Signal(int)
+    headingButtonHeight = 30
+    filterRowHeight = 30
+
+    # Emitted after the text in one of the filter text boxes is changed, or a row is deleted
+    filterChange = Signal()
 
     #print(tableView.geometry())
     #print(tableView.frameGeometry())
@@ -535,14 +545,71 @@ class HeaderBar(QWidget):
     #print(tableView.contentsRect())
     #tableView.horizontalHeader().resizeSection(self.parent().resize_columnNo, newWidth)
 
+    class FilterEdit(QWidget):  # TODO rename to FilterEdit
+        # Emitted after the text is changed
+        textChange = Signal()
+
+        def __init__(self, i_parent=None):
+            QWidget.__init__(self, i_parent)
+
+            self.layout = QHBoxLayout(self)
+            self.setLayout(self.layout)
+            self.layout.setSpacing(0)
+            self.layout.setContentsMargins(0, 0, 0, 0)
+
+            self.lineEdit = QLineEdit(self)
+            self.lineEdit.setFixedHeight(HeaderBar.filterRowHeight)
+            self.layout.addWidget(self.lineEdit)
+            self.layout.setStretch(0, 1)
+            self.lineEdit.editingFinished.connect(self.lineEdit_onEditingFinished)
+
+            self.clearButton = QPushButton("", self)
+            self.clearButton.setIcon(self.style().standardIcon(QStyle.SP_DialogCloseButton))
+            self.clearButton.setStyleSheet("QPushButton { border: none; }");
+            #self.clearButton.setFlat(True)
+            self.clearButton.setFixedHeight(HeaderBar.filterRowHeight)
+            self.clearButton.setFixedWidth(HeaderBar.filterRowHeight)
+            self.clearButton.setVisible(False)
+            self.layout.addWidget(self.clearButton)
+            self.layout.setStretch(1, 0)
+            self.clearButton.clicked.connect(self.clearButton_onClicked)
+
+            self.lineEdit.textEdited.connect(self.lineEdit_onTextEdited)
+
+        def lineEdit_onEditingFinished(self):
+            self.textChange.emit()
+
+        def lineEdit_onTextEdited(self, i_text):
+            # Hide or show clear button depending on whether there's text
+            self.clearButton.setVisible(i_text != "")
+
+        def clearButton_onClicked(self):
+            self.lineEdit.setText("")
+            self.clearButton.setVisible(False)
+            self.textChange.emit()
+
+        def text(self):
+            """
+            Returns:
+             (str)
+            """
+            return self.lineEdit.text()
+
+        def setText(self, i_text):
+            """
+            Params:
+             i_text:
+              (str)
+            """
+            self.lineEdit.setText(i_text)
+            self.lineEdit_onTextEdited(i_text)
+
     def __init__(self, i_parent=None):
         QWidget.__init__(self, i_parent)
 
         # Allow this custom widget derived from a QWidget to be fully styled by stylesheets
         # https://stackoverflow.com/a/49179582
         self.setAttribute(Qt.WA_StyledBackground, True)
-
-        self.setFixedHeight(59)
 
         self.scrollX = 0
         self.scrollY = 0
@@ -557,23 +624,32 @@ class HeaderBar(QWidget):
 
         #self.setStyleSheet("* { border: 1px solid red; }");
 
-        self.headerButtons = {}
+        self.columnHeadingButtons = {}
         # (dict)
-        # Dictionary has:
+        # Dictionary has arbitrary key-value properties:
         #  Keys:
         #   (str)
         #   Column id
         #  Values:
-        #   (HeaderButton)
+        #   (HeadingButton)
 
-        self.headerFilters = {}
-        # (dict)
-        # Dictionary has:
-        #  Keys:
-        #   (str)
-        #   Column id
-        #  Values:
-        #   (HeaderFilter)
+        self.filterRows = []
+        # (list)
+        # Each element is:
+        #  (dict)
+        #  Dictionary has specific key-value properties:
+        #   insertRow_pushButton:
+        #    (QPushButton)
+        #   deleteRow_pushButton:
+        #    (QPushButton)
+        #   columnFilterEdits:
+        #    (dict)
+        #    Dictionary has arbitrary key-value properties:
+        #     Keys:
+        #      (str)
+        #      Column id
+        #     Values:
+        #      (FilterEdit)
 
         # Resizing of columns by mouse dragging
         self.installEventFilter(self)
@@ -587,7 +663,7 @@ class HeaderBar(QWidget):
         self.sort_columnNo = None
         self.sort_direction = None
 
-        class HeaderButton(QPushButton):
+        class HeadingButton(QPushButton):
             def __init__(self, i_text, i_hasBorder, i_parent=None):
                 QPushButton.__init__(self, i_text, i_parent)
 
@@ -602,77 +678,109 @@ class HeaderBar(QWidget):
                 self.setMouseTracking(True)
                 self.installEventFilter(self.parent())
 
-        class HeaderFilter(QWidget):
-            # Emitted after the text is changed
-            textChange = Signal()
-
-            def __init__(self, i_parent=None):
-                QWidget.__init__(self, i_parent)
-
-                self.layout = QHBoxLayout(self)
-                self.setLayout(self.layout)
-                self.layout.setSpacing(0)
-                self.layout.setContentsMargins(0, 0, 0, 0)
-
-                self.lineEdit = QLineEdit(self)
-                self.lineEdit.setFixedHeight(30)
-                self.layout.addWidget(self.lineEdit)
-                self.layout.setStretch(0, 1)
-                self.lineEdit.editingFinished.connect(self.lineEdit_onEditingFinished)
-
-                self.clearButton = QPushButton("", self)
-                self.clearButton.setIcon(self.style().standardIcon(QStyle.SP_DialogCloseButton))
-                self.clearButton.setStyleSheet("QPushButton { border: none; }");
-                #self.clearButton.setFlat(True)
-                self.clearButton.setFixedHeight(30)
-                self.clearButton.setFixedWidth(30)
-                self.clearButton.setVisible(False)
-                self.layout.addWidget(self.clearButton)
-                self.layout.setStretch(1, 0)
-                self.clearButton.clicked.connect(self.clearButton_onClicked)
-
-                self.lineEdit.textEdited.connect(self.lineEdit_onTextEdited)
-
-            def lineEdit_onEditingFinished(self):
-                self.textChange.emit()
-
-            def lineEdit_onTextEdited(self, i_text):
-                # Hide or show clear button depending on whether there's text
-                self.clearButton.setVisible(i_text != "")
-
-            def clearButton_onClicked(self):
-                self.lineEdit.setText("")
-                self.clearButton.setVisible(False)
-                self.textChange.emit()
-
-            def text(self):
-                """
-                Returns:
-                 (str)
-                """
-                return self.lineEdit.text()
-
-        # Create widgets (HeaderButton and HeaderFilter objects) for columns
+        # Create header buttons
         global g_columns
         for columnNo, column in enumerate(g_columns):
             if column["filterable"]:
-                # Create button
-                headerButton = HeaderButton(column["headingText"], column["filterable"], self)
-                self.headerButtons[column["id"]] = headerButton
-                #column["headerButton"] = headerButton
+                # Create header button
+                headingButton = HeadingButton(column["headingText"], column["filterable"], self)
+                self.columnHeadingButtons[column["id"]] = headingButton
+                #column["headingButton"] = headingButton
                 # Set its basic properties (apart from position)
-                headerButton.clicked.connect(functools.partial(self.button_onClicked, columnNo))
+                headingButton.clicked.connect(functools.partial(self.button_onClicked, columnNo))
 
-            if column["filterable"]:
-                # Create lineedit
-                headerFilter = HeaderFilter(self)
-                self.headerFilters[column["id"]] = headerFilter
-                # Set its basic properties (apart from position)
-                headerFilter.textChange.connect(functools.partial(self.lineEdit_onTextChange, columnNo))
+        self.insertFilterRow(0)
+        self.insertFilterRow(1)
 
         # Initially set all widget positions
-        self.repositionHeaderButtons()
-        self.repositionHeaderFilters()
+        self.repositionHeadingButtons()
+        self.repositionFilterEdits()
+
+    # + Filter rows {{{
+
+    def insertFilterRow(self, i_position):
+        """
+        Params:
+         i_position:
+          (int)
+        """
+        newRow = {}
+
+        # Add widgets to GUI
+        deleteRow_pushButton = QPushButton("x", self)
+        newRow["deleteRow_pushButton"] = deleteRow_pushButton
+        deleteRow_pushButton.clicked.connect(functools.partial(self.deleteRow_pushButton_onClicked, newRow))
+        deleteRow_pushButton.setVisible(True)
+
+        insertRow_pushButton = QPushButton("+", self)
+        newRow["insertRow_pushButton"] = insertRow_pushButton
+        insertRow_pushButton.clicked.connect(functools.partial(self.insertRow_pushButton_onClicked, newRow))
+        insertRow_pushButton.setVisible(True)
+
+        newRow["columnFilterEdits"] = {}
+        global g_columns
+        for columnNo, column in enumerate(g_columns):
+            if column["filterable"]:
+                # Create FilterEdit
+                headerFilter = HeaderBar.FilterEdit(self)
+                newRow["columnFilterEdits"][column["id"]] = headerFilter
+                # Set its basic properties (apart from position)
+                headerFilter.setVisible(True)
+                headerFilter.textChange.connect(functools.partial(self.lineEdit_onTextChange, columnNo))
+
+        # Add entry to filterRows list
+        self.filterRows.insert(i_position, newRow)
+
+        # Resize header to accommodate the current number of filter rows
+        self.setFixedHeight(HeaderBar.headingButtonHeight + HeaderBar.filterRowHeight*len(self.filterRows) - 1)
+
+    def deleteFilterRow(self, i_position):
+        """
+        Params:
+         i_position:
+          (int)
+        """
+        # Remove widgets from GUI
+        filterRow = self.filterRows[i_position]
+        for columnFilterEdit in filterRow["columnFilterEdits"].values():
+            columnFilterEdit.setParent(None)
+        filterRow["deleteRow_pushButton"].setParent(None)
+        filterRow["insertRow_pushButton"].setParent(None)
+
+        # Remove entry from filterRows list
+        del(self.filterRows[i_position])
+
+        # Resize header to accommodate the current number of filter rows
+        self.setFixedHeight(HeaderBar.headingButtonHeight + HeaderBar.filterRowHeight*len(self.filterRows) - 1)
+
+    def clearFilterRow(self, i_position):
+        """
+        Params:
+         i_position:
+          (int)
+        """
+        filterRow = self.filterRows[i_position]
+        for columnFilterEdit in filterRow["columnFilterEdits"].values():
+            columnFilterEdit.setText("")
+
+    def deleteRow_pushButton_onClicked(self, i_filterRow):
+        if len(self.filterRows) == 1:
+            self.clearFilterRow(0)
+        else:
+            for filterRowNo, filterRow in enumerate(self.filterRows):
+                if filterRow == i_filterRow:
+                    self.deleteFilterRow(filterRowNo)
+                    self.repositionFilterEdits()
+        self.filterChange.emit()
+
+    def insertRow_pushButton_onClicked(self, i_filterRow):
+        for filterRowNo, filterRow in enumerate(self.filterRows):
+            if filterRow == i_filterRow:
+                self.insertFilterRow(filterRowNo + 1)
+                #self.repositionHeadingButtons()
+                self.repositionFilterEdits()
+
+    # + }}}
 
     #def sizeHint(self):
     #    return QSize(10000, 59)
@@ -694,9 +802,9 @@ class HeaderBar(QWidget):
 
         # Remove old sort arrow from heading
         if self.sort_columnNo != None:
-            headerButton = self.headerButtons[g_columns[self.sort_columnNo]["id"]]
-            if headerButton.text().endswith("▲") or headerButton.text().endswith("▼"):
-                headerButton.setText(g_columns[self.sort_columnNo]["headingText"])
+            headingButton = self.columnHeadingButtons[g_columns[self.sort_columnNo]["id"]]
+            if headingButton.text().endswith("▲") or headingButton.text().endswith("▼"):
+                headingButton.setText(g_columns[self.sort_columnNo]["headingText"])
 
         #
         if self.sort_columnNo == i_columnNo:
@@ -706,18 +814,18 @@ class HeaderBar(QWidget):
             self.sort_columnNo = i_columnNo
 
         # Add new sort arrow to heading
-        headerButton = self.headerButtons[g_columns[self.sort_columnNo]["id"]]
+        headingButton = self.columnHeadingButtons[g_columns[self.sort_columnNo]["id"]]
         if self.sort_direction > 0:
-            headerButton.setText(headerButton.text() + "  ▲")
+            headingButton.setText(headingButton.text() + "  ▲")
         else:
-            headerButton.setText(headerButton.text() + "  ▼")
+            headingButton.setText(headingButton.text() + "  ▼")
 
         #
         queryDb()
         tableView.requery()
 
     def lineEdit_onTextChange(self, i_columnNo):
-        self.filterChange.emit(i_columnNo)
+        self.filterChange.emit()
 
     # + Resizing columns by mouse dragging {{{
 
@@ -775,8 +883,8 @@ class HeaderBar(QWidget):
                 column["width"] = newWidth
 
                 # Move/resize buttons and lineedits
-                self.repositionHeaderButtons()
-                self.repositionHeaderFilters()
+                self.repositionHeadingButtons()
+                self.repositionFilterEdits()
                 #
                 tableView.horizontalHeader().resizeSection(self.resize_columnNo, newWidth)
 
@@ -796,7 +904,7 @@ class HeaderBar(QWidget):
                     self.resize_columnNo = columnNo
 
                     # Get horizontal distance from mouse to the draggable vertical edge (ie. the right edge of the button being resized)
-                    #button = column["headerButton"]
+                    #button = column["headingButton"]
                     #buttonBottomRight = button.mapTo(self, QPoint(button.size().width(), button.size().height()))
                     self.resize_mouseToEdgeOffset = edgeX - mousePos.x()
 
@@ -817,24 +925,32 @@ class HeaderBar(QWidget):
 
     # + }}}
 
-    def repositionHeaderButtons(self):
+    def repositionHeadingButtons(self):
         x = 0
         x += self.scrollX  # Adjust for horizontal scroll amount
         y = 0
         for columnNo, column in enumerate(g_columns):
             if column["filterable"]:
-                self.headerButtons[column["id"]].setGeometry(x, y, column["width"], 30)
+                self.columnHeadingButtons[column["id"]].setGeometry(x, y, column["width"], HeaderBar.headingButtonHeight)
             x += column["width"]
 
-    def repositionHeaderFilters(self):
-        x = 0
-        x += self.scrollX  # Adjust for horizontal scroll amount
-        y = 30
-        for columnNo, column in enumerate(g_columns):
-            if column["filterable"]:
-                self.headerFilters[column["id"]].setGeometry(x, y, column["width"], 30)
-            x += column["width"]
+    def repositionFilterEdits(self):
+        y = HeaderBar.headingButtonHeight
 
+        for filterRow in self.filterRows:
+            x = 0
+            x += self.scrollX  # Adjust for horizontal scroll amount
+            for columnNo, column in enumerate(g_columns):
+                if column["filterable"]:
+                    print(filterRow["columnFilterEdits"][column["id"]])
+                    filterRow["columnFilterEdits"][column["id"]].setGeometry(x, y, column["width"], HeaderBar.filterRowHeight)
+                x += column["width"]
+
+            filterRow["deleteRow_pushButton"].setGeometry(x, y, HeaderBar.filterRowHeight, HeaderBar.filterRowHeight)
+            x += HeaderBar.filterRowHeight
+            filterRow["insertRow_pushButton"].setGeometry(x, y, HeaderBar.filterRowHeight, HeaderBar.filterRowHeight)
+
+            y += HeaderBar.filterRowHeight
 
 class MyStyledItemDelegate(QStyledItemDelegate):
     def __init__(self, i_parent=None):
@@ -1178,7 +1294,7 @@ headerBar = HeaderBar()
 headerBar.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 gameTable_layout.addWidget(headerBar)
 
-def headerBar_onFilterChange(i_columnNo):
+def headerBar_onFilterChange():
     queryDb()
     tableView.requery()
 headerBar.filterChange.connect(headerBar_onFilterChange)
