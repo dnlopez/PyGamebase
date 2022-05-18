@@ -1651,7 +1651,7 @@ ORDER BY
     nonImageRows = []
     for extrasRow in extrasRows:
         path = extrasRow[extrasColumnNames.index("Path")]
-        if path.lower().endswith(".jpg") or path.lower().endswith(".jpeg") or path.lower().endswith(".gif") or path.lower().endswith(".png"):
+        if path != None and (path.lower().endswith(".jpg") or path.lower().endswith(".jpeg") or path.lower().endswith(".gif") or path.lower().endswith(".png")):
             imageRows.append(extrasRow)
         else:
             nonImageRows.append(extrasRow)
@@ -1668,7 +1668,11 @@ ORDER BY
                 #container.appendChild(document.createTextNode(" | "));
                 html += '<span style="margin-left: 8px; margin-right: 8px; border-left: 1px dotted #666;"></span>'
 
-            html += '<a href="extra:///' + nonImageRow[extrasColumnNames.index("Path")] + '">'
+            html += '<a'
+            path = nonImageRow[extrasColumnNames.index("Path")]
+            if path != None:
+                html += ' href="extra:///' + path + '"'
+            html += '>'
             html += nonImageRow[extrasColumnNames.index("Name")]
             html += '</a>'
 
