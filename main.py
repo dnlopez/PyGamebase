@@ -562,6 +562,9 @@ class HeaderBar(QWidget):
 
         self.setFixedHeight(59)
 
+        self.scrollX = 0
+        self.scrollY = 0
+
         #pal = QPalette()
         #pal.setColor(QPalette.Window, Qt.red)
         #self.setPalette(pal)
@@ -671,6 +674,15 @@ class HeaderBar(QWidget):
     #def sizeHint(self):
     #    return QSize(10000, 59)
 
+    # + Scrolling {{{
+
+    def scroll(self, i_dx, i_dy):
+        self.scrollX += i_dx
+        self.scrollY += i_dy
+        QWidget.scroll(self, i_dx, i_dy)
+
+    # + }}}
+
     def button_onClicked(self, i_columnNo):
         # If column isn't sortable,
         # bail
@@ -707,6 +719,12 @@ class HeaderBar(QWidget):
     # + Resizing columns by mouse dragging {{{
 
     def _columnBoundaryAtPixelX(self, i_x):
+        """
+        Params:
+         i_x:
+          (int)
+          Relative to the left of the window.
+        """
         x = 0
 
         for columnNo, column in enumerate(g_columns):
@@ -727,7 +745,9 @@ class HeaderBar(QWidget):
             # set cursor shape
             if self.resize_columnNo == None:
                 # Get mouse pos relative to HeaderBar
+                # and adjust for horizontal scroll amount
                 mousePos = i_watched.mapTo(self, i_event.pos())
+                mousePos.setX(mousePos.x() - self.scrollX)
                 #
                 columnNo, _, _ = self._columnBoundaryAtPixelX(mousePos.x())
                 if columnNo != None:
@@ -738,7 +758,9 @@ class HeaderBar(QWidget):
             # do the resize
             else:
                 # Get mouse pos relative to HeaderBar
+                # and adjust for horizontal scroll amount
                 mousePos = i_watched.mapTo(self, i_event.pos())
+                mousePos.setX(mousePos.x() - self.scrollX)
                 # Get new width
                 newRightEdge = mousePos.x() + self.resize_mouseToEdgeOffset
                 columnLeft = sum([column["width"]  for column in g_columns[0 : self.resize_columnNo]])
@@ -761,7 +783,9 @@ class HeaderBar(QWidget):
             # If pressed the left button
             if i_event.button() == Qt.MouseButton.LeftButton:
                 # Get mouse pos relative to HeaderBar
+                # and adjust for horizontal scroll amount
                 mousePos = i_watched.mapTo(self, i_event.pos())
+                mousePos.setX(mousePos.x() - self.scrollX)
                 # If cursor is near a draggable vertical edge
                 columnNo, column, edgeX = self._columnBoundaryAtPixelX(mousePos.x())
                 if columnNo != None:
@@ -792,6 +816,8 @@ class HeaderBar(QWidget):
 
     def repositionHeaderButtons(self):
         x = 0
+        # Adjust for horizontal scroll amount
+        x += self.scrollX
         y = 0
         for columnNo, column in enumerate(g_columns):
             if column["filterable"]:
@@ -805,6 +831,8 @@ class HeaderBar(QWidget):
         #        button = column["headerButton"]
         #        column["headerFilter"].setGeometry(button.geometry().left(), button.geometry().bottom(), button.width(), 30)
         x = 0
+        # Adjust for horizontal scroll amount
+        x += self.scrollX
         y = 30
         for columnNo, column in enumerate(g_columns):
             if column["filterable"]:
