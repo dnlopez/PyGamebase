@@ -1171,6 +1171,25 @@ class MyTableView(QTableView):
     def requery(self):
         self.tableModel.modelReset.emit()
 
+    def updateGeometries(self):
+        # Increase the horizontal scrollbar's maximum to enable scrolling to the insert/delete filter row buttons 
+
+        # Save initial scrollbar position to prevent jitter
+        initialValue = self.horizontalScrollBar().value()
+
+        #
+        QTableView.updateGeometries(self)
+
+        # Calculate and set new scrollbar maximum
+        allColumnsWidth = sum([column["width"]  for column in g_columns])
+        newMaximum = allColumnsWidth - self.horizontalScrollBar().pageStep() + HeaderBar.filterRowHeight*2 + self.verticalScrollBar().width()
+        if newMaximum < 0:
+            newMaximum = 0
+        self.horizontalScrollBar().setMaximum(newMaximum)
+
+        # Restore initial scrollbar position
+        self.horizontalScrollBar().setValue(initialValue)
+
 # Create a Qt application
 # (or reuse old one if it already exists; ie. when re-running in REPL during development)
 if not QApplication.instance():
