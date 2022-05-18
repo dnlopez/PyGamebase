@@ -198,24 +198,6 @@ g_columns = [
 #    (int)
 #    In pixels
 
-def getColumnByHeaderButton(i_headerButton):
-    """
-    Params:
-     i_headerButton:
-      (HeaderButton)
-    Returns:
-     (tuple)
-     Tuple has elements:
-      0:
-       (int)
-      1:
-       (Column)
-    """
-    for columnNo, column in enumerate(g_columns):
-        if "headerButton" in column and column["headerButton"] == i_headerButton:
-            return columnNo, column
-    return None, None
-
 # + }}}
 
 # + Screenshot file/URL resolving {{{
@@ -336,7 +318,7 @@ FROM
 
     for column in g_columns:
         if column["filterable"]:
-            value = column["headerFilter"].text()
+            value = headerBar.headerFilters[column["id"]].text()
             value = value.strip()
             if value != "":
                 # If range operator
@@ -575,7 +557,25 @@ class HeaderBar(QWidget):
 
         #self.setStyleSheet("* { border: 1px solid red; }");
 
-        # Resizing columns by mouse dragging
+        self.headerButtons = {}
+        # (dict)
+        # Dictionary has:
+        #  Keys:
+        #   (str)
+        #   Column id
+        #  Values:
+        #   (HeaderButton)
+
+        self.headerFilters = {}
+        # (dict)
+        # Dictionary has:
+        #  Keys:
+        #   (str)
+        #   Column id
+        #  Values:
+        #   (HeaderFilter)
+
+        # Resizing of columns by mouse dragging
         self.installEventFilter(self)
         #  Receive mouse move events even if button isn't held down
         self.setMouseTracking(True)
@@ -657,19 +657,22 @@ class HeaderBar(QWidget):
         for columnNo, column in enumerate(g_columns):
             if column["filterable"]:
                 # Create button
-                column["headerButton"] = HeaderButton(column["headingText"], column["filterable"], self)
+                headerButton = HeaderButton(column["headingText"], column["filterable"], self)
+                self.headerButtons[column["id"]] = headerButton
+                #column["headerButton"] = headerButton
                 # Set its basic properties (apart from position)
-                column["headerButton"].clicked.connect(functools.partial(self.button_onClicked, columnNo))
+                headerButton.clicked.connect(functools.partial(self.button_onClicked, columnNo))
 
             if column["filterable"]:
                 # Create lineedit
-                column["headerFilter"] = HeaderFilter(self)
+                headerFilter = HeaderFilter(self)
+                self.headerFilters[column["id"]] = headerFilter
                 # Set its basic properties (apart from position)
-                column["headerFilter"].textChange.connect(functools.partial(self.lineEdit_onTextChange, columnNo))
+                headerFilter.textChange.connect(functools.partial(self.lineEdit_onTextChange, columnNo))
 
         # Initially set all widget positions
         self.repositionHeaderButtons()
-        self.repositionLineEdits()
+        self.repositionHeaderFilters()
 
     #def sizeHint(self):
     #    return QSize(10000, 59)
@@ -691,7 +694,7 @@ class HeaderBar(QWidget):
 
         # Remove old sort arrow from heading
         if self.sort_columnNo != None:
-            headerButton = g_columns[self.sort_columnNo]["headerButton"]
+            headerButton = self.headerButtons[g_columns[self.sort_columnNo]["id"]]
             if headerButton.text().endswith("▲") or headerButton.text().endswith("▼"):
                 headerButton.setText(g_columns[self.sort_columnNo]["headingText"])
 
@@ -703,7 +706,7 @@ class HeaderBar(QWidget):
             self.sort_columnNo = i_columnNo
 
         # Add new sort arrow to heading
-        headerButton = g_columns[self.sort_columnNo]["headerButton"]
+        headerButton = self.headerButtons[g_columns[self.sort_columnNo]["id"]]
         if self.sort_direction > 0:
             headerButton.setText(headerButton.text() + "  ▲")
         else:
@@ -773,7 +776,7 @@ class HeaderBar(QWidget):
 
                 # Move/resize buttons and lineedits
                 self.repositionHeaderButtons()
-                self.repositionLineEdits()
+                self.repositionHeaderFilters()
                 #
                 tableView.horizontalHeader().resizeSection(self.resize_columnNo, newWidth)
 
@@ -816,27 +819,20 @@ class HeaderBar(QWidget):
 
     def repositionHeaderButtons(self):
         x = 0
-        # Adjust for horizontal scroll amount
-        x += self.scrollX
+        x += self.scrollX  # Adjust for horizontal scroll amount
         y = 0
         for columnNo, column in enumerate(g_columns):
             if column["filterable"]:
-                button = column["headerButton"]
-                button.setGeometry(x, y, column["width"], 30)
+                self.headerButtons[column["id"]].setGeometry(x, y, column["width"], 30)
             x += column["width"]
 
-    def repositionLineEdits(self):
-        #for columnNo, column in enumerate(g_columns):
-        #    if column["filterable"]:
-        #        button = column["headerButton"]
-        #        column["headerFilter"].setGeometry(button.geometry().left(), button.geometry().bottom(), button.width(), 30)
+    def repositionHeaderFilters(self):
         x = 0
-        # Adjust for horizontal scroll amount
-        x += self.scrollX
+        x += self.scrollX  # Adjust for horizontal scroll amount
         y = 30
         for columnNo, column in enumerate(g_columns):
             if column["filterable"]:
-                column["headerFilter"].setGeometry(x, y, column["width"], 30)
+                self.headerFilters[column["id"]].setGeometry(x, y, column["width"], 30)
             x += column["width"]
 
 
