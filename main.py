@@ -252,7 +252,7 @@ def openDb():
         #print("functionRegex(" + i_value + ", " + i_pattern + ")")
         #c_pattern = re.compile(r"\b" + i_pattern.lower() + r"\b")
         compiledPattern = re.compile(i_pattern)
-        return compiledPattern.search(i_value) is not None
+        return compiledPattern.search(str(i_value)) is not None
     g_db.create_function("REGEXP", 2, functionRegex)
 
     # Get columns in Games table
