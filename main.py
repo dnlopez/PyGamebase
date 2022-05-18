@@ -595,6 +595,9 @@ class HeaderBar(QWidget):
             """
             return self.lineEdit.text()
 
+        def setFocus(self, i_reason):
+            self.lineEdit.setFocus(i_reason)
+
         def setText(self, i_text):
             """
             Params:
@@ -1342,6 +1345,20 @@ mainWindow.setProperty("class", "mainWindow")
 frontend.mainWindow = mainWindow
 
 #mainWindow.setStyleSheet("* {background-color: white; }")
+
+# Application-wide keyboard shortcuts
+shortcut = QShortcut(QKeySequence("Ctrl+F"), mainWindow)
+shortcut.setContext(Qt.ApplicationShortcut)
+def ctrlFShortcut_onActivated():
+    print("ctrlFShortcut_onActivated")
+    firstVisibleAndFilterableColumn = None
+    for column in g_columns:
+        if column["visible"] and column["filterable"]:
+            firstVisibleAndFilterableColumn = column
+            break
+    if firstVisibleAndFilterableColumn != None:
+        headerBar.filterRows[0]["columnFilterEdits"][firstVisibleAndFilterableColumn["id"]].setFocus(Qt.ShortcutFocusReason)
+shortcut.activated.connect(ctrlFShortcut_onActivated)
 
 # Window layout
 mainWindow_layout = QVBoxLayout()
