@@ -569,6 +569,7 @@ class HeaderBar(QWidget):
             #self.clearButton.setFlat(True)
             self.clearButton.setFixedHeight(HeaderBar.filterRowHeight)
             self.clearButton.setFixedWidth(HeaderBar.filterRowHeight)
+            self.clearButton.setFocusPolicy(Qt.NoFocus)
             self.clearButton.setVisible(False)
             self.layout.addWidget(self.clearButton)
             self.layout.setStretch(1, 0)

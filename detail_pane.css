@@ -13,3 +13,25 @@ img {
 a {
     color: #08f;
 }
+
+
+::-webkit-scrollbar {
+    width: 17px;
+    height: 17px;
+    background-color: #222;
+}
+::-webkit-scrollbar-button {
+    background-color: #444;
+    border: 1px outset #666;
+
+    padding: 1px;
+    min-width: 17px;
+    min-height: 17px;
+}
+::-webkit-scrollbar-corner {
+    background-color: #222;
+}
+::-webkit-scrollbar-thumb {
+    background-color: #444;
+    border: 1px outset #666;
+}
