@@ -638,8 +638,6 @@ class HeaderBar(QWidget):
         # Each element is:
         #  (dict)
         #  Dictionary has specific key-value properties:
-        #   insertRow_pushButton:
-        #    (QPushButton)
         #   deleteRow_pushButton:
         #    (QPushButton)
         #   columnFilterEdits:
@@ -689,8 +687,10 @@ class HeaderBar(QWidget):
                 # Set its basic properties (apart from position)
                 headingButton.clicked.connect(functools.partial(self.button_onClicked, columnNo))
 
+        self.insertRow_pushButton = QPushButton("+", self)
+        self.insertRow_pushButton.clicked.connect(functools.partial(self.insertRow_pushButton_onClicked))
+
         self.insertFilterRow(0)
-        self.insertFilterRow(1)
 
         # Initially set all widget positions
         self.repositionHeadingButtons()
@@ -711,11 +711,6 @@ class HeaderBar(QWidget):
         newRow["deleteRow_pushButton"] = deleteRow_pushButton
         deleteRow_pushButton.clicked.connect(functools.partial(self.deleteRow_pushButton_onClicked, newRow))
         deleteRow_pushButton.setVisible(True)
-
-        insertRow_pushButton = QPushButton("+", self)
-        newRow["insertRow_pushButton"] = insertRow_pushButton
-        insertRow_pushButton.clicked.connect(functools.partial(self.insertRow_pushButton_onClicked, newRow))
-        insertRow_pushButton.setVisible(True)
 
         newRow["columnFilterEdits"] = {}
         global g_columns
@@ -745,7 +740,6 @@ class HeaderBar(QWidget):
         for columnFilterEdit in filterRow["columnFilterEdits"].values():
             columnFilterEdit.setParent(None)
         filterRow["deleteRow_pushButton"].setParent(None)
-        filterRow["insertRow_pushButton"].setParent(None)
 
         # Remove entry from filterRows list
         del(self.filterRows[i_position])
@@ -773,12 +767,10 @@ class HeaderBar(QWidget):
                     self.repositionFilterEdits()
         self.filterChange.emit()
 
-    def insertRow_pushButton_onClicked(self, i_filterRow):
-        for filterRowNo, filterRow in enumerate(self.filterRows):
-            if filterRow == i_filterRow:
-                self.insertFilterRow(filterRowNo + 1)
-                #self.repositionHeadingButtons()
-                self.repositionFilterEdits()
+    def insertRow_pushButton_onClicked(self):
+        self.insertFilterRow(len(self.filterRows))
+        #self.repositionHeadingButtons()
+        self.repositionFilterEdits()
 
     # + }}}
 
@@ -942,15 +934,16 @@ class HeaderBar(QWidget):
             x += self.scrollX  # Adjust for horizontal scroll amount
             for columnNo, column in enumerate(g_columns):
                 if column["filterable"]:
-                    print(filterRow["columnFilterEdits"][column["id"]])
                     filterRow["columnFilterEdits"][column["id"]].setGeometry(x, y, column["width"], HeaderBar.filterRowHeight)
                 x += column["width"]
 
             filterRow["deleteRow_pushButton"].setGeometry(x, y, HeaderBar.filterRowHeight, HeaderBar.filterRowHeight)
             x += HeaderBar.filterRowHeight
-            filterRow["insertRow_pushButton"].setGeometry(x, y, HeaderBar.filterRowHeight, HeaderBar.filterRowHeight)
 
             y += HeaderBar.filterRowHeight
+
+        y -= HeaderBar.filterRowHeight
+        self.insertRow_pushButton.setGeometry(x, y, HeaderBar.filterRowHeight, HeaderBar.filterRowHeight)
 
 class MyStyledItemDelegate(QStyledItemDelegate):
     def __init__(self, i_parent=None):
