@@ -26,7 +26,7 @@
     background-color: black;
 }
 
-.Header3
+.HeaderBar
 {
 	background: #191919;
 	color: #DDDDDD;
@@ -120,7 +120,7 @@ QPushButton:pressed
     color: #fff;
 }
 
-Header3 QLineEdit
+HeaderBar QLineEdit
 {
 	background-color: rgb(34, 68, 34);
     border-width: 1px;

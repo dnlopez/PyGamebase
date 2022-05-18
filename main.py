@@ -411,10 +411,10 @@ FROM
         sql += "\nWHERE " + (" AND ".join(filters))
 
     # ORDER BY
-    if header.sort_columnNo != None:
+    if headerBar.sort_columnNo != None:
         sql += "\nORDER BY "
-        sql += g_columns[header.sort_columnNo]["qualifiedDbFieldName"]
-        if header.sort_direction == -1:
+        sql += g_columns[headerBar.sort_columnNo]["qualifiedDbFieldName"]
+        if headerBar.sort_direction == -1:
             sql += " DESC"
 
     #print(sql)
@@ -534,7 +534,7 @@ def dbRow_getSupplementaryScreenshotPaths(i_row, i_simulateCount=None):
 # + }}}
 
 
-class Header3(QWidget):
+class HeaderBar(QWidget):
     """
     A top row of buttons to act as table headings and controls for column resizing and sorting,
     and a second row of text box controls for entering filter criteria.
@@ -595,7 +595,7 @@ class Header3(QWidget):
                     #self.setStyleSheet("QPushButton { background-color: red; color: black;}");
 
                 # Receive mouse move events even if button isn't held down
-                # and install event filter to let parent Header3 see all events first
+                # and install event filter to let parent HeaderBar see all events first
                 self.setMouseTracking(True)
                 self.installEventFilter(self.parent())
 
@@ -711,7 +711,7 @@ class Header3(QWidget):
 
         for columnNo, column in enumerate(g_columns):
             columnEdgeX = x + column["width"]
-            if abs(i_x - columnEdgeX) <= Header3.resizeMargin:
+            if abs(i_x - columnEdgeX) <= HeaderBar.resizeMargin:
                 return columnNo, column, columnEdgeX
 
             x += column["width"]
@@ -726,7 +726,7 @@ class Header3(QWidget):
             # then depending on whether cursor is near a draggable vertical edge,
             # set cursor shape
             if self.resize_columnNo == None:
-                # Get mouse pos relative to Header3
+                # Get mouse pos relative to HeaderBar
                 mousePos = i_watched.mapTo(self, i_event.pos())
                 #
                 columnNo, _, _ = self._columnBoundaryAtPixelX(mousePos.x())
@@ -737,14 +737,14 @@ class Header3(QWidget):
             # Else if currently resizing,
             # do the resize
             else:
-                # Get mouse pos relative to Header3
+                # Get mouse pos relative to HeaderBar
                 mousePos = i_watched.mapTo(self, i_event.pos())
                 # Get new width
                 newRightEdge = mousePos.x() + self.resize_mouseToEdgeOffset
                 columnLeft = sum([column["width"]  for column in g_columns[0 : self.resize_columnNo]])
                 newWidth = newRightEdge - columnLeft
-                if newWidth < Header3.minimumColumnWidth:
-                    newWidth = Header3.minimumColumnWidth
+                if newWidth < HeaderBar.minimumColumnWidth:
+                    newWidth = HeaderBar.minimumColumnWidth
                 # Resize column
                 column = g_columns[self.resize_columnNo]
                 column["width"] = newWidth
@@ -760,7 +760,7 @@ class Header3(QWidget):
         elif i_event.type() == QEvent.MouseButtonPress:
             # If pressed the left button
             if i_event.button() == Qt.MouseButton.LeftButton:
-                # Get mouse pos relative to Header3
+                # Get mouse pos relative to HeaderBar
                 mousePos = i_watched.mapTo(self, i_event.pos())
                 # If cursor is near a draggable vertical edge
                 columnNo, column, edgeX = self._columnBoundaryAtPixelX(mousePos.x())
@@ -1033,7 +1033,7 @@ class MyTableView(QTableView):
         # If the table view is scrolled horizontally,
         # scroll external header by the same amount
         QTableView.scrollContentsBy(self, i_dx, i_dy)
-        header.scroll(i_dx, 0)
+        headerBar.scroll(i_dx, 0)
 
     def requery(self):
         self.tableModel.modelReset.emit()
@@ -1150,22 +1150,14 @@ gameTable_layout.setContentsMargins(0, 0, 0, 0)
 gameTable.setLayout(gameTable_layout)
 
 # Create header
-header = Header3()
-header.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-gameTable_layout.addWidget(header)
+headerBar = HeaderBar()
+headerBar.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+gameTable_layout.addWidget(headerBar)
 
-def header_onFilterChange(i_columnNo):
+def headerBar_onFilterChange(i_columnNo):
     queryDb()
     tableView.requery()
-header.filterChange.connect(header_onFilterChange)
-
-#headerView = Header3()
-#mainWindow_layout.addWidget(headerView)
-
-#headerView = QTableView()
-#headerModel = HeaderModel(None)
-#headerView.setModel(headerModel)
-#mainWindow_layout.addWidget(headerView)
+headerBar.filterChange.connect(headerBar_onFilterChange)
 
 splitter = QSplitter(Qt.Vertical)
 gameTable_layout.addWidget(splitter)
