@@ -1243,6 +1243,13 @@ class MyTableView(QTableView):
                              g_dbRows[rowNo][g_dbColumnNames.index("FileToRun")],
                              getGameInfoDict(g_dbRows[rowNo]))
 
+    def selectionChanged(self, i_selected, i_deselected):
+        QTableView.selectionChanged(self, i_selected, i_deselected)
+        if detailPane_height() > 0:
+            selectedIndex = self.selectionModel().currentIndex()
+            if selectedIndex.row() != detailPane_currentRowNo:
+                detailPane_populate(selectedIndex.row())
+
     # + Context menu {{{
 
     def onCustomContextMenuRequested(self, i_pos):
@@ -1539,6 +1546,13 @@ def detailPane_hide():
     tableView.setFocus(Qt.OtherFocusReason)
 
 detailPane_margin = QPushButton("x")
+def detailPane_height():
+    """
+    Returns:
+     (int)
+    """
+    return splitter.sizes()[1]
+
 detailPane_margin.clicked.connect(detailPane_hide)
 #detailPane_margin = QWidget()
 detailPane_layout.addWidget(detailPane_margin)
@@ -1558,12 +1572,16 @@ detailPane_webEngineView = QWebEngineView()
 detailPane_webEngineView.setProperty("class", "webEngineView")
 detailPane_layout.addWidget(detailPane_webEngineView)
 
+detailPane_currentRowNo = None
 def detailPane_populate(i_rowNo):
     """
     Params:
      i_rowNo:
       (int)
     """
+    global detailPane_currentRowNo
+    detailPane_currentRowNo = i_rowNo
+
     row = g_dbRows[i_rowNo]
 
     html = ""
