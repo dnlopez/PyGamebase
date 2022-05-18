@@ -688,7 +688,7 @@ class HeaderBar(QWidget):
                 headingButton.clicked.connect(functools.partial(self.button_onClicked, columnNo))
 
         self.insertRow_pushButton = QPushButton("+", self)
-        self.insertRow_pushButton.clicked.connect(functools.partial(self.insertRow_pushButton_onClicked))
+        self.insertRow_pushButton.clicked.connect(self.insertRow_pushButton_onClicked)
 
         self.insertFilterRow(0)
 
@@ -729,6 +729,9 @@ class HeaderBar(QWidget):
         # Resize header to accommodate the current number of filter rows
         self.setFixedHeight(HeaderBar.headingButtonHeight + HeaderBar.filterRowHeight*len(self.filterRows) - 1)
 
+    def appendFilterRow(self):
+        self.insertFilterRow(len(self.filterRows))
+
     def deleteFilterRow(self, i_position):
         """
         Params:
@@ -768,7 +771,7 @@ class HeaderBar(QWidget):
         self.filterChange.emit()
 
     def insertRow_pushButton_onClicked(self):
-        self.insertFilterRow(len(self.filterRows))
+        self.appendFilterRow()
         #self.repositionHeadingButtons()
         self.repositionFilterEdits()
 
@@ -1131,24 +1134,68 @@ class MyTableView(QTableView):
         self.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel)
         self.setHorizontalScrollMode(QAbstractItemView.ScrollPerPixel)
 
-        #
-        def onClick(i_modelIndex):
-            """
-            Params:
-             i_modelIndex:
-              (QModelIndex)
-            """
-            if i_modelIndex.column() == 0:
-                self.scrollTo(i_modelIndex, QAbstractItemView.PositionAtTop)
-                detailPane_show()
-                detailPane_populate(i_modelIndex.row())
+        # + Context menu {{{
 
-            elif i_modelIndex.column() == 1:
-                rowNo = i_modelIndex.row()
-                gamebase.runGame(g_dbRows[rowNo][g_dbColumnNames.index("Filename")],
-                                 g_dbRows[rowNo][g_dbColumnNames.index("FileToRun")],
-                                 getGameInfoDict(g_dbRows[rowNo]))
-        self.clicked.connect(onClick)
+        self.contextMenu = QMenu(self)
+
+        self.contextMenu_filter = QMenu("Filter", self.contextMenu)
+
+        self.contextMenu_filter_or = QMenu("OR", self.contextMenu_filter)
+        action = self.contextMenu_filter_or.addAction("Containing")
+        action.triggered.connect(functools.partial(self.contextMenu_filter_item_onTriggered, "OR", ""))
+        action = self.contextMenu_filter_or.addAction("Not containing")
+        action.triggered.connect(functools.partial(self.contextMenu_filter_item_onTriggered, "OR", "nc"))
+        action = self.contextMenu_filter_or.addAction("Equal to (=)")
+        action.triggered.connect(functools.partial(self.contextMenu_filter_item_onTriggered, "OR", "="))
+        action = self.contextMenu_filter_or.addAction("Not equal to (<>)")
+        action.triggered.connect(functools.partial(self.contextMenu_filter_item_onTriggered, "OR", "<>"))
+        action = self.contextMenu_filter_or.addAction("Greater than (>)")
+        action.triggered.connect(functools.partial(self.contextMenu_filter_item_onTriggered, "OR", ">"))
+        action = self.contextMenu_filter_or.addAction("Greater than or equal to (>=)")
+        action.triggered.connect(functools.partial(self.contextMenu_filter_item_onTriggered, "OR", ">="))
+        action = self.contextMenu_filter_or.addAction("Less than (<)")
+        action.triggered.connect(functools.partial(self.contextMenu_filter_item_onTriggered, "OR", "<"))
+        action = self.contextMenu_filter_or.addAction("Less than or equal to (<=)")
+        action.triggered.connect(functools.partial(self.contextMenu_filter_item_onTriggered, "OR", "<="))
+        action = self.contextMenu_filter_or.addAction("Regular expression (/.../)")
+        action.triggered.connect(functools.partial(self.contextMenu_filter_item_onTriggered, "OR", "/.../"))
+        self.contextMenu_filter.addMenu(self.contextMenu_filter_or)
+
+        self.contextMenu_filter.addSeparator()
+        action = self.contextMenu_filter.addAction("AND")
+        action.setEnabled(False)
+        action = self.contextMenu_filter.addAction("Containing")
+        action.triggered.connect(functools.partial(self.contextMenu_filter_item_onTriggered, "AND", ""))
+        action = self.contextMenu_filter.addAction("Not containing")
+        action.triggered.connect(functools.partial(self.contextMenu_filter_item_onTriggered, "AND", "nc"))
+        action = self.contextMenu_filter.addAction("Equal to (=)")
+        action.triggered.connect(functools.partial(self.contextMenu_filter_item_onTriggered, "AND", "="))
+        action = self.contextMenu_filter.addAction("Not equal to (<>)")
+        action.triggered.connect(functools.partial(self.contextMenu_filter_item_onTriggered, "AND", "<>"))
+        action = self.contextMenu_filter.addAction("Greater than (>)")
+        action.triggered.connect(functools.partial(self.contextMenu_filter_item_onTriggered, "AND", ">"))
+        action = self.contextMenu_filter.addAction("Greater than or equal to (>=)")
+        action.triggered.connect(functools.partial(self.contextMenu_filter_item_onTriggered, "AND", ">="))
+        action = self.contextMenu_filter.addAction("Less than (<)")
+        action.triggered.connect(functools.partial(self.contextMenu_filter_item_onTriggered, "AND", "<"))
+        action = self.contextMenu_filter.addAction("Less than or equal to (<=)")
+        action.triggered.connect(functools.partial(self.contextMenu_filter_item_onTriggered, "AND", "<="))
+        action = self.contextMenu_filter.addAction("Regular expression (/.../)")
+        action.triggered.connect(functools.partial(self.contextMenu_filter_item_onTriggered, "AND", "/.../"))
+
+        self.contextMenu.addMenu(self.contextMenu_filter)
+
+        self.contextMenu.addSeparator()
+        action = self.contextMenu.addAction("Copy")
+        action.triggered.connect(self.clipboardCopy)
+        action.setShortcut(QKeySequence("Ctrl+C"))
+        self.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.customContextMenuRequested.connect(self.onCustomContextMenuRequested)
+
+        # + }}}
+
+        #
+        self.clicked.connect(self.onClick)
 
         #https://stackoverflow.com/questions/69076597/how-can-i-remove-the-outside-gridlines-of-qtablewidget-and-qheaderview
         # Have no border on the table view so the scrollbar is right at the edge
@@ -1161,6 +1208,52 @@ class MyTableView(QTableView):
         #self.horizontalHeader().setStyleSheet("""
         #    QHeaderView::section {padding-left: 0px; border: 0px}
         #""")
+
+    def onClick(self, i_modelIndex):
+        """
+        Params:
+         i_modelIndex:
+          (QModelIndex)
+        """
+        if i_modelIndex.column() == 0:
+            self.scrollTo(i_modelIndex, QAbstractItemView.PositionAtTop)
+            detailPane_show()
+            detailPane_populate(i_modelIndex.row())
+
+        elif i_modelIndex.column() == 1:
+            rowNo = i_modelIndex.row()
+            gamebase.runGame(g_dbRows[rowNo][g_dbColumnNames.index("Filename")],
+                             g_dbRows[rowNo][g_dbColumnNames.index("FileToRun")],
+                             getGameInfoDict(g_dbRows[rowNo]))
+
+    # + Context menu {{{
+
+    def onCustomContextMenuRequested(self, i_pos):
+        self.contextMenu.popup(self.viewport().mapToGlobal(i_pos))
+
+    def contextMenu_filter_item_onTriggered(self, i_combiner, i_comparisonOperation): #, i_checked):
+        print("contextMenu_filter_item_onTriggered")
+        print(i_comparisonOperation)
+        selectedIndex = self.selectionModel().currentIndex()
+        selectedValue = self.tableModel.data(selectedIndex, Qt.DisplayRole)
+
+        formattedCriteria = None
+        if i_comparisonOperation == "nc":
+            formattedCriteria = "/^((?!" + str(selectedValue) + ").)*$/"
+        elif i_comparisonOperation == "/.../":
+            formattedCriteria = "/" + str(selectedValue) + "/"
+        else:
+            formattedCriteria = i_comparisonOperation + str(selectedValue)
+
+        if i_combiner == "OR":
+            headerBar.appendFilterRow()
+            headerBar.repositionFilterEdits()
+
+        columnId = g_columns[selectedIndex.column()]["id"]
+        headerBar.filterRows[-1]["columnFilterEdits"][columnId].setText(formattedCriteria)
+        headerBar.filterChange.emit()
+
+    # + }}}
 
     def scrollContentsBy(self, i_dx, i_dy):
         # If the table view is scrolled horizontally,
@@ -1190,34 +1283,37 @@ class MyTableView(QTableView):
         # Restore initial scrollbar position
         self.horizontalScrollBar().setValue(initialValue)
 
+    def clipboardCopy(self):
+        selectedIndexes = self.selectedIndexes()
+        if len(selectedIndexes) == 1:
+            QApplication.clipboard().setText(self.tableModel.data(selectedIndexes[0], Qt.DisplayRole))
+        elif len(selectedIndexes) > 1:
+            # Group selected cells by row
+            import itertools
+            indexGroups = itertools.groupby(sorted(selectedIndexes), lambda index: index.row())
+            # Extract text of each cell
+            textRows = []
+            for indexGroup in indexGroups:
+                textRows.append([self.tableModel.data(index, Qt.DisplayRole)  for index in indexGroup[1]])
+            # Convert texts to CSV format
+            rowCsvs = []
+            for textRow in textRows:
+                rowCsv = []
+                for text in textRow:
+                    if isinstance(text, str):
+                        text = '"' + text.replace('"', '""') + '"'
+                    else:
+                        text = str(text)
+                    rowCsv.append(text)
+                rowCsvs.append(rowCsv)
+            csv = "\n".join([",".join(rowCsv)  for rowCsv in rowCsvs])
+            # Copy CSV text to clipboard
+            QApplication.clipboard().setText(csv)
+
     def keyPressEvent(self, i_event):
         # If pressed Ctrl+C
         if i_event.key() == Qt.Key_C and (i_event.modifiers() & Qt.ControlModifier):
-            selectedIndexes = self.selectedIndexes()
-            if len(selectedIndexes) == 1:
-                QApplication.clipboard().setText(self.tableModel.data(selectedIndexes[0], Qt.DisplayRole))
-            elif len(selectedIndexes) > 1:
-                # Group selected cells by row
-                import itertools
-                indexGroups = itertools.groupby(sorted(selectedIndexes), lambda index: index.row())
-                # Extract text of each cell
-                textRows = []
-                for indexGroup in indexGroups:
-                    textRows.append([self.tableModel.data(index, Qt.DisplayRole)  for index in indexGroup[1]])
-                # Convert texts to CSV format
-                rowCsvs = []
-                for textRow in textRows:
-                    rowCsv = []
-                    for text in textRow:
-                        if isinstance(text, str):
-                            text = '"' + text.replace('"', '""') + '"'
-                        else:
-                            text = str(text)
-                        rowCsv.append(text)
-                    rowCsvs.append(rowCsv)
-                csv = "\n".join([",".join(rowCsv)  for rowCsv in rowCsvs])
-                # Copy CSV text to clipboard
-                QApplication.clipboard().setText(csv)
+            self.clipboardCopy()
         else:
             super().keyPressEvent(i_event)
 
