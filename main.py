@@ -7,6 +7,7 @@ import sys
 import sqlite3
 import functools
 import os.path
+import re
 
 # Qt
 from PySide2.QtCore import *
@@ -264,6 +265,14 @@ def openDb():
     #print("file:" + gamebase.config_databaseFilePath + "?mode=ro")
     g_db = sqlite3.connect("file:" + gamebase.config_databaseFilePath + "?mode=ro", uri=True)
 
+    # Add REGEXP function
+    def functionRegex(i_pattern, i_value):
+        #print("functionRegex(" + i_value + ", " + i_pattern + ")")
+        #c_pattern = re.compile(r"\b" + i_pattern.lower() + r"\b")
+        compiledPattern = re.compile(i_pattern)
+        return compiledPattern.search(i_value) is not None
+    g_db.create_function("REGEXP", 2, functionRegex)
+
     # Get columns in Games table
     cursor = g_db.execute("PRAGMA table_info(Games)")
     global g_db_gamesColumnNames
@@ -278,6 +287,13 @@ g_dbColumnNames = None
 #  (list of str)
 g_dbRows = None
 #  (list of tuple)
+
+def stringLooksLikeNumber(i_str):
+    try:
+        float(i_str)
+        return True
+    except ValueError:
+        return False
 
 def queryDb():
     # SELECT
@@ -323,11 +339,73 @@ FROM
             value = column["headerFilter"].text()
             value = value.strip()
             if value != "":
-                # TODO: escape '%', "'" etc in value
+                # If range operator
+                betweenValues = value.split("~")
+                if len(betweenValues) == 2 and stringLooksLikeNumber(betweenValues[0]) and stringLooksLikeNumber(betweenValues[1]):
+                    filters.append(column["qualifiedDbFieldName"] + " BETWEEN " + betweenValues[0] + " AND " + betweenValues[1])
 
-                #value = value.toUpperCase();
-                #filters.push("UPPER(" + column["qualifiedDbFieldName"] + ") LIKE '%" + value + "%'")
-                filters.append(column["qualifiedDbFieldName"] + " LIKE '%" + value + "%'")
+                # Else if regular expression
+                elif len(value) > 2 and value.startswith("/") and value.endswith("/"):
+                    # Get regexp
+                    value = value[1:-1]
+
+                    # Format value as a string
+                    value = value.replace("'", "''")
+                    value = "'" + value + "'"
+
+                    #
+                    filters.append(column["qualifiedDbFieldName"] + " REGEXP " + value)
+                    # Format value as a string
+                    value = value.replace("'", "''")
+                    value = "'" + value + "'"
+
+                # Else if 2 character comparison operator
+                elif value.startswith(">=") or value.startswith("<=") or value.startswith("<>"):
+                    # Get operator and value
+                    operator = value[:2]
+                    value = value[2:]
+
+                    # If value doesn't look like a number, format it as a string
+                    if not stringLooksLikeNumber(value):
+                        value = value.replace("'", "''")
+                        value = "'" + value + "'"
+
+                    #
+                    filters.append(column["qualifiedDbFieldName"] + " " + operator + " " + value)
+
+                # Else if 1 character comparison operator
+                elif value.startswith(">") or value.startswith("<") or value.startswith("="):
+                    # Get operator and value
+                    operator = value[:1]
+                    value = value[1:]
+
+                    # If value doesn't look like a number, format it as a string
+                    if not stringLooksLikeNumber(value):
+                        value = value.replace("'", "''")
+                        value = "'" + value + "'"
+
+                    #
+                    filters.append(column["qualifiedDbFieldName"] + " " + operator + " " + value)
+
+                # Else if LIKE expression (contains an unescaped %)
+                elif value.replace("\\%", "").find("%") != -1:
+                    # Format value as a string
+                    value = value.replace("'", "''")
+                    value = "'" + value + "'"
+
+                    #
+                    filters.append(column["qualifiedDbFieldName"] + " LIKE " + value + " ESCAPE '\\'")
+
+                # Else if a plain string
+                else:
+                    value = "%" + value + "%"
+
+                    # Format value as a string
+                    value = value.replace("'", "''")
+                    value = "'" + value + "'"
+
+                    #
+                    filters.append(column["qualifiedDbFieldName"] + " LIKE " + value + " ESCAPE '\\'")
 
     if len(filters) > 0:
         sql += "\nWHERE " + (" AND ".join(filters))
