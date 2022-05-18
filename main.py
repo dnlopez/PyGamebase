@@ -731,7 +731,7 @@ class HeaderBar(QWidget):
         self.filterRows.insert(i_position, newRow)
 
         # Resize header to accommodate the current number of filter rows
-        self.setFixedHeight(HeaderBar.headingButtonHeight + HeaderBar.filterRowHeight*len(self.filterRows) - 1)
+        self.setFixedHeight(HeaderBar.headingButtonHeight + HeaderBar.filterRowHeight*len(self.filterRows))
 
     def appendFilterRow(self):
         self.insertFilterRow(len(self.filterRows))
@@ -752,7 +752,7 @@ class HeaderBar(QWidget):
         del(self.filterRows[i_position])
 
         # Resize header to accommodate the current number of filter rows
-        self.setFixedHeight(HeaderBar.headingButtonHeight + HeaderBar.filterRowHeight*len(self.filterRows) - 1)
+        self.setFixedHeight(HeaderBar.headingButtonHeight + HeaderBar.filterRowHeight*len(self.filterRows))
 
     def clearFilterRow(self, i_position):
         """
