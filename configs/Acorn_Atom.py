@@ -26,26 +26,26 @@ config_extrasBaseDirPath = gamebaseBaseDirPath + "/Extras"
 emulatorCommand = ["rezmame.py", "atom", "-flop1"]#, "$gameFiles"]
 
 
-def runGame(i_zipFilePath, i_zipMemberToRun = None, i_gameInfo = None):
-    #print('runGame(' + pprint.pformat(i_zipFilePath) + ', ' + pprint.pformat(i_zipMemberToRun) + ', ' + pprint.pformat(i_gameInfo) + ')')
+def runGame(i_gamePath, i_fileToRun = None, i_gameInfo = None):
+    #print('runGame(' + pprint.pformat(i_gamePath) + ', ' + pprint.pformat(i_fileToRun) + ', ' + pprint.pformat(i_gameInfo) + ')')
 
     basePath = gamebaseBaseDirPath + "/Games/"
     tempDirPath = "/tmp/gamebase"
 
     # If file is a zip
-    if utils.pathHasExtension(i_zipFilePath, ".ZIP"):
+    if utils.pathHasExtension(i_gamePath, ".ZIP"):
         # Extract it
-        zipMembers = utils.extractZip(basePath + i_zipFilePath, tempDirPath)
+        zipMembers = utils.extractZip(basePath + i_gamePath, tempDirPath)
         gameFiles = zipMembers
     # Else if file is not a zip
     else:
         # Copy it
-        shutil.copyfile(basePath + i_zipFilePath, tempDirPath + "/" + os.path.basename(i_zipFilePath))
-        gameFiles = [os.path.basename(i_zipFilePath)]
+        shutil.copyfile(basePath + i_gamePath, tempDirPath + "/" + os.path.basename(i_gamePath))
+        gameFiles = [os.path.basename(i_gamePath)]
 
     #
-    if i_zipMemberToRun == None:
-        gameFiles = utils.moveElementToFront(gameFiles, i_zipMemberToRun)
+    if i_fileToRun == None:
+        gameFiles = utils.moveElementToFront(gameFiles, i_fileToRun)
 
     #
     command = emulatorCommand[:]
@@ -53,14 +53,14 @@ def runGame(i_zipFilePath, i_zipMemberToRun = None, i_gameInfo = None):
     utils.shellStartTask(command)
 
 
-def runExtra(i_path, i_gameInfo = None):
-    #print('runExtra(' + pprint.pformat(i_path) + ', ' + pprint.pformat(i_gameInfo) + ')')
+def runExtra(i_extraPath, i_gameInfo = None):
+    #print('runExtra(' + pprint.pformat(i_extraPath) + ', ' + pprint.pformat(i_gameInfo) + ')')
 
     # If file is a zip
-    if utils.pathHasExtension(i_path, ".ZIP"):
+    if utils.pathHasExtension(i_extraPath, ".ZIP"):
         # Extract it
         tempDirPath = "/tmp/gamebase"
-        zipMembers = utils.extractZip(config_extrasBaseDirPath + i_path, tempDirPath)
+        zipMembers = utils.extractZip(config_extrasBaseDirPath + i_extraPath, tempDirPath)
 
         # Get game description
         gameDescription = i_gameInfo["name"]
@@ -70,4 +70,4 @@ def runExtra(i_path, i_gameInfo = None):
         #
         runGameMenu(gameDescription, utils.joinPaths(tempDirPath, zipMembers))
     else:
-        utils.openInDefaultApplication(config_extrasBaseDirPath + "/" + i_path)
+        utils.openInDefaultApplication(config_extrasBaseDirPath + "/" + i_extraPath)

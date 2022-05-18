@@ -64,15 +64,15 @@ def runGame2(i_gameDescription, i_gameFilePaths):
     """
     runGameOnMachine(i_gameDescription, "plus4", i_gameFilePaths)
 
-def runGame(i_zipFilePath, i_zipMemberToRun = None, i_gameInfo = None):
-    #print('runGame(' + pprint.pformat(i_zipFilePath) + ', ' + pprint.pformat(i_zipMemberToRun) + ', ' + pprint.pformat(i_gameInfo) + ')')
+def runGame(i_gamePath, i_fileToRun = None, i_gameInfo = None):
+    #print('runGame(' + pprint.pformat(i_gamePath) + ', ' + pprint.pformat(i_fileToRun) + ', ' + pprint.pformat(i_gameInfo) + ')')
 
     basePath = gamebaseBaseDirPath + "/Games/"
 
-    if utils.pathHasExtension(i_zipFilePath, ".ZIP"):
+    if utils.pathHasExtension(i_gamePath, ".ZIP"):
         # Extract zip
         tempDirPath = "/tmp/gamebase"
-        zipMembers = utils.extractZip(basePath + i_zipFilePath, tempDirPath)
+        zipMembers = utils.extractZip(basePath + i_gamePath, tempDirPath)
 
         # Filter non-game files out of zip member list
         gameFilePaths = [zipMember
@@ -81,12 +81,12 @@ def runGame(i_zipFilePath, i_zipMemberToRun = None, i_gameInfo = None):
 
         gameFileBaseDirPath = tempDirPath
     else:
-        gameFilePaths = [i_zipFilePath]
+        gameFilePaths = [i_gamePath]
         gameFileBaseDirPath = basePath
 
     #
-    if i_zipMemberToRun == None:
-        gameFilePaths = utils.moveElementToFront(gameFilePaths, i_zipMemberToRun)
+    if i_fileToRun == None:
+        gameFilePaths = utils.moveElementToFront(gameFilePaths, i_fileToRun)
 
     # Get game description
     gameDescription = i_gameInfo["name"]
@@ -96,14 +96,14 @@ def runGame(i_zipFilePath, i_zipMemberToRun = None, i_gameInfo = None):
     #
     runGame2(gameDescription, utils.joinPaths(gameFileBaseDirPath, gameFilePaths))
 
-def runExtra(i_path, i_gameInfo = None):
-    #print('runExtra(' + pprint.pformat(i_path) + ', ' + pprint.pformat(i_gameInfo) + ')')
+def runExtra(i_extraPath, i_gameInfo = None):
+    #print('runExtra(' + pprint.pformat(i_extraPath) + ', ' + pprint.pformat(i_gameInfo) + ')')
 
     # If zip file
-    if utils.pathHasExtension(i_path, ".ZIP"):
+    if utils.pathHasExtension(i_extraPath, ".ZIP"):
         # Extract zip
         tempDirPath = "/tmp/gamebase"
-        zipMembers = utils.extractZip(config_extrasBaseDirPath + i_path, tempDirPath)
+        zipMembers = utils.extractZip(config_extrasBaseDirPath + i_extraPath, tempDirPath)
 
         # Get game description
         gameDescription = i_gameInfo["name"]
@@ -113,4 +113,4 @@ def runExtra(i_path, i_gameInfo = None):
         #
         runGame2(gameDescription, utils.joinPaths(tempDirPath, zipMembers))
     else:
-        utils.openInDefaultApplication(config_extrasBaseDirPath + "/" + i_path)
+        utils.openInDefaultApplication(config_extrasBaseDirPath + "/" + i_extraPath)
