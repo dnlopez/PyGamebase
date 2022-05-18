@@ -1195,7 +1195,8 @@ class MyTableView(QTableView):
         # + }}}
 
         #
-        self.clicked.connect(self.onClick)
+        self.clicked.connect(self.onActivatedOrClicked)
+        self.activated.connect(self.onActivatedOrClicked)
 
         #https://stackoverflow.com/questions/69076597/how-can-i-remove-the-outside-gridlines-of-qtablewidget-and-qheaderview
         # Have no border on the table view so the scrollbar is right at the edge
@@ -1209,7 +1210,7 @@ class MyTableView(QTableView):
         #    QHeaderView::section {padding-left: 0px; border: 0px}
         #""")
 
-    def onClick(self, i_modelIndex):
+    def onActivatedOrClicked(self, i_modelIndex):
         """
         Params:
          i_modelIndex:
