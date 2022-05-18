@@ -994,6 +994,8 @@ class MyTableModel(QAbstractTableModel):
         # Play
         elif i_index.column() == 1:
             if i_role == Qt.DisplayRole:
+                if g_dbRows[i_index.row()][g_dbColumnNames.index("Filename")] == None:
+                    return ""
                 return "▶"
             elif i_role == Qt.TextAlignmentRole:
                 return Qt.AlignCenter
