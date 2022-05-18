@@ -1770,6 +1770,13 @@ ORDER BY
     # Let background of application show through to stop white flash on page loads
     webEnginePage.setBackgroundColor(Qt.transparent)
 
+    def webEnginePage_onLinkHovered(i_url):
+        if i_url == "":
+            label_statusbar.setText("Showing " + str(len(g_dbRows)) + " games.")
+        else:
+            label_statusbar.setText(i_url)
+    webEnginePage.linkHovered.connect(webEnginePage_onLinkHovered)
+
     # Load web engine page into the web engine view
     #webEnginePage.setView(detailPane_webEngineView)
     detailPane_webEngineView.setPage(webEnginePage)
