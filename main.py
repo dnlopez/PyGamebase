@@ -1130,11 +1130,11 @@ class MyTableView(QTableView):
         self.verticalHeader().hide()
 
         #self.horizontalHeader().setSectionResizeMode(QHeaderView.Fixed)
-        self.horizontalHeader().setDefaultSectionSize(200)
-        self.horizontalHeader().resizeSection(0, 20)
-        self.horizontalHeader().resizeSection(1, 20)
-        self.horizontalHeader().resizeSection(2, 300)
-        self.horizontalHeader().resizeSection(3, 50)
+        #self.horizontalHeader().setDefaultSectionSize(200)
+        #self.horizontalHeader().resizeSection(0, 20)
+        #self.horizontalHeader().resizeSection(1, 20)
+        #self.horizontalHeader().resizeSection(2, 300)
+        #self.horizontalHeader().resizeSection(3, 50)
         self.horizontalHeader().hide()
 
         self.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel)
