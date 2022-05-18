@@ -1225,6 +1225,7 @@ class MyTableView(QTableView):
             self.scrollTo(i_modelIndex, QAbstractItemView.PositionAtTop)
             detailPane_show()
             detailPane_populate(i_modelIndex.row())
+            detailPane_webEngineView.setFocus(Qt.OtherFocusReason)
 
         elif i_modelIndex.column() == 1:
             rowNo = i_modelIndex.row()
@@ -1238,8 +1239,6 @@ class MyTableView(QTableView):
         self.contextMenu.popup(self.viewport().mapToGlobal(i_pos))
 
     def contextMenu_filter_item_onTriggered(self, i_combiner, i_comparisonOperation): #, i_checked):
-        print("contextMenu_filter_item_onTriggered")
-        print(i_comparisonOperation)
         selectedIndex = self.selectionModel().currentIndex()
         selectedValue = self.tableModel.data(selectedIndex, Qt.DisplayRole)
 
@@ -1350,7 +1349,6 @@ frontend.mainWindow = mainWindow
 shortcut = QShortcut(QKeySequence("Ctrl+F"), mainWindow)
 shortcut.setContext(Qt.ApplicationShortcut)
 def ctrlFShortcut_onActivated():
-    print("ctrlFShortcut_onActivated")
     firstVisibleAndFilterableColumn = None
     for column in g_columns:
         if column["visible"] and column["filterable"]:
@@ -1359,6 +1357,19 @@ def ctrlFShortcut_onActivated():
     if firstVisibleAndFilterableColumn != None:
         headerBar.filterRows[0]["columnFilterEdits"][firstVisibleAndFilterableColumn["id"]].setFocus(Qt.ShortcutFocusReason)
 shortcut.activated.connect(ctrlFShortcut_onActivated)
+
+shortcut = QShortcut(QKeySequence("Escape"), mainWindow)
+shortcut.setContext(Qt.ApplicationShortcut)
+def escShortcut_onActivated():
+    # If table view is not already focused,
+    # focus it
+    if not tableView.hasFocus():
+        tableView.setFocus(Qt.ShortcutFocusReason)
+    # Else if table view is not already focused,
+    # close the detail pane
+    else:
+        detailPane_hide()
+shortcut.activated.connect(escShortcut_onActivated)
 
 # Window layout
 mainWindow_layout = QVBoxLayout()
@@ -1479,17 +1490,17 @@ for columnNo, column in enumerate(g_columns):
     tableView.horizontalHeader().resizeSection(columnNo, column["width"])
 
 # Create detail pane
-class DetailPane(QWidget):
-    def __init__(self):
-        QWidget.__init__(self)
-        QShortcut(QKeySequence("Escape"), self, activated=self.escapeShortcut_onActivated)
-        #QShortcut(QKeySequence("Page Up"), self, activated=self.pageUpShortcut_onActivated)
-    def escapeShortcut_onActivated(self):
-        detailPane_hide()
-    #def pageUpShortcut_onActivated(self):
-    #    detailPane_hide()
+#class DetailPane(QWidget):
+#    def __init__(self):
+#        QWidget.__init__(self)
+#        #QShortcut(QKeySequence("Escape"), self, activated=self.escapeShortcut_onActivated)
+#        #QShortcut(QKeySequence("Page Up"), self, activated=self.pageUpShortcut_onActivated)
+#    #def escapeShortcut_onActivated(self):
+#    #    detailPane_hide()
+#    #def pageUpShortcut_onActivated(self):
+#    #    detailPane_hide()
 
-detailPane_widget = DetailPane()
+detailPane_widget = QWidget()
 detailPane_widget.setProperty("class", "detailPane")
 splitter.addWidget(detailPane_widget)
 splitter.setStretchFactor(1, 1)  # Do stretch detail pane when window is resized
@@ -1513,6 +1524,8 @@ def detailPane_hide():
     splitter.setSizes([splitter.geometry().height(), 0])
     # Stop forcibly aligning an item to the top of the table view
     tableView.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel)
+    # Give focus to the component next in line, ie. the table view
+    tableView.setFocus(Qt.OtherFocusReason)
 
 detailPane_margin = QPushButton("x")
 detailPane_margin.clicked.connect(detailPane_hide)
