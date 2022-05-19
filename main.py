@@ -1246,6 +1246,7 @@ class MyTableView(QTableView):
         #  State used while resizing
         self.resize_rowNo = None
         self.resize_lastMouseY = None
+        self.resize_selectedRowTopY = None
 
     def onActivatedOrClicked(self, i_modelIndex):
         """
@@ -1430,8 +1431,10 @@ class MyTableView(QTableView):
                 mousePos = i_watched.mapTo(self, i_event.pos())
                 # Get distance moved
                 deltaY = mousePos.y() - self.resize_lastMouseY
-                #
+                # Change row height
                 self.verticalHeader().setDefaultSectionSize(self.rowHeight() + deltaY)
+                # Keep start of initially resized row in same position on screen
+                self.verticalScrollBar().setValue(self.rowHeight() * self.resize_rowNo - self.resize_selectedRowTopY)
 
                 self.resize_lastMouseY = mousePos.y()
 
@@ -1449,10 +1452,10 @@ class MyTableView(QTableView):
                     self.resize_rowNo = rowNo
                     self.resize_lastMouseY = mousePos.y()
 
-                    # Remember what game is currently selected and where on the screen the row is
+                    # Remember where on the screen the row being resized is
                     #selectedIndex = tableView.selectionModel().currentIndex()
                     #self.resize_selectedRowId = g_dbRows[selectedIndex.row()][g_dbColumnNames.index("GA_Id")]
-                    #selectedRowTopY = tableView.rowViewportPosition(selectedIndex.row())
+                    self.resize_selectedRowTopY = tableView.rowViewportPosition(rowNo)
 
                     #
                     return True
