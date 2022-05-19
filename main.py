@@ -854,7 +854,7 @@ class HeaderBar(QWidget):
             # then depending on whether cursor is near a draggable vertical edge,
             # set cursor shape
             if self.resize_columnNo == None:
-                # Get mouse pos relative to HeaderBar
+                # Get mouse pos relative to the HeaderBar
                 # and adjust for horizontal scroll amount
                 mousePos = i_watched.mapTo(self, i_event.pos())
                 mousePos.setX(mousePos.x() - self.scrollX)
@@ -867,7 +867,7 @@ class HeaderBar(QWidget):
             # Else if currently resizing,
             # do the resize
             else:
-                # Get mouse pos relative to HeaderBar
+                # Get mouse pos relative to the HeaderBar
                 # and adjust for horizontal scroll amount
                 mousePos = i_watched.mapTo(self, i_event.pos())
                 mousePos.setX(mousePos.x() - self.scrollX)
@@ -892,7 +892,7 @@ class HeaderBar(QWidget):
         elif i_event.type() == QEvent.MouseButtonPress:
             # If pressed the left button
             if i_event.button() == Qt.MouseButton.LeftButton:
-                # Get mouse pos relative to HeaderBar
+                # Get mouse pos relative to the HeaderBar
                 # and adjust for horizontal scroll amount
                 mousePos = i_watched.mapTo(self, i_event.pos())
                 mousePos.setX(mousePos.x() - self.scrollX)
@@ -1225,6 +1225,14 @@ class MyTableView(QTableView):
         #    QHeaderView::section {padding-left: 0px; border: 0px}
         #""")
 
+        # Resizing of rows by mouse dragging
+        self.viewport().installEventFilter(self)
+        #  Receive mouse move events even if button isn't held down
+        self.viewport().setMouseTracking(True)
+        #  State used while resizing
+        self.resize_row = False
+        self.resize_lastMouseY = None
+
     def onActivatedOrClicked(self, i_modelIndex):
         """
         Params:
@@ -1338,6 +1346,85 @@ class MyTableView(QTableView):
             self.clipboardCopy()
         else:
             super().keyPressEvent(i_event)
+
+    # + Resizing rows by mouse dragging {{{
+
+    def _rowBoundaryAtPixelY(self, i_y):
+        """
+        Params:
+         i_y:
+          (int)
+          Relative to the top of the widget.
+
+        Returns:
+         (bool)
+        """
+        # Account for current scroll position
+        i_y += self.verticalScrollBar().value()
+        #
+        rowHeight = self.verticalHeader().defaultSectionSize()
+        i_y %= rowHeight
+        return i_y <= HeaderBar.resizeMargin or i_y >= rowHeight - HeaderBar.resizeMargin
+
+    def eventFilter(self, i_watched, i_event):
+        #print(i_event.type())
+
+        if i_event.type() == QEvent.MouseMove:
+            # If not currently resizing,
+            # then depending on whether cursor is near a draggable horizontal edge,
+            # set cursor shape
+            if not self.resize_row:
+                # Get mouse pos relative to the MyTableView
+                mousePos = i_watched.mapTo(self, i_event.pos())
+                # If cursor is near a draggable horizontal edge
+                # change the pointer shape
+                isBoundary = self._rowBoundaryAtPixelY(mousePos.y())
+                if isBoundary:
+                    self.setCursor(Qt.SizeVerCursor)
+                else:
+                    self.unsetCursor()
+            # Else if currently resizing,
+            # do the resize
+            else:
+                # Get mouse pos relative to the MyTableView
+                mousePos = i_watched.mapTo(self, i_event.pos())
+                # Get distance moved
+                deltaY = mousePos.y() - self.resize_lastMouseY
+                #
+                self.verticalHeader().setDefaultSectionSize(self.verticalHeader().defaultSectionSize() + deltaY)
+
+                self.resize_lastMouseY = mousePos.y()
+
+                return True
+
+        elif i_event.type() == QEvent.MouseButtonPress:
+            # If pressed the left button
+            if i_event.button() == Qt.MouseButton.LeftButton:
+                # Get mouse pos relative to the MyTableView
+                mousePos = i_watched.mapTo(self, i_event.pos())
+                # If cursor is near a draggable horizontal edge
+                # change the pointer shape
+                isBoundary = self._rowBoundaryAtPixelY(mousePos.y())
+                if isBoundary:
+                    self.resize_row = True
+                    self.resize_lastMouseY = mousePos.y()
+
+                    #
+                    return True
+
+        elif i_event.type() == QEvent.MouseButtonRelease:
+            # If currently resizing and released the left button
+            if self.resize_row and i_event.button() == Qt.MouseButton.LeftButton:
+                # Stop resizing
+                self.resize_row = False
+
+                #
+                return True
+
+        # Let event continue
+        return False
+
+    # + }}}
 
 # Create a Qt application
 # (or reuse old one if it already exists; ie. when re-running in REPL during development)
@@ -1529,7 +1616,7 @@ detailPane_widget.setLayout(detailPane_layout)
 
 def detailPane_show():
     # Position splitter so that the table view shows exactly one row
-    topPaneHeight = 200  # Row height
+    topPaneHeight = tableView.verticalHeader().defaultSectionSize()
     if tableView.horizontalScrollBar().isVisible():
         topPaneHeight += application.style().pixelMetric(QStyle.PM_ScrollBarExtent)  # Scrollbar height
     splitter.setSizes([topPaneHeight, splitter.geometry().height() - topPaneHeight])
