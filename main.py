@@ -1253,6 +1253,7 @@ class MyTableView(QTableView):
 
     def selectionChanged(self, i_selected, i_deselected):
         QTableView.selectionChanged(self, i_selected, i_deselected)
+
         if detailPane_height() > 0:
             selectedIndex = self.selectionModel().currentIndex()
             if selectedIndex.row() != detailPane_currentRowNo:
@@ -1349,6 +1350,16 @@ class MyTableView(QTableView):
 
     # + Resizing rows by mouse dragging {{{
 
+    # Within this many pixels either side of a horizontal boundary between rows, allow dragging to resize a row.
+    resizeMargin = 10
+
+    def rowHeight(self):
+        """
+        Returns:
+         (int)
+        """
+        return self.verticalHeader().defaultSectionSize()
+
     def _rowBoundaryAtPixelY(self, i_y):
         """
         Params:
@@ -1362,9 +1373,9 @@ class MyTableView(QTableView):
         # Account for current scroll position
         i_y += self.verticalScrollBar().value()
         #
-        rowHeight = self.verticalHeader().defaultSectionSize()
+        rowHeight = self.rowHeight()
         i_y %= rowHeight
-        return i_y <= HeaderBar.resizeMargin or i_y >= rowHeight - HeaderBar.resizeMargin
+        return i_y <= MyTableView.resizeMargin or i_y >= rowHeight - MyTableView.resizeMargin
 
     def eventFilter(self, i_watched, i_event):
         #print(i_event.type())
@@ -1391,7 +1402,7 @@ class MyTableView(QTableView):
                 # Get distance moved
                 deltaY = mousePos.y() - self.resize_lastMouseY
                 #
-                self.verticalHeader().setDefaultSectionSize(self.verticalHeader().defaultSectionSize() + deltaY)
+                self.verticalHeader().setDefaultSectionSize(self.rowHeight() + deltaY)
 
                 self.resize_lastMouseY = mousePos.y()
 
@@ -1570,8 +1581,29 @@ headerBar.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 gameTable_layout.addWidget(headerBar)
 
 def headerBar_onFilterChange():
+    # Remember what game is currently selected and where on the screen the row is
+    selectedIndex = tableView.selectionModel().currentIndex()
+    selectedGameId = g_dbRows[selectedIndex.row()][g_dbColumnNames.index("GA_Id")]
+    selectedRowTopY = tableView.rowViewportPosition(selectedIndex.row())
+
+    # Query database and update table widget data
     queryDb()
     tableView.requery()
+
+    # Find new row number of the previously selected game
+    idColumnNo = g_dbColumnNames.index("GA_Id")
+    newDbRowNo = None
+    for dbRowNo, dbRow in enumerate(g_dbRows):
+        if dbRow[idColumnNo] == selectedGameId:
+            newDbRowNo = dbRowNo
+            break
+
+    # If found, scroll to put that same game in the same screen position it previously was
+    if newDbRowNo == None:
+        tableView.scrollToTop()
+    else:
+        tableView.verticalScrollBar().setValue(tableView.rowHeight() * newDbRowNo - selectedRowTopY)
+        tableView.selectionModel().setCurrentIndex(tableView.selectionModel().model().index(newDbRowNo, selectedIndex.column()), QItemSelectionModel.ClearAndSelect)
 headerBar.filterChange.connect(headerBar_onFilterChange)
 
 splitter = QSplitter(Qt.Vertical)
@@ -1616,7 +1648,7 @@ detailPane_widget.setLayout(detailPane_layout)
 
 def detailPane_show():
     # Position splitter so that the table view shows exactly one row
-    topPaneHeight = tableView.verticalHeader().defaultSectionSize()
+    topPaneHeight = tableView.rowHeight()
     if tableView.horizontalScrollBar().isVisible():
         topPaneHeight += application.style().pixelMetric(QStyle.PM_ScrollBarExtent)  # Scrollbar height
     splitter.setSizes([topPaneHeight, splitter.geometry().height() - topPaneHeight])
