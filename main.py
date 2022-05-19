@@ -1656,27 +1656,32 @@ gameTable_layout.addWidget(headerBar)
 def headerBar_onFilterChange():
     # Remember what game is currently selected and where on the screen the row is
     selectedIndex = tableView.selectionModel().currentIndex()
-    selectedGameId = g_dbRows[selectedIndex.row()][g_dbColumnNames.index("GA_Id")]
-    selectedRowTopY = tableView.rowViewportPosition(selectedIndex.row())
+    if selectedIndex.row() < 0 or selectedIndex.row() >= len(g_dbRows):
+        selectedGameId = None
+    else:
+        selectedGameId = g_dbRows[selectedIndex.row()][g_dbColumnNames.index("GA_Id")]
+        selectedRowTopY = tableView.rowViewportPosition(selectedIndex.row())
 
     # Query database and update table widget data
     queryDb()
     tableView.requery()
 
-    # Find new row number of the previously selected game
-    idColumnNo = g_dbColumnNames.index("GA_Id")
-    newDbRowNo = None
-    for dbRowNo, dbRow in enumerate(g_dbRows):
-        if dbRow[idColumnNo] == selectedGameId:
-            newDbRowNo = dbRowNo
-            break
+    # If a game was previously selected,
+    # search for new row number of that game
+    # and if found, scroll to put that game in the same screen position it previously was
+    if selectedGameId != None:
+        idColumnNo = g_dbColumnNames.index("GA_Id")
+        newDbRowNo = None
+        for dbRowNo, dbRow in enumerate(g_dbRows):
+            if dbRow[idColumnNo] == selectedGameId:
+                newDbRowNo = dbRowNo
+                break
 
-    # If found, scroll to put that same game in the same screen position it previously was
-    if newDbRowNo == None:
-        tableView.scrollToTop()
-    else:
-        tableView.verticalScrollBar().setValue(tableView.rowHeight() * newDbRowNo - selectedRowTopY)
-        tableView.selectionModel().setCurrentIndex(tableView.selectionModel().model().index(newDbRowNo, selectedIndex.column()), QItemSelectionModel.ClearAndSelect)
+        if newDbRowNo == None:
+            tableView.scrollToTop()
+        else:
+            tableView.verticalScrollBar().setValue(tableView.rowHeight() * newDbRowNo - selectedRowTopY)
+            tableView.selectionModel().setCurrentIndex(tableView.selectionModel().model().index(newDbRowNo, selectedIndex.column()), QItemSelectionModel.ClearAndSelect)
 headerBar.filterChange.connect(headerBar_onFilterChange)
 
 splitter = QSplitter(Qt.Vertical)
