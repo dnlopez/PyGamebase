@@ -344,28 +344,23 @@ FROM
                         value = value.replace("'", "''")
                         value = "'" + value + "'"
 
-                    # Else if 2 character comparison operator
-                    elif value.startswith(">=") or value.startswith("<=") or value.startswith("<>"):
+                    # Else if a comparison operator (=, <>, >, <, >=, <=)
+                    elif value.startswith("=") or value.startswith(">") or value.startswith("<"):
                         # Get operator and value
-                        operator = value[:2]
-                        value = value[2:]
+                        if value.startswith(">=") or value.startswith("<=") or value.startswith("<>"):
+                            operator = value[:2]
+                            value = value[2:]
+                        else:
+                            operator = value[:1]
+                            value = value[1:]
 
-                        # If value doesn't look like a number, format it as a string
-                        if not stringLooksLikeNumber(value):
-                            value = value.replace("'", "''")
-                            value = "'" + value + "'"
-
-                        #
-                        andTerms.append(column["qualifiedDbFieldName"] + " " + operator + " " + value)
-
-                    # Else if 1 character comparison operator
-                    elif value.startswith(">") or value.startswith("<") or value.startswith("="):
-                        # Get operator and value
-                        operator = value[:1]
-                        value = value[1:]
-
-                        # If value doesn't look like a number, format it as a string
-                        if not stringLooksLikeNumber(value):
+                        # If testing for exact equality, handle the special value "NULL"
+                        if operator == "=" and value == "NULL":
+                            operator = "IS"
+                        elif operator == "<>" and value == "NULL":
+                            operator = "IS NOT"
+                        # Else if value doesn't look like a number, format it as a string
+                        elif not stringLooksLikeNumber(value):
                             value = value.replace("'", "''")
                             value = "'" + value + "'"
 
