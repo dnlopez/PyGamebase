@@ -828,12 +828,26 @@ class HeaderBar(QWidget):
 
     # + Resizing columns by mouse dragging {{{
 
-    def _columnBoundaryAtPixelX(self, i_x):
+    def _columnBoundaryNearPixelX(self, i_x):
         """
         Params:
          i_x:
           (int)
           Relative to the left of the window.
+
+        Returns:
+         Either (tuple)
+          Tuple has elements:
+           0:
+            (int)
+            Column number
+           1:
+            (dict)
+            Column info from g_columns
+           2:
+            (int)
+            Column edge X pixel position
+          (None, None, None): There is not a column boundary near i_x.
         """
         x = 0
 
@@ -859,7 +873,7 @@ class HeaderBar(QWidget):
                 mousePos = i_watched.mapTo(self, i_event.pos())
                 mousePos.setX(mousePos.x() - self.scrollX)
                 #
-                columnNo, _, _ = self._columnBoundaryAtPixelX(mousePos.x())
+                columnNo, _, _ = self._columnBoundaryNearPixelX(mousePos.x())
                 if columnNo != None:
                     self.setCursor(Qt.SizeHorCursor)
                 else:
@@ -897,7 +911,7 @@ class HeaderBar(QWidget):
                 mousePos = i_watched.mapTo(self, i_event.pos())
                 mousePos.setX(mousePos.x() - self.scrollX)
                 # If cursor is near a draggable vertical edge
-                columnNo, column, edgeX = self._columnBoundaryAtPixelX(mousePos.x())
+                columnNo, column, edgeX = self._columnBoundaryNearPixelX(mousePos.x())
                 if columnNo != None:
                     #
                     self.resize_columnNo = columnNo
@@ -1230,7 +1244,7 @@ class MyTableView(QTableView):
         #  Receive mouse move events even if button isn't held down
         self.viewport().setMouseTracking(True)
         #  State used while resizing
-        self.resize_row = False
+        self.resize_rowNo = None
         self.resize_lastMouseY = None
 
     def onActivatedOrClicked(self, i_modelIndex):
@@ -1360,7 +1374,7 @@ class MyTableView(QTableView):
         """
         return self.verticalHeader().defaultSectionSize()
 
-    def _rowBoundaryAtPixelY(self, i_y):
+    def _rowBoundaryNearPixelY(self, i_y):
         """
         Params:
          i_y:
@@ -1368,14 +1382,29 @@ class MyTableView(QTableView):
           Relative to the top of the widget.
 
         Returns:
-         (bool)
+         Either (tuple)
+          Tuple has elements:
+           0:
+            (int)
+            Row number
+           1:
+            (int)
+            Row edge Y pixel position
+          (None, None): There is not a row boundary near i_y.
         """
         # Account for current scroll position
         i_y += self.verticalScrollBar().value()
         #
         rowHeight = self.rowHeight()
-        i_y %= rowHeight
-        return i_y <= MyTableView.resizeMargin or i_y >= rowHeight - MyTableView.resizeMargin
+        offsetFromEdge = i_y % rowHeight
+        if offsetFromEdge >= rowHeight - MyTableView.resizeMargin:
+            rowNo = int(i_y / rowHeight)
+            return (rowNo, rowNo * rowHeight - self.verticalScrollBar().value())
+        elif offsetFromEdge <= MyTableView.resizeMargin:
+            rowNo = int(i_y / rowHeight) - 1
+            return (rowNo, rowNo * rowHeight - self.verticalScrollBar().value())
+        else:
+            return None, None
 
     def eventFilter(self, i_watched, i_event):
         #print(i_event.type())
@@ -1384,13 +1413,13 @@ class MyTableView(QTableView):
             # If not currently resizing,
             # then depending on whether cursor is near a draggable horizontal edge,
             # set cursor shape
-            if not self.resize_row:
+            if self.resize_rowNo == None:
                 # Get mouse pos relative to the MyTableView
                 mousePos = i_watched.mapTo(self, i_event.pos())
                 # If cursor is near a draggable horizontal edge
                 # change the pointer shape
-                isBoundary = self._rowBoundaryAtPixelY(mousePos.y())
-                if isBoundary:
+                rowNo, _ = self._rowBoundaryNearPixelY(mousePos.y())
+                if rowNo != None:
                     self.setCursor(Qt.SizeVerCursor)
                 else:
                     self.unsetCursor()
@@ -1415,19 +1444,24 @@ class MyTableView(QTableView):
                 mousePos = i_watched.mapTo(self, i_event.pos())
                 # If cursor is near a draggable horizontal edge
                 # change the pointer shape
-                isBoundary = self._rowBoundaryAtPixelY(mousePos.y())
-                if isBoundary:
-                    self.resize_row = True
+                rowNo, _ = self._rowBoundaryNearPixelY(mousePos.y())
+                if rowNo != None:
+                    self.resize_rowNo = rowNo
                     self.resize_lastMouseY = mousePos.y()
+
+                    # Remember what game is currently selected and where on the screen the row is
+                    #selectedIndex = tableView.selectionModel().currentIndex()
+                    #self.resize_selectedRowId = g_dbRows[selectedIndex.row()][g_dbColumnNames.index("GA_Id")]
+                    #selectedRowTopY = tableView.rowViewportPosition(selectedIndex.row())
 
                     #
                     return True
 
         elif i_event.type() == QEvent.MouseButtonRelease:
             # If currently resizing and released the left button
-            if self.resize_row and i_event.button() == Qt.MouseButton.LeftButton:
+            if self.resize_rowNo != None and i_event.button() == Qt.MouseButton.LeftButton:
                 # Stop resizing
-                self.resize_row = False
+                self.resize_rowNo = None
 
                 #
                 return True
