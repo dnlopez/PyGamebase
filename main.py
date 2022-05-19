@@ -90,7 +90,7 @@ gamebase = importlib.import_module(os.path.splitext(os.path.basename(param_confi
 
 
 
-# + Column visibility {{{
+# + Columns {{{
 
 g_columns = [
     { "id": "detail",
@@ -1015,7 +1015,10 @@ class MyStyledItemDelegate(QStyledItemDelegate):
         #if i_option.state & QStyle.State_Selected:
         #    i_painter.fillRect(i_option.rect, i_option.palette.highlight())
 
-        if i_index.column() == 2:
+        column = g_columns[i_index.column()]
+
+        # Screenshot
+        if column["id"] == "pic":
             screenshotPath = dbRow_getScreenshotRelativePath(g_dbRows[i_index.row()])
             if screenshotPath != None:
                 if hasattr(gamebase, "config_screenshotsBaseDirPath"):
@@ -1042,14 +1045,16 @@ class MyTableModel(QAbstractTableModel):
         if not i_index.isValid():
             return None
 
+        column = g_columns[i_index.column()]
+
         # Detail
-        if i_index.column() == 0:
+        if column["id"] == "detail":
             if i_role == Qt.DisplayRole:
                 return "+"
             elif i_role == Qt.TextAlignmentRole:
                 return Qt.AlignCenter
         # Play
-        elif i_index.column() == 1:
+        elif column["id"] == "play":
             if i_role == Qt.DisplayRole:
                 if g_dbRows[i_index.row()][g_dbColumnNames.index("Filename")] == None:
                     return ""
@@ -1057,7 +1062,7 @@ class MyTableModel(QAbstractTableModel):
             elif i_role == Qt.TextAlignmentRole:
                 return Qt.AlignCenter
         # Screenshot
-        elif i_index.column() == 2:
+        elif column["id"] == "pic":
             # (Done via delegate)
             #if i_role == Qt.DecorationRole:
             #    screenshotPath = g_dbRows[i_index.row()][g_dbColumnNames.index("ScrnshotFilename")]
@@ -1065,43 +1070,43 @@ class MyTableModel(QAbstractTableModel):
             #    return pixmap;
             pass
         # ID
-        elif i_index.column() == 3:
+        elif column["id"] == "id":
             if i_role == Qt.DisplayRole:
                 return g_dbRows[i_index.row()][g_dbColumnNames.index("GA_Id")]
             elif i_role == Qt.TextAlignmentRole:
                 return Qt.AlignLeft
         # Name
-        elif i_index.column() == 4:
+        elif column["id"] == "name":
             if i_role == Qt.DisplayRole:
                 return g_dbRows[i_index.row()][g_dbColumnNames.index("Name")]
             elif i_role == Qt.TextAlignmentRole:
                 return Qt.AlignLeft
         # Year
-        elif i_index.column() == 5:
+        elif column["id"] == "year":
             if i_role == Qt.DisplayRole:
                 return g_dbRows[i_index.row()][g_dbColumnNames.index("Year")]
             elif i_role == Qt.TextAlignmentRole:
                 return Qt.AlignLeft
         # Publisher
-        elif i_index.column() == 6:
+        elif column["id"] == "publisher":
             if i_role == Qt.DisplayRole:
                 return g_dbRows[i_index.row()][g_dbColumnNames.index("Publisher")]
             elif i_role == Qt.TextAlignmentRole:
                 return Qt.AlignLeft
         # Programmer
-        elif i_index.column() == 7:
+        elif column["id"] == "programmer":
             if i_role == Qt.DisplayRole:
                 return g_dbRows[i_index.row()][g_dbColumnNames.index("Programmer")]
             elif i_role == Qt.TextAlignmentRole:
                 return Qt.AlignLeft
         # Parent genre
-        elif i_index.column() == 8:
+        elif column["id"] == "parent_genre":
             if i_role == Qt.DisplayRole:
                 return g_dbRows[i_index.row()][g_dbColumnNames.index("ParentGenre")]
             elif i_role == Qt.TextAlignmentRole:
                 return Qt.AlignLeft
         # Genre
-        elif i_index.column() == 9:
+        elif column["id"] == "genre":
             if i_role == Qt.DisplayRole:
                 return g_dbRows[i_index.row()][g_dbColumnNames.index("Genre")]
             elif i_role == Qt.TextAlignmentRole:
@@ -1109,38 +1114,11 @@ class MyTableModel(QAbstractTableModel):
 
         return None
 
+    # [Not used anymore since the native QTableView headers are hidden]
     def headerData(self, i_columnNo, i_orientation, i_role):
         if i_orientation == Qt.Horizontal and i_role == Qt.DisplayRole:
-            # Detail
-            if i_columnNo == 0:
-                pass
-            # Play
-            elif i_columnNo == 1:
-                pass
-            # Screenshot
-            elif i_columnNo == 2:
-                pass
-            # ID
-            elif i_columnNo == 3:
-                return "ID"
-            # Name
-            elif i_columnNo == 4:
-                return "Name"
-            # Year
-            elif i_columnNo == 5:
-                return "Year"
-            # Publisher
-            elif i_columnNo == 6:
-                return "Publisher"
-            # Programmer
-            elif i_columnNo == 7:
-                return "Programmer"
-            # Parent genre
-            elif i_columnNo == 8:
-                return "Parent genre"
-            # Genre
-            elif i_columnNo == 9:
-                return "Genre"
+            column = g_columns[i_columnNo]
+            return column["headingText"]
 
         return None
 
