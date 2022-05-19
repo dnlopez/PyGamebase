@@ -699,6 +699,7 @@ class HeaderBar(QWidget):
         # Initially set all widget positions
         self.repositionHeadingButtons()
         self.repositionFilterEdits()
+        self.repositionTabOrder()
 
     # + Filter rows {{{
 
@@ -772,12 +773,14 @@ class HeaderBar(QWidget):
                 if filterRow == i_filterRow:
                     self.deleteFilterRow(filterRowNo)
                     self.repositionFilterEdits()
+                    #self.repositionTabOrder()
         self.filterChange.emit()
 
     def insertRow_pushButton_onClicked(self):
         self.appendFilterRow()
         #self.repositionHeadingButtons()
         self.repositionFilterEdits()
+        self.repositionTabOrder()
 
     # + }}}
 
@@ -965,6 +968,38 @@ class HeaderBar(QWidget):
 
         y -= HeaderBar.filterRowHeight
         self.insertRow_pushButton.setGeometry(x, y, HeaderBar.filterRowHeight, HeaderBar.filterRowHeight)
+
+    def repositionTabOrder(self):
+        previousWidget = None
+
+        # For each heading button
+        for columnNo, column in enumerate(g_columns):
+            if column["filterable"]:
+                nextWidget = self.columnHeadingButtons[column["id"]]
+                if previousWidget != None:
+                    self.setTabOrder(previousWidget, nextWidget)
+                previousWidget = nextWidget
+
+        # For each filter edit
+        for filterRow in self.filterRows:
+            for columnNo, column in enumerate(g_columns):
+                if column["filterable"]:
+                    nextWidget = filterRow["columnFilterEdits"][column["id"]].lineEdit
+                    if previousWidget != None:
+                        self.setTabOrder(previousWidget, nextWidget)
+                    previousWidget = nextWidget
+
+            nextWidget = filterRow["deleteRow_pushButton"]
+            if previousWidget != None:
+                self.setTabOrder(previousWidget, nextWidget)
+            previousWidget = nextWidget
+
+        #
+        nextWidget = self.insertRow_pushButton
+        if previousWidget != None:
+            self.setTabOrder(previousWidget, nextWidget)
+        previousWidget = nextWidget
+
 
 class MyStyledItemDelegate(QStyledItemDelegate):
     def __init__(self, i_parent=None):
@@ -1294,6 +1329,7 @@ class MyTableView(QTableView):
         if i_combiner == "OR":
             headerBar.appendFilterRow()
             headerBar.repositionFilterEdits()
+            headerBar.repositionTabOrder()
 
         columnId = g_columns[selectedIndex.column()]["id"]
         headerBar.filterRows[-1]["columnFilterEdits"][columnId].setText(formattedCriteria)
