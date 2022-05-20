@@ -94,6 +94,7 @@ gamebase = importlib.import_module(os.path.splitext(os.path.basename(param_confi
 
 g_columns = [
     { "id": "detail",
+      "name": "Show detail (+)",
       "headingText": "",
       "visible": True,
       "width": 35,
@@ -101,6 +102,7 @@ g_columns = [
       "filterable": False
     },
     { "id": "play",
+      "name": "Start game (▶)",
       "headingText": "",
       "visible": True,
       "width": 35,
@@ -108,6 +110,7 @@ g_columns = [
       "filterable": False
     },
     { "id": "pic",
+      "name": "Picture",
       "headingText": "",#"Pic",
       "visible": True,
       "width": 320,
@@ -122,7 +125,8 @@ g_columns = [
     #  "filterable": False
     #},
     { "id": "id",
-      "headingText": "",#"ID",
+      "headingText": "",
+      "name": "ID",
       "visible": True,
       "width": 40,
       "sortable": False,
@@ -132,6 +136,7 @@ g_columns = [
     },
     { "id": "name",
       "headingText": "Name",
+      "name": "Name",
       "visible": True,
       "width": 250,
       "sortable": True,
@@ -141,6 +146,7 @@ g_columns = [
     },
     { "id": "year",
       "headingText": "Year",
+      "name": "Year",
       "visible": True,
       "width": 75,
       "sortable": True,
@@ -150,6 +156,7 @@ g_columns = [
     },
     { "id": "publisher",
       "headingText": "Publisher",
+      "name": "Publisher",
       "visible": True,
       "width": 250,
       "sortable": True,
@@ -159,6 +166,7 @@ g_columns = [
     },
     { "id": "programmer",
       "headingText": "Programmer",
+      "name": "Programmer",
       "visible": True,
       "width": 250,
       "sortable": True,
@@ -168,6 +176,7 @@ g_columns = [
     },
     { "id": "parent_genre",
       "headingText": "Parent genre",
+      "name": "Parent genre",
       "visible": True,
       "width": 150,
       "sortable": True,
@@ -177,6 +186,7 @@ g_columns = [
     },
     { "id": "genre",
       "headingText": "Genre",
+      "name": "Genre",
       "visible": True,
       "width": 150,
       "sortable": True,
@@ -197,6 +207,135 @@ g_columns = [
 #   width:
 #    (int)
 #    In pixels
+
+def columns_getByPos(i_pos):
+    """
+    Get the object of the n'th column.
+
+    Params:
+     i_pos:
+      (int)
+
+    Returns:
+     Either (Column)
+     or (None)
+    """
+    if i_pos < 0 or i_pos >= len(g_columns):
+        return None
+    return g_columns[i_pos]
+
+def columns_getBySlice(i_startPos=None, i_endPos=None):
+    """
+    Get the objects of a range of columns.
+
+    Params:
+     i_startPos, i_endPos:
+      Either (int)
+      or (None)
+
+    Returns:
+     (list of Column)
+    """
+    return g_columns[i_startPos:i_endPos]
+
+def columns_getById(i_id):
+    """
+    Get the object of the column with some ID.
+
+    Params:
+     i_id:
+      (str)
+
+    Returns:
+     Either (Column)
+     or (None)
+    """
+    for column in g_columns:
+        if column["id"] == i_id:
+            return column
+    return None
+
+#def columns_visibleNoByNo(i_pos):
+#    """
+#    Params:
+#     i_pos:
+#      (int)
+#    """
+#    visibleNo = -1
+#    for column in g_columns:
+#        if column["visible"]:
+#            visibleNo += 1
+#        if i_pos == 0:
+#            return visibleNo
+#        i_pos -= 1
+#    return -1
+
+def columns_idToVisiblePos(i_id):
+    """
+    Get the visible position of the column with some ID.
+
+    Params:
+     i_id:
+      (str)
+
+    Returns:
+     (int)
+     Visible position of the column with the given ID.
+     -1: There was no column with this ID or it is not visible.
+    """
+    visibleNo = -1
+    for column in g_columns:
+        if column["visible"]:
+            visibleNo += 1
+        if i_id == column["id"]:
+            return visibleNo
+    return -1
+
+def columns_visible_count():
+    """
+    Count the visible columns.
+
+    Returns:
+     (int)
+    """
+    count = 0
+    for column in g_columns:
+        if column["visible"]:
+            count += 1
+    return count
+
+def columns_visible_getByPos(i_pos):
+    """
+    Get the object of the n'th visible column.
+
+    Params:
+     i_pos:
+      (int)
+
+    Returns:
+     Either (Column)
+     or (None)
+    """
+    for column in g_columns:
+        if column["visible"]:
+            i_pos -= 1
+            if i_pos < 0:
+                return column
+    return None
+
+def columns_visible_getBySlice(i_startPos=None, i_endPos=None):
+    """
+    Get the objects of a range of visible columns.
+
+    Params:
+     i_startPos, i_endPos:
+      Either (int)
+      or (None)
+
+    Returns:
+     (list of Column)
+    """
+    return [column  for column in g_columns  if column["visible"]] [i_startPos:i_endPos]
 
 # + }}}
 
@@ -316,12 +455,12 @@ FROM
     # WHERE
     andGroups = []
 
-    for filterRow in headerBar.filterRows:
+    for filterRowNo in range(0, len(headerBar.filterRows)):
         andTerms = []
 
         for column in g_columns:
-            if column["filterable"]:
-                value = filterRow["columnFilterEdits"][column["id"]].text()
+            if column["filterable"] and column["visible"]:
+                value = headerBar.columnWidgets[column["id"]]["filterEdits"][filterRowNo].text()
                 value = value.strip()
                 if value != "":
                     # If range operator
@@ -397,7 +536,7 @@ FROM
     # ORDER BY
     if headerBar.sort_columnNo != None:
         sql += "\nORDER BY "
-        sql += g_columns[headerBar.sort_columnNo]["qualifiedDbFieldName"]
+        sql += columns_getByPos(headerBar.sort_columnNo)["qualifiedDbFieldName"]
         if headerBar.sort_direction == -1:
             sql += " DESC"
 
@@ -540,7 +679,73 @@ class HeaderBar(QWidget):
     #print(tableView.contentsRect())
     #tableView.horizontalHeader().resizeSection(self.parent().resize_columnNo, newWidth)
 
-    class FilterEdit(QWidget):  # TODO rename to FilterEdit
+    class HeadingButton(QPushButton):
+        def __init__(self, i_text, i_hasBorder, i_parent=None):
+            QPushButton.__init__(self, i_text, i_parent)
+
+            if not i_hasBorder:
+                self.setStyleSheet("QPushButton { border: none; }");
+                self.setFlat(True)
+                self.setFocusPolicy(Qt.NoFocus)
+                #self.setStyleSheet("QPushButton { background-color: red; color: black;}");
+
+            # Receive mouse move events even if button isn't held down
+            # and install event filter to let parent HeaderBar see all events first
+            self.setMouseTracking(True)
+            self.installEventFilter(self.parent())
+
+            # + Context menu {{{
+
+            self.setContextMenuPolicy(Qt.CustomContextMenu)
+            self.customContextMenuRequested.connect(self.onCustomContextMenuRequested)
+
+            # + }}}
+
+        # + Context menu {{{
+
+        def onCustomContextMenuRequested(self, i_pos):
+            contextMenu = QMenu(self)
+
+            def action_onTriggered(i_columnNo):
+                # Toggle visibility
+                columns_getByPos(i_columnNo)["visible"] = not columns_getByPos(i_columnNo)["visible"]
+
+                # Update GUI
+                # If the following recreateWidgets() call deletes the button which we right-clicked to open this context menu,
+                # QT will subsequently segfault. To workaround this, use a one-shot zero-delay QTimer to continue at idle-time,
+                # when apparently the context menu has been cleaned up and a crash does not happen.
+                continueTimer = QTimer(self)
+                continueTimer.setSingleShot(True)
+                def on_continueTimer():
+                    headerBar.recreateWidgets()
+                    headerBar.repositionHeadingButtons()
+                    headerBar.repositionFilterEdits()
+                    headerBar.repositionTabOrder()
+
+                    # Requery DB in case filter criteria have changed
+                    queryDb()
+                    tableView.requery()
+                    #
+                    tableView.resizeAllColumns([column["width"]  for column in columns_visible_getBySlice()])
+                continueTimer.timeout.connect(on_continueTimer)
+                continueTimer.start(0)
+
+            action = contextMenu.addAction("Columns")
+            action.setEnabled(False)
+            contextMenu.addSeparator()
+            for columnNo, column in enumerate(g_columns):
+                action = contextMenu.addAction(column["name"])
+                action.setCheckable(True)
+                action.setChecked(column["visible"])
+                action.triggered.connect(functools.partial(action_onTriggered, columnNo))
+
+            contextMenu.popup(self.mapToGlobal(i_pos))
+        #def mousePressEvent(self, i_event):
+        #    if i_event.button() == Qt.MouseButton.RightButton:
+
+        # + }}}
+
+    class FilterEdit(QWidget):
         # Emitted after the text is changed
         textChange = Signal()
 
@@ -623,30 +828,30 @@ class HeaderBar(QWidget):
 
         #self.setStyleSheet("* { border: 1px solid red; }");
 
-        self.columnHeadingButtons = {}
+        self.columnWidgets = {}
         # (dict)
+        # Per-column GUI widgets.
         # Dictionary has arbitrary key-value properties:
         #  Keys:
         #   (str)
         #   Column id
         #  Values:
-        #   (HeadingButton)
+        #   (dict)
+        #   Dictionary has specific key-value properties:
+        #    headingButton:
+        #     (HeadingButton)
+        #    filterEdits:
+        #     (list of FilterEdit)
 
         self.filterRows = []
         # (list)
+        # Per-filter row GUI widgets.
+        # The length of this list is currently used as the primary indication of how many filter rows there are.
         # Each element is:
         #  (dict)
         #  Dictionary has specific key-value properties:
         #   deleteRow_pushButton:
         #    (QPushButton)
-        #   columnFilterEdits:
-        #    (dict)
-        #    Dictionary has arbitrary key-value properties:
-        #     Keys:
-        #      (str)
-        #      Column id
-        #     Values:
-        #      (FilterEdit)
 
         # Resizing of columns by mouse dragging
         self.installEventFilter(self)
@@ -660,32 +865,11 @@ class HeaderBar(QWidget):
         self.sort_columnNo = None
         self.sort_direction = None
 
-        class HeadingButton(QPushButton):
-            def __init__(self, i_text, i_hasBorder, i_parent=None):
-                QPushButton.__init__(self, i_text, i_parent)
-
-                if not i_hasBorder:
-                    self.setStyleSheet("QPushButton { border: none; }");
-                    self.setFlat(True)
-                    self.setFocusPolicy(Qt.NoFocus)
-                    #self.setStyleSheet("QPushButton { background-color: red; color: black;}");
-
-                # Receive mouse move events even if button isn't held down
-                # and install event filter to let parent HeaderBar see all events first
-                self.setMouseTracking(True)
-                self.installEventFilter(self.parent())
 
         # Create header buttons
-        global g_columns
-        for columnNo, column in enumerate(g_columns):
-            if column["filterable"]:
-                # Create header button
-                headingButton = HeadingButton(column["headingText"], column["filterable"], self)
-                self.columnHeadingButtons[column["id"]] = headingButton
-                #column["headingButton"] = headingButton
-                # Set its basic properties (apart from position)
-                headingButton.clicked.connect(functools.partial(self.button_onClicked, columnNo))
+        self.recreateWidgets()
 
+        #
         self.insertRow_pushButton = QPushButton("+", self)
         self.insertRow_pushButton.clicked.connect(self.insertRow_pushButton_onClicked)
 
@@ -696,6 +880,60 @@ class HeaderBar(QWidget):
         self.repositionFilterEdits()
         self.repositionTabOrder()
 
+    def recreateWidgets(self):
+        """
+        Call this when a filterable column is added or removed in the master description in g_columns
+        to create/delete GUI widgets as necessary, bringing self.columnWidgets into sync with it.
+        """
+        # For each new filterable, visible column
+        # that does not already have header widgets
+        global g_columns
+        for columnNo, column in enumerate(g_columns):
+            if column["filterable"] and column["visible"] and \
+               (column["id"] not in self.columnWidgets):
+
+                # Create an object for its header widgets
+                widgetDict = {}
+
+                # Create header button
+                headingButton = HeaderBar.HeadingButton(column["headingText"], column["filterable"], self)
+                widgetDict["headingButton"] = headingButton
+                # Set its fixed properties (apart from position)
+                headingButton.setVisible(True)
+                headingButton.clicked.connect(functools.partial(self.button_onClicked, columnNo))
+
+                # Create filter edits
+                widgetDict["filterEdits"] = []
+                for filterRowNo in range(0, len(self.filterRows)):
+                    headerFilter = HeaderBar.FilterEdit(self)
+                    widgetDict["filterEdits"].append(headerFilter)
+                    # Set its fixed properties (apart from position)
+                    headerFilter.setVisible(True)
+                    headerFilter.textChange.connect(functools.partial(self.lineEdit_onTextChange, columnNo))
+
+                # Save the object of header widgets
+                self.columnWidgets[column["id"]] = widgetDict
+
+        # For each object of header widgets
+        # which no longer corresponds to an existing, filterable, visible column
+        columnIds = list(self.columnWidgets.keys())
+        for columnId in columnIds:
+            column = columns_getById(columnId)
+            if column != None:
+                if not (column["filterable"] and column["visible"]):
+                    column = None
+            if column == None:
+
+                # Remove all its widgets from the GUI
+                widgetDict = self.columnWidgets[columnId]
+                widgetDict["headingButton"].setParent(None)
+                #del(widgetDict["headingButton"])
+                for filterEdit in widgetDict["filterEdits"]:
+                    filterEdit.setParent(None)
+
+                # Remove object of header widgets
+                del(self.columnWidgets[columnId])
+
     # + Filter rows {{{
 
     def insertFilterRow(self, i_position):
@@ -704,27 +942,30 @@ class HeaderBar(QWidget):
          i_position:
           (int)
         """
-        newRow = {}
 
-        # Add widgets to GUI
+        # Add per-filter row GUI widgets
+        newRow = {}
+        self.filterRows.insert(i_position, newRow)
+
+        # 'Delete row' button
         deleteRow_pushButton = QPushButton("x", self)
-        newRow["deleteRow_pushButton"] = deleteRow_pushButton
+        # Set its fixed properties (apart from position)
         deleteRow_pushButton.clicked.connect(functools.partial(self.deleteRow_pushButton_onClicked, newRow))
         deleteRow_pushButton.setVisible(True)
+        # Save in member object
+        newRow["deleteRow_pushButton"] = deleteRow_pushButton
 
-        newRow["columnFilterEdits"] = {}
+        # Add per-column GUI widgets
         global g_columns
         for columnNo, column in enumerate(g_columns):
-            if column["filterable"]:
+            if column["filterable"] and column["visible"]:
                 # Create FilterEdit
                 headerFilter = HeaderBar.FilterEdit(self)
-                newRow["columnFilterEdits"][column["id"]] = headerFilter
-                # Set its basic properties (apart from position)
+                # Set its fixed properties (apart from position)
                 headerFilter.setVisible(True)
                 headerFilter.textChange.connect(functools.partial(self.lineEdit_onTextChange, columnNo))
-
-        # Add entry to filterRows list
-        self.filterRows.insert(i_position, newRow)
+                # Save in member object
+                self.columnWidgets[column["id"]]["filterEdits"].insert(i_position, headerFilter)
 
         # Resize header to accommodate the current number of filter rows
         self.setFixedHeight(HeaderBar.headingButtonHeight + HeaderBar.filterRowHeight*len(self.filterRows))
@@ -738,13 +979,21 @@ class HeaderBar(QWidget):
          i_position:
           (int)
         """
-        # Remove widgets from GUI
-        filterRow = self.filterRows[i_position]
-        for columnFilterEdit in filterRow["columnFilterEdits"].values():
-            columnFilterEdit.setParent(None)
-        filterRow["deleteRow_pushButton"].setParent(None)
+        # Remove per-column widgets
+        for columnNo, column in enumerate(g_columns):
+            if column["filterable"] and column["visible"]:
+                # From the GUI
+                self.columnWidgets[column["id"]]["filterEdits"][i_position].setParent(None)
+                # From member object
+                del(self.columnWidgets[column["id"]]["filterEdits"][i_position])
 
-        # Remove entry from filterRows list
+        # Remove per-filter row widgets
+        filterRow = self.filterRows[i_position]
+
+        # 'Delete row' button
+        #  From the GUI
+        filterRow["deleteRow_pushButton"].setParent(None)
+        #  From member object
         del(self.filterRows[i_position])
 
         # Resize header to accommodate the current number of filter rows
@@ -756,9 +1005,9 @@ class HeaderBar(QWidget):
          i_position:
           (int)
         """
-        filterRow = self.filterRows[i_position]
-        for columnFilterEdit in filterRow["columnFilterEdits"].values():
-            columnFilterEdit.setText("")
+        for columnNo, column in enumerate(g_columns):
+            if column["filterable"] and column["visible"]:
+                self.columnWidgets[column["id"]]["filterEdits"][i_position].setText("")
 
     def deleteRow_pushButton_onClicked(self, i_filterRow):
         if len(self.filterRows) == 1:
@@ -794,16 +1043,16 @@ class HeaderBar(QWidget):
     def button_onClicked(self, i_columnNo):
         # If column isn't sortable,
         # bail
-        if not g_columns[i_columnNo]["sortable"]:
+        if not columns_getByPos(i_columnNo)["sortable"]:
             return
 
         # Remove old sort arrow from heading
         if self.sort_columnNo != None:
-            headingButton = self.columnHeadingButtons[g_columns[self.sort_columnNo]["id"]]
+            headingButton = self.columnWidgets[columns_getByPos(self.sort_columnNo)["id"]]["headingButton"]
             if headingButton.text().endswith("▲") or headingButton.text().endswith("▼"):
-                headingButton.setText(g_columns[self.sort_columnNo]["headingText"])
+                headingButton.setText(columns_getByPos(self.sort_columnNo)["headingText"])
 
-        #
+        # Update self.sort_columnNo and self.sort_direction
         if self.sort_columnNo == i_columnNo:
             self.sort_direction = -self.sort_direction
         else:
@@ -811,13 +1060,13 @@ class HeaderBar(QWidget):
             self.sort_columnNo = i_columnNo
 
         # Add new sort arrow to heading
-        headingButton = self.columnHeadingButtons[g_columns[self.sort_columnNo]["id"]]
+        headingButton = self.columnWidgets[columns_getByPos(self.sort_columnNo)["id"]]["headingButton"]
         if self.sort_direction > 0:
             headingButton.setText(headingButton.text() + "  ▲")
         else:
             headingButton.setText(headingButton.text() + "  ▼")
 
-        #
+        # Requery DB in new order
         queryDb()
         tableView.requery()
 
@@ -838,7 +1087,7 @@ class HeaderBar(QWidget):
           Tuple has elements:
            0:
             (int)
-            Column number
+            Column number that i_x is near the right edge of
            1:
             (dict)
             Column info from g_columns
@@ -850,11 +1099,12 @@ class HeaderBar(QWidget):
         x = 0
 
         for columnNo, column in enumerate(g_columns):
-            columnEdgeX = x + column["width"]
-            if abs(i_x - columnEdgeX) <= HeaderBar.resizeMargin:
-                return columnNo, column, columnEdgeX
+            if column["visible"]:
+                columnEdgeX = x + column["width"]
+                if abs(i_x - columnEdgeX) <= HeaderBar.resizeMargin:
+                    return columnNo, column, columnEdgeX
 
-            x += column["width"]
+                x += column["width"]
 
         return None, None, None
 
@@ -885,19 +1135,19 @@ class HeaderBar(QWidget):
                 mousePos.setX(mousePos.x() - self.scrollX)
                 # Get new width
                 newRightEdge = mousePos.x() + self.resize_mouseToEdgeOffset
-                columnLeft = sum([column["width"]  for column in g_columns[0 : self.resize_columnNo]])
+                columnLeft = sum([column["width"]  for column in columns_getBySlice(0, self.resize_columnNo)  if column["visible"]])
                 newWidth = newRightEdge - columnLeft
                 if newWidth < HeaderBar.minimumColumnWidth:
                     newWidth = HeaderBar.minimumColumnWidth
                 # Resize column
-                column = g_columns[self.resize_columnNo]
+                column = columns_getByPos(self.resize_columnNo)
                 column["width"] = newWidth
 
                 # Move/resize buttons and lineedits
                 self.repositionHeadingButtons()
                 self.repositionFilterEdits()
                 #
-                tableView.horizontalHeader().resizeSection(self.resize_columnNo, newWidth)
+                tableView.horizontalHeader().resizeSection(columns_idToVisiblePos(column["id"]), newWidth)
 
                 return True
 
@@ -940,21 +1190,23 @@ class HeaderBar(QWidget):
         x = 0
         x += self.scrollX  # Adjust for horizontal scroll amount
         y = 0
-        for columnNo, column in enumerate(g_columns):
-            if column["filterable"]:
-                self.columnHeadingButtons[column["id"]].setGeometry(x, y, column["width"], HeaderBar.headingButtonHeight)
-            x += column["width"]
+        for column in g_columns:
+            if column["visible"]:
+                if column["filterable"]:
+                    self.columnWidgets[column["id"]]["headingButton"].setGeometry(x, y, column["width"], HeaderBar.headingButtonHeight)
+                x += column["width"]
 
     def repositionFilterEdits(self):
         y = HeaderBar.headingButtonHeight
 
-        for filterRow in self.filterRows:
+        for filterRowNo, filterRow in enumerate(self.filterRows):
             x = 0
             x += self.scrollX  # Adjust for horizontal scroll amount
             for columnNo, column in enumerate(g_columns):
-                if column["filterable"]:
-                    filterRow["columnFilterEdits"][column["id"]].setGeometry(x, y, column["width"], HeaderBar.filterRowHeight)
-                x += column["width"]
+                if column["visible"]:
+                    if column["filterable"]:
+                        self.columnWidgets[column["id"]]["filterEdits"][filterRowNo].setGeometry(x, y, column["width"], HeaderBar.filterRowHeight)
+                    x += column["width"]
 
             filterRow["deleteRow_pushButton"].setGeometry(x, y, HeaderBar.filterRowHeight, HeaderBar.filterRowHeight)
             x += HeaderBar.filterRowHeight
@@ -968,18 +1220,18 @@ class HeaderBar(QWidget):
         previousWidget = None
 
         # For each heading button
-        for columnNo, column in enumerate(g_columns):
-            if column["filterable"]:
-                nextWidget = self.columnHeadingButtons[column["id"]]
+        for column in g_columns:
+            if column["filterable"] and column["visible"]:
+                nextWidget = self.columnWidgets[column["id"]]["headingButton"]
                 if previousWidget != None:
                     self.setTabOrder(previousWidget, nextWidget)
                 previousWidget = nextWidget
 
         # For each filter edit
-        for filterRow in self.filterRows:
-            for columnNo, column in enumerate(g_columns):
-                if column["filterable"]:
-                    nextWidget = filterRow["columnFilterEdits"][column["id"]].lineEdit
+        for filterRowNo, filterRow in enumerate(self.filterRows):
+            for column in g_columns:
+                if column["filterable"] and column["visible"]:
+                    nextWidget = self.columnWidgets[column["id"]]["filterEdits"][filterRowNo].lineEdit
                     if previousWidget != None:
                         self.setTabOrder(previousWidget, nextWidget)
                     previousWidget = nextWidget
@@ -1015,7 +1267,7 @@ class MyStyledItemDelegate(QStyledItemDelegate):
         #if i_option.state & QStyle.State_Selected:
         #    i_painter.fillRect(i_option.rect, i_option.palette.highlight())
 
-        column = g_columns[i_index.column()]
+        column = columns_visible_getByPos(i_index.column())
 
         # Screenshot
         if column["id"] == "pic":
@@ -1037,7 +1289,7 @@ class MyTableModel(QAbstractTableModel):
         return len(g_dbRows)
 
     def columnCount(self, i_parent):
-        return len(g_columns)
+        return columns_visible_count()
 
     #https://stackoverflow.com/questions/7988182/displaying-an-image-from-a-qabstracttablemodel
     #https://forum.qt.io/topic/5195/qtableview-extra-column-space-solved/8
@@ -1045,7 +1297,7 @@ class MyTableModel(QAbstractTableModel):
         if not i_index.isValid():
             return None
 
-        column = g_columns[i_index.column()]
+        column = columns_visible_getByPos(i_index.column())
 
         # Detail
         if column["id"] == "detail":
@@ -1117,7 +1369,7 @@ class MyTableModel(QAbstractTableModel):
     # [Not used anymore since the native QTableView headers are hidden]
     def headerData(self, i_columnNo, i_orientation, i_role):
         if i_orientation == Qt.Horizontal and i_role == Qt.DisplayRole:
-            column = g_columns[i_columnNo]
+            column = columns_getByPos(i_columnNo)
             return column["headingText"]
 
         return None
@@ -1304,8 +1556,8 @@ class MyTableView(QTableView):
             headerBar.repositionFilterEdits()
             headerBar.repositionTabOrder()
 
-        columnId = g_columns[selectedIndex.column()]["id"]
-        headerBar.filterRows[-1]["columnFilterEdits"][columnId].setText(formattedCriteria)
+        columnId = columns_getByPos(selectedIndex.column())["id"]
+        headerBar.columnWidgets[columnId]["filterEdits"][-1].setText(formattedCriteria)
         headerBar.filterChange.emit()
 
     # + }}}
@@ -1329,7 +1581,7 @@ class MyTableView(QTableView):
         QTableView.updateGeometries(self)
 
         # Calculate and set new scrollbar maximum
-        allColumnsWidth = sum([column["width"]  for column in g_columns])
+        allColumnsWidth = sum([column["width"]  for column in columns_visible_getBySlice()])
         newMaximum = allColumnsWidth - self.horizontalScrollBar().pageStep() + HeaderBar.filterRowHeight*2 + self.verticalScrollBar().width()
         if newMaximum < 0:
             newMaximum = 0
@@ -1371,6 +1623,15 @@ class MyTableView(QTableView):
             self.clipboardCopy()
         else:
             super().keyPressEvent(i_event)
+
+    def resizeAllColumns(self, i_widths):
+        """
+        Params:
+         i_widths:
+          (list of int)
+        """
+        for widthNo, width in enumerate(i_widths):
+            self.horizontalHeader().resizeSection(widthNo, width)
 
     # + Resizing rows by mouse dragging {{{
 
@@ -1516,7 +1777,7 @@ def ctrlFShortcut_onActivated():
             firstVisibleAndFilterableColumn = column
             break
     if firstVisibleAndFilterableColumn != None:
-        headerBar.filterRows[0]["columnFilterEdits"][firstVisibleAndFilterableColumn["id"]].setFocus(Qt.ShortcutFocusReason)
+        headerBar.columnWidgets[firstVisibleAndFilterableColumn["id"]]["filterEdits"][0].setFocus(Qt.ShortcutFocusReason)
 shortcut.activated.connect(ctrlFShortcut_onActivated)
 
 shortcut = QShortcut(QKeySequence("Escape"), mainWindow)
@@ -1674,8 +1935,8 @@ splitter.addWidget(tableView)
 splitter.setStretchFactor(0, 0)  # Don't stretch table view when window is resized
 tableView.setItemDelegate(MyStyledItemDelegate())
 
-for columnNo, column in enumerate(g_columns):
-    tableView.horizontalHeader().resizeSection(columnNo, column["width"])
+#  Set initial column widths
+tableView.resizeAllColumns([column["width"]  for column in columns_visible_getBySlice()])
 
 # Create detail pane
 #class DetailPane(QWidget):
@@ -1730,9 +1991,9 @@ detailPane_layout.addWidget(detailPane_margin)
 #detailPane_margin.setLayout(detailPane_margin_layout)
 
 detailPane_margin.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Expanding)
-#detailPane_margin.setGeometry(0, 0, g_columns[0]["width"], 100)
-detailPane_margin.setFixedWidth(g_columns[0]["width"])
-#print(g_columns[0]["width"])
+#detailPane_margin.setGeometry(0, 0, columns_getByPos(0)["width"], 100)
+detailPane_margin.setFixedWidth(columns_getByPos(0)["width"])
+#print(columns_getByPos(0)["width"])
 
 #detailPane_margin_layout.addWidget(QPushButton())
 #detailPane_margin_layout.addWidget(QPushButton())
@@ -1777,7 +2038,7 @@ def detailPane_populate(i_rowNo):
         #
         #    for (var columnNo = 0, columnCount = g_columns.length; columnNo < columnCount; ++columnNo)
         #    {
-        #        var column = g_columns[columnNo];
+        #        var column = columns_getByPos(columnNo);
         #
         #        if (column.filterable)
         #        {
