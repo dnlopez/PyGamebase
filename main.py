@@ -1542,8 +1542,8 @@ class MyTableView(QTableView):
         # + }}}
 
         #
-        self.clicked.connect(self.onActivatedOrClicked)
-        self.activated.connect(self.onActivatedOrClicked)
+        self.clicked.connect(functools.partial(self.onActivatedOrClicked, False))
+        self.activated.connect(functools.partial(self.onActivatedOrClicked, True))
 
         #https://stackoverflow.com/questions/69076597/how-can-i-remove-the-outside-gridlines-of-qtablewidget-and-qheaderview
         # Have no border on the table view so the scrollbar is right at the edge
@@ -1566,17 +1566,24 @@ class MyTableView(QTableView):
         self.resize_lastMouseY = None
         self.resize_selectedRowTopY = None
 
-    def onActivatedOrClicked(self, i_modelIndex):
+        #self.verticalScrollBar().setSingleStep(30)
+
+    def onActivatedOrClicked(self, i_keyboardOriented, i_modelIndex):
         """
         Params:
+         i_keyboardOriented:
+          (bool)
          i_modelIndex:
           (QModelIndex)
         """
         if i_modelIndex.column() == 0:
             self.scrollTo(i_modelIndex, QAbstractItemView.PositionAtTop)
+            detailPaneWasAlreadyVisible = detailPane_height() > 0
             detailPane_show()
-            detailPane_populate(i_modelIndex.row())
-            detailPane_webEngineView.setFocus(Qt.OtherFocusReason)
+            if i_modelIndex.row() != detailPane_currentRowNo:
+                detailPane_populate(i_modelIndex.row())
+            if i_keyboardOriented and detailPaneWasAlreadyVisible:
+                detailPane_webEngineView.setFocus(Qt.OtherFocusReason)
 
         elif i_modelIndex.column() == 1:
             rowNo = i_modelIndex.row()
@@ -1596,6 +1603,8 @@ class MyTableView(QTableView):
     def selectionChanged(self, i_selected, i_deselected):
         QTableView.selectionChanged(self, i_selected, i_deselected)
 
+        # If detail pane is open,
+        # repopulate it from the new row
         if detailPane_height() > 0:
             selectedIndex = self.selectionModel().currentIndex()
             if selectedIndex.row() != detailPane_currentRowNo:
@@ -1875,6 +1884,28 @@ def escShortcut_onActivated():
     else:
         detailPane_hide()
 shortcut.activated.connect(escShortcut_onActivated)
+
+shortcut = QShortcut(QKeySequence("F12"), mainWindow)
+shortcut.setContext(Qt.ApplicationShortcut)
+def f12Shortcut_onActivated():
+    # If detail pane is closed,
+    # scroll selected row to top and
+    # open, populate and focus the detail pane
+    if detailPane_height() == 0:
+        selectedIndex = tableView.selectionModel().currentIndex()
+        tableView.scrollTo(selectedIndex, QAbstractItemView.PositionAtTop)
+
+        detailPane_show()
+
+        if selectedIndex.row() != detailPane_currentRowNo:
+            detailPane_populate(selectedIndex.row())
+
+        detailPane_webEngineView.setFocus(Qt.OtherFocusReason)
+    # Else if detail pane is open,
+    # close it (and return focus to the table view)
+    else:
+        detailPane_hide()
+shortcut.activated.connect(f12Shortcut_onActivated)
 
 # Window layout
 mainWindow_layout = QVBoxLayout()
