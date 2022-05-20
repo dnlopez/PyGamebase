@@ -128,7 +128,7 @@ g_columns = [
       "headingText": "",
       "name": "ID",
       "visible": True,
-      "width": 40,
+      "width": 50,
       "sortable": False,
       "filterable": False,
       "qualifiedDbFieldName": "Games.GA_Id",
