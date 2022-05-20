@@ -1588,9 +1588,18 @@ class MyTableView(QTableView):
 
         elif i_modelIndex.column() == 1:
             rowNo = i_modelIndex.row()
-            gamebase.runGame(g_dbRows[rowNo][g_dbColumnNames.index("Filename")],
-                             g_dbRows[rowNo][g_dbColumnNames.index("FileToRun")],
-                             getGameInfoDict(g_dbRows[rowNo]))
+            try:
+                gamebase.runGame(g_dbRows[rowNo][g_dbColumnNames.index("Filename")],
+                                 g_dbRows[rowNo][g_dbColumnNames.index("FileToRun")],
+                                 getGameInfoDict(g_dbRows[rowNo]))
+            except Exception as e:
+                import traceback
+                print(traceback.format_exc())
+                messageBox = QMessageBox(QMessageBox.Critical, "Error", traceback.format_exc())
+                messageBox.setText("<big><b>In runGame():</b></big>")
+                messageBox.setInformativeText(traceback.format_exc())
+                #messageBox.setFixedWidth(800)
+                messageBox.exec()
 
     def selectionChanged(self, i_selected, i_deselected):
         QTableView.selectionChanged(self, i_selected, i_deselected)
@@ -2250,8 +2259,17 @@ ORDER BY
                 # pass it to the config file's runExtra()
                 url = i_qUrl.toString()
                 if url.startswith("extra:///"):
-                    gamebase.runExtra(url[9:],
-                                      getGameInfoDict(g_dbRows[i_rowNo]))
+                    try:
+                        gamebase.runExtra(url[9:],
+                                          getGameInfoDict(g_dbRows[i_rowNo]))
+                    except Exception as e:
+                        import traceback
+                        print(traceback.format_exc())
+                        messageBox = QMessageBox(QMessageBox.Critical, "Error", traceback.format_exc())
+                        messageBox.setText("<big><b>In runExtra():</b></big>")
+                        messageBox.setInformativeText(traceback.format_exc())
+                        #messageBox.setFixedWidth(800)
+                        messageBox.exec()
                 # Else if it's a normal link,
                 # open it with the default browser
                 else:
