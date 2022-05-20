@@ -1613,6 +1613,24 @@ class MyTableModel(QAbstractTableModel):
 
         return None
 
+def dbRowToDict(i_row, i_columnNames):
+    """
+    Params:
+     i_row:
+      (list)
+     i_columnNames:
+      (list of str)
+
+    Returns:
+     (dict)
+    """
+    rv = {}
+
+    for columnNo, columnName in enumerate(i_columnNames):
+        rv[columnName] = i_row[columnNo]
+
+    return rv
+
 def getGameInfoDict(i_dbRow):
     """
     Params:
@@ -1620,13 +1638,12 @@ def getGameInfoDict(i_dbRow):
       (list)
     """
     rv = {}
+    rv = dbRowToDict(i_dbRow, g_dbColumnNames)
+
     rv["id"] = i_dbRow[g_dbColumnNames.index("GA_Id")]
     rv["name"] = i_dbRow[g_dbColumnNames.index("Name")]
     rv["year"] = i_dbRow[g_dbColumnNames.index("Year")]
     rv["publisher"] = i_dbRow[g_dbColumnNames.index("Publisher")]
-
-    for columnNo, columnName in enumerate(g_dbColumnNames):
-        rv[columnName] = i_dbRow[columnNo]
 
     return rv
 
@@ -2311,14 +2328,14 @@ def detailPane_populate(i_rowNo):
     global detailPane_currentRowNo
     detailPane_currentRowNo = i_rowNo
 
-    row = g_dbRows[i_rowNo]
+    gameRow = g_dbRows[i_rowNo]
 
     html = ""
 
     html += '<link rel="stylesheet" type="text/css" href="file://' + os.path.dirname(os.path.realpath(__file__)).replace("\\", "/") + '/detail_pane.css">'
 
     # Insert screenshots after the first one
-    supplementaryScreenshotRelativePaths = dbRow_getSupplementaryScreenshotPaths(row)
+    supplementaryScreenshotRelativePaths = dbRow_getSupplementaryScreenshotPaths(gameRow)
     for relativePath in supplementaryScreenshotRelativePaths:
         screenshotUrl = getScreenshotUrl(relativePath)
         if screenshotUrl != None:
@@ -2326,11 +2343,11 @@ def detailPane_populate(i_rowNo):
 
     # If this game is a clone,
     # insert a link to the original
-    if "CloneOfName" in g_dbColumnNames and row[g_dbColumnNames.index("CloneOfName")] != None:
+    if "CloneOfName" in g_dbColumnNames and gameRow[g_dbColumnNames.index("CloneOfName")] != None:
         html += '<p style="white-space: pre-wrap;">'
         html += 'Clone of: '
 
-        html += '<a href="#">' + row[g_dbColumnNames.index("CloneOfName")] + '</a>'
+        html += '<a href="#">' + gameRow[g_dbColumnNames.index("CloneOfName")] + '</a>'
         #link.addEventListener("click", function (i_event) {
         #    i_event.preventDefault();
         #
@@ -2341,7 +2358,7 @@ def detailPane_populate(i_rowNo):
         #        if (column.filterable)
         #        {
         #            if (column.id == "name")
-        #                column.headerFilter.setValue(i_row.CloneOfName);
+        #                column.headerFilter.setValue(i_gameRow.CloneOfName);
         #            else
         #                column.headerFilter.setValue("");
         #        }
@@ -2355,23 +2372,23 @@ def detailPane_populate(i_rowNo):
         html += '</p>'
 
     # Insert memo text
-    if row[g_dbColumnNames.index("MemoText")] != None:
+    if gameRow[g_dbColumnNames.index("MemoText")] != None:
         html += '<p style="white-space: pre-wrap;">'
-        html += row[g_dbColumnNames.index("MemoText")]
+        html += gameRow[g_dbColumnNames.index("MemoText")]
         html += '</p>'
 
     # Insert comment
-    if row[g_dbColumnNames.index("Comment")] != None:
+    if gameRow[g_dbColumnNames.index("Comment")] != None:
         html += '<p style="white-space: pre-wrap;">'
-        html += row[g_dbColumnNames.index("Comment")]
+        html += gameRow[g_dbColumnNames.index("Comment")]
         html += '</p>'
 
     # Insert weblink(s)
-    if "WebLink_Name" in g_dbColumnNames and row[g_dbColumnNames.index("WebLink_Name")] != None:
+    if "WebLink_Name" in g_dbColumnNames and gameRow[g_dbColumnNames.index("WebLink_Name")] != None:
         html += '<p style="white-space: pre-wrap;">'
 
-        html += row[g_dbColumnNames.index("WebLink_Name")] + ": "
-        url = row[g_dbColumnNames.index("WebLink_URL")]
+        html += gameRow[g_dbColumnNames.index("WebLink_Name")] + ": "
+        url = gameRow[g_dbColumnNames.index("WebLink_URL")]
         html += '<a target="_blank" href="' + url + '">'
         html += url
         html += '</a>'
@@ -2381,7 +2398,7 @@ def detailPane_populate(i_rowNo):
         #});
 
         # If it's a World Of Spectrum link then insert a corresponding Spectrum Computing link
-        if "WebLink_Name" in g_dbColumnNames and row[g_dbColumnNames.index("WebLink_Name")] == "WOS":
+        if "WebLink_Name" in g_dbColumnNames and gameRow[g_dbColumnNames.index("WebLink_Name")] == "WOS":
             # Separator
             html += '<span style="margin-left: 8px; margin-right: 8px; border-left: 1px dotted #666;"></span>'
             # Label
@@ -2408,7 +2425,7 @@ SELECT
 FROM
  Extras
 WHERE
- Extras.GA_Id = """ + str(row[g_dbColumnNames.index("GA_Id")]) + """
+ Extras.GA_Id = """ + str(gameRow[g_dbColumnNames.index("GA_Id")]) + """
 ORDER BY
  Extras.DisplayOrder"""
 
@@ -2474,6 +2491,12 @@ ORDER BY
     #detailPane_webEngineView.setHtml(html, QUrl("file:///"))
     # Load HTML into a QWebEnginePage with a handler for link clicks
     class WebEnginePage(QWebEnginePage):
+        def __init__(self, i_gameRow, i_extrasRows, i_parent=None):
+            QWebEnginePage.__init__(self, i_parent)
+
+            self.gameRow = i_gameRow
+            self.extrasRows = i_extrasRows
+
         def acceptNavigationRequest(self, i_qUrl, i_requestType, i_isMainFrame):
             if i_requestType == QWebEnginePage.NavigationTypeLinkClicked:
                 #print(i_isMainFrame)
@@ -2482,9 +2505,11 @@ ORDER BY
                 # pass it to the config file's runExtra()
                 url = i_qUrl.toString()
                 if url.startswith("extra:///"):
+                    extraPath = url[9:]
+                    extraInfo = [row  for row in self.extrasRows  if row[extrasColumnNames.index("Path")] == extraPath][0]
+                    gameInfo = getGameInfoDict(self.gameRow)
                     try:
-                        gamebase.runExtra(url[9:],
-                                          getGameInfoDict(g_dbRows[i_rowNo]))
+                        gamebase.runExtra(extraPath, extraInfo, gameInfo)
                     except Exception as e:
                         import traceback
                         print(traceback.format_exc())
@@ -2503,7 +2528,7 @@ ORDER BY
 
             else:
                 return True
-    webEnginePage = WebEnginePage(detailPane_webEngineView)
+    webEnginePage = WebEnginePage(gameRow, extrasRows, detailPane_webEngineView)
     webEnginePage.setHtml(html, QUrl("file:///"))
     # Let background of application show through to stop white flash on page loads
     webEnginePage.setBackgroundColor(Qt.transparent)

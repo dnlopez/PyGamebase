@@ -53,8 +53,8 @@ def runGame(i_gamePath, i_fileToRun = None, i_gameInfo = None):
     utils.shellStartTask(command)
 
 
-def runExtra(i_extraPath, i_gameInfo = None):
-    #print('runExtra(' + pprint.pformat(i_extraPath) + ', ' + pprint.pformat(i_gameInfo) + ')')
+def runExtra(i_extraPath, i_extraInfo, i_gameInfo):
+    #print('runExtra(' + pprint.pformat(i_extraPath) + ', ' + pprint.pformat(i_extraInfo) + ', ' + pprint.pformat(i_gameInfo) + ')')
 
     # If file is a zip
     if utils.pathHasExtension(i_extraPath, ".ZIP"):
