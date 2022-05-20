@@ -789,7 +789,14 @@ class HeaderBar(QWidget):
             self.lineEdit.textEdited.connect(self.lineEdit_onTextEdited)
 
         def lineEdit_onEditingFinished(self):
-            self.textChange.emit()
+            # If text was modified, requery,
+            # else focus the tableview
+            textWasModified = self.lineEdit.isModified()
+            self.lineEdit.setModified(False)
+            if textWasModified:
+                self.textChange.emit()
+            else:
+                tableView.setFocus()
 
         def lineEdit_onTextEdited(self, i_text):
             # Hide or show clear button depending on whether there's text
@@ -1863,13 +1870,22 @@ frontend.mainWindow = mainWindow
 shortcut = QShortcut(QKeySequence("Ctrl+F"), mainWindow)
 shortcut.setContext(Qt.ApplicationShortcut)
 def ctrlFShortcut_onActivated():
-    firstVisibleAndFilterableColumn = None
-    for column in g_columns:
-        if column["visible"] and column["filterable"]:
-            firstVisibleAndFilterableColumn = column
-            break
-    if firstVisibleAndFilterableColumn != None:
-        headerBar.columnWidgets[firstVisibleAndFilterableColumn["id"]]["filterEdits"][0].setFocus(Qt.ShortcutFocusReason)
+    # If table view has the focus and the selected column is filterable,
+    # target that
+    selectedIndex = tableView.selectionModel().currentIndex()
+    selectedColumn = columns_visible_getByPos(selectedIndex.column())
+    if tableView.hasFocus() and selectedColumn["filterable"]:
+        targetColumn = selectedColumn
+    # Else target the first visible and filterable column
+    else:
+        for column in columns_getBySlice():
+            if column["visible"] and column["filterable"]:
+                targetColumn = column
+                break
+
+    # Set focus to filter edit control
+    if targetColumn != None:
+        headerBar.columnWidgets[targetColumn["id"]]["filterEdits"][0].setFocus(Qt.ShortcutFocusReason)
 shortcut.activated.connect(ctrlFShortcut_onActivated)
 
 shortcut = QShortcut(QKeySequence("Escape"), mainWindow)
