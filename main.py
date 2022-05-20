@@ -1631,7 +1631,7 @@ class MyTableView(QTableView):
             headerBar.repositionFilterEdits()
             headerBar.repositionTabOrder()
 
-        columnId = columns_getByPos(selectedIndex.column())["id"]
+        columnId = columns_visible_getByPos(selectedIndex.column())["id"]
         headerBar.columnWidgets[columnId]["filterEdits"][-1].setText(formattedCriteria)
         headerBar.filterChange.emit()
 
