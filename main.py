@@ -296,6 +296,29 @@ def columns_idToVisiblePos(i_id):
             return visiblePos
     return -1
 
+def columns_moveColumn(i_moveColumn, i_beforeColumn):
+    """
+    Move a column.
+
+    Params:
+     i_moveColumn:
+      (Column)
+      Column to move.
+     i_beforeColumn:
+      Either (Column)
+       Move to before of this column.
+      or (None)
+       Move to the end.
+    """
+    # Delete column from original position
+    del(g_columns[g_columns.index(i_moveColumn)])
+
+    # Reinsert/append in new position
+    if i_beforeColumn == None:
+        g_columns.append(i_moveColumn)
+    else:
+        g_columns.insert(g_columns.index(i_beforeColumn), i_moveColumn)
+
 def columns_visible_count():
     """
     Count the visible columns.
@@ -871,13 +894,36 @@ class HeaderBar(QWidget):
         #   deleteRow_pushButton:
         #    (QPushButton)
 
-        # Resizing of columns by mouse dragging
+        # + Mouse drag to resize/reorder columns {{{
+
         self.installEventFilter(self)
-        #  Receive mouse move events even if button isn't held down
+
+        # Receive mouse move events even if button isn't held down
         self.setMouseTracking(True)
-        #  State used while resizing
-        self.resize_columnNo = None
+
+        # State used while resizing
+        self.resize_column = None  # [rename to mouse_resize_...]
+        self.resize_columnLeftX = None
         self.resize_mouseToEdgeOffset = None
+
+        # State used while reordering
+        self.reorder_column = None
+        #  Either (Column)
+        #  or (None)
+
+        self.reorderIndicator_widget = QFrame(self)
+        #self.reorderIndicator_widget.setAutoFillBackground(True)
+        self.reorderIndicator_widget.setGeometry(10, 10, 100, 20)
+        pal = QPalette()
+        #pal.setColor(QPalette.Window, Qt.red)
+        pal.setColor(QPalette.WindowText, Qt.red)
+        self.reorderIndicator_widget.setPalette(pal)
+        self.reorderIndicator_widget.hide()
+
+        self.reorderIndicator_widget.setFrameStyle(QFrame.Box)
+        self.reorderIndicator_widget.setLineWidth(2)
+
+        # + }}}
 
         # State of column sorting
         self.sort_operations = []
@@ -1146,9 +1192,66 @@ class HeaderBar(QWidget):
     def lineEdit_onTextChange(self, i_columnNo):
         self.filterChange.emit()
 
-    # + Resizing columns by mouse dragging {{{
+    # + Mouse drag to resize/reorder columns {{{
 
-    def _columnBoundaryNearPixelX(self, i_x):
+    def _columnBoundaryNearPixelX(self, i_x, i_withinMargin=None):
+        """
+        Params:
+         i_x:
+          (int)
+          Relative to the left of the window.
+         i_withinMargin:
+          Either (int)
+           Require the resulting edge to be within this many pixels of i_x
+          or (None)
+           Get the nearest edge regardless of how far from i_x it is.
+
+        Returns:
+         Either (tuple)
+          Tuple has elements:
+           0:
+            Either (Column)
+             The object of the visible column before the edge that i_x is nearest to
+            or (None)
+             There is no before the edge that i_x is nearest to (ie. it is the first edge).
+           1:
+            Either (Column)
+             The object of the visible column after the edge that i_x is nearest to
+            or (None)
+             There is no after the edge that i_x is nearest to (ie. it is the last edge).
+           2:
+            (int)
+            Column edge X pixel position
+          (None, None, None): There are no visible columns, or there is not an edge within the distance of i_withinMargin.
+        """
+        # If no visible columns,
+        # return none
+        visibleColumns = columns_visible_getBySlice()
+        if len(visibleColumns) == 0:
+            return None, None, None
+
+        # Indicate left edge of first column
+        columnEdgeX = 0
+        nearest = (None, visibleColumns[0], columnEdgeX)
+
+        # For each column, replace result with its right edge if it's nearer
+        for visibleColumnNo, column in enumerate(visibleColumns):
+            columnEdgeX += column["width"]
+            if abs(i_x - columnEdgeX) <= abs(i_x - nearest[2]):
+                nextColumn = None
+                if visibleColumnNo + 1 < len(visibleColumns):
+                    nextColumn = visibleColumns[visibleColumnNo + 1]
+                nearest = (column, nextColumn, columnEdgeX)
+
+        # If requested a maximum margin and closest edge is not within that,
+        # return none
+        if i_withinMargin != None and abs(i_x - nearest[2]) > i_withinMargin:
+            return None, None, None
+
+        # Return details of closest edge
+        return nearest
+
+    def _columnAtPixelX(self, i_x):
         """
         Params:
          i_x:
@@ -1156,73 +1259,98 @@ class HeaderBar(QWidget):
           Relative to the left of the window.
 
         Returns:
-         Either (tuple)
-          Tuple has elements:
-           0:
-            (int)
-            Column number that i_x is near the right edge of
-           1:
-            (dict)
-            Column info from g_columns
-           2:
-            (int)
-            Column edge X pixel position
-          (None, None, None): There is not a column boundary near i_x.
+         Either (Column)
+          The object of the visible column that i_x is under
+         or (None)
+          There is not a visible column at i_x.
         """
-        x = 0
+        if i_x < 0:
+            return None
 
+        x = 0
         for columnNo, column in enumerate(g_columns):
             if column["visible"]:
-                columnEdgeX = x + column["width"]
-                if abs(i_x - columnEdgeX) <= HeaderBar.resizeMargin:
-                    return columnNo, column, columnEdgeX
+                x += column["width"]
+                if i_x < x:
+                    return column
 
+        return None
+
+    def _columnScreenX(self, i_column):
+        """
+        Params:
+         i_column:
+          (Column)
+
+        Returns:
+         Either (int)
+         or (None)
+        """
+        x = 0
+        for columnNo, column in enumerate(g_columns):
+            if column["visible"]:
+                if column == i_column:
+                    return x
                 x += column["width"]
 
-        return None, None, None
+        return None
 
     def eventFilter(self, i_watched, i_event):
         #print(i_event.type())
 
         if i_event.type() == QEvent.MouseMove:
-            # If not currently resizing,
-            # then depending on whether cursor is near a draggable vertical edge,
-            # set cursor shape
-            if self.resize_columnNo == None:
-                # Get mouse pos relative to the HeaderBar
-                # and adjust for horizontal scroll amount
-                mousePos = i_watched.mapTo(self, i_event.pos())
-                mousePos.setX(mousePos.x() - self.scrollX)
-                #
-                columnNo, _, _ = self._columnBoundaryNearPixelX(mousePos.x())
-                if columnNo != None:
-                    self.setCursor(Qt.SizeHorCursor)
-                else:
-                    self.unsetCursor()
-            # Else if currently resizing,
+            # If currently resizing,
             # do the resize
-            else:
+            if self.resize_column != None:
                 # Get mouse pos relative to the HeaderBar
                 # and adjust for horizontal scroll amount
                 mousePos = i_watched.mapTo(self, i_event.pos())
                 mousePos.setX(mousePos.x() - self.scrollX)
                 # Get new width
                 newRightEdge = mousePos.x() + self.resize_mouseToEdgeOffset
-                columnLeft = sum([column["width"]  for column in columns_getBySlice(0, self.resize_columnNo)  if column["visible"]])
-                newWidth = newRightEdge - columnLeft
+                newWidth = newRightEdge - self.resize_columnLeftX
                 if newWidth < HeaderBar.minimumColumnWidth:
                     newWidth = HeaderBar.minimumColumnWidth
                 # Resize column
-                column = columns_getByPos(self.resize_columnNo)
-                column["width"] = newWidth
+                self.resize_column["width"] = newWidth
 
                 # Move/resize buttons and lineedits
                 self.repositionHeadingButtons()
                 self.repositionFilterEdits()
                 #
-                tableView.horizontalHeader().resizeSection(columns_idToVisiblePos(column["id"]), newWidth)
+                tableView.horizontalHeader().resizeSection(columns_idToVisiblePos(self.resize_column["id"]), newWidth)
 
                 return True
+
+            # Else if currently reordering,
+            # draw line at nearest vertical edge
+            elif self.reorder_column != None:
+                # Get mouse pos relative to the HeaderBar
+                # and adjust for horizontal scroll amount
+                mousePos = i_watched.mapTo(self, i_event.pos())
+                mousePos.setX(mousePos.x() - self.scrollX)
+                #
+                leftColumn, rightColumn, edgeX = self._columnBoundaryNearPixelX(mousePos.x())
+                self.reorder_dropBeforeColumn = rightColumn
+                if self.reorder_dropBeforeColumn == self.reorder_column:
+                    self.reorderIndicator_widget.setGeometry(self._columnScreenX(self.reorder_column), 0, self.reorder_column["width"], HeaderBar.headingButtonHeight)
+                else:
+                    self.reorderIndicator_widget.setGeometry(edgeX - 3 + self.scrollX, 0, 6, self.height())
+
+            # Else if not currently resizing or reordering,
+            # then depending on whether cursor is near a draggable vertical edge,
+            # set cursor shape
+            else:
+                # Get mouse pos relative to the HeaderBar
+                # and adjust for horizontal scroll amount
+                mousePos = i_watched.mapTo(self, i_event.pos())
+                mousePos.setX(mousePos.x() - self.scrollX)
+                #
+                leftColumn, _, _ = self._columnBoundaryNearPixelX(mousePos.x(), HeaderBar.resizeMargin)
+                if leftColumn != None:
+                    self.setCursor(Qt.SizeHorCursor)
+                else:
+                    self.unsetCursor()
 
         elif i_event.type() == QEvent.MouseButtonPress:
             # If pressed the left button
@@ -1231,25 +1359,63 @@ class HeaderBar(QWidget):
                 # and adjust for horizontal scroll amount
                 mousePos = i_watched.mapTo(self, i_event.pos())
                 mousePos.setX(mousePos.x() - self.scrollX)
-                # If cursor is near a draggable vertical edge
-                columnNo, column, edgeX = self._columnBoundaryNearPixelX(mousePos.x())
-                if columnNo != None:
-                    #
-                    self.resize_columnNo = columnNo
+                # If holding Shift
+                if i_event.modifiers() & Qt.ShiftModifier:
+                    self.reorder_column = self._columnAtPixelX(mousePos.x())
+                    self.reorder_dropBeforeColumn = self.reorder_column
 
-                    # Get horizontal distance from mouse to the draggable vertical edge (ie. the right edge of the button being resized)
-                    #button = column["headingButton"]
-                    #buttonBottomRight = button.mapTo(self, QPoint(button.size().width(), button.size().height()))
-                    self.resize_mouseToEdgeOffset = edgeX - mousePos.x()
+                    # Show drop indicator
+                    self.reorderIndicator_widget.setGeometry(self._columnScreenX(self.reorder_column), 0, self.reorder_column["width"], HeaderBar.headingButtonHeight)
+                    self.reorderIndicator_widget.show()
+                    self.reorderIndicator_widget.raise_()
 
-                    #
                     return True
+                # Else if cursor is near a draggable vertical edge
+                else:
+                    leftColumn, rightColumn, edgeX = self._columnBoundaryNearPixelX(mousePos.x(), HeaderBar.resizeMargin)
+                    if leftColumn != None:
+                        #
+                        self.resize_column = leftColumn
+                        self.resize_columnLeftX = edgeX - self.resize_column["width"]
+
+                        # Get horizontal distance from mouse to the draggable vertical edge (ie. the right edge of the button being resized)
+                        #button = column["headingButton"]
+                        #buttonBottomRight = button.mapTo(self, QPoint(button.size().width(), button.size().height()))
+                        self.resize_mouseToEdgeOffset = edgeX - mousePos.x()
+
+                        #
+                        return True
 
         elif i_event.type() == QEvent.MouseButtonRelease:
             # If currently resizing and released the left button
-            if self.resize_columnNo != None and i_event.button() == Qt.MouseButton.LeftButton:
+            if self.resize_column != None and i_event.button() == Qt.MouseButton.LeftButton:
                 # Stop resizing
-                self.resize_columnNo = None
+                self.resize_column = None
+
+                #
+                return True
+
+            # Else if currently reordering and released the left button
+            if self.reorder_column != None and i_event.button() == Qt.MouseButton.LeftButton:
+                if self.reorder_column != self.reorder_dropBeforeColumn:
+                    columns_moveColumn(self.reorder_column, self.reorder_dropBeforeColumn)
+
+                # Stop reordering
+                self.reorder_column = None
+
+                #
+                self.reorderIndicator_widget.hide()
+                # Move/resize buttons and lineedits
+                self.repositionHeadingButtons()
+                self.repositionFilterEdits()
+                self.repositionTabOrder()
+                #
+                tableView.requery()
+                #
+                tableView.resizeAllColumns([column["width"]  for column in columns_visible_getBySlice()])
+                #self.reorderIndicator_widget.setFrameRect(QRect(edgeX - 2, 0, 4, 20))
+                #self.reorderIndicator_widget.setFrameRect(QRect(2, 2, 50, 10))
+                #print(leftColumn["id"], rightColumn["id"], edgeX)
 
                 #
                 return True
@@ -1583,7 +1749,9 @@ class MyTableView(QTableView):
          i_modelIndex:
           (QModelIndex)
         """
-        if i_modelIndex.column() == 0:
+        columnId = columns_visible_getByPos(i_modelIndex.column())["id"]
+
+        if columnId == "detail":
             self.scrollTo(i_modelIndex, QAbstractItemView.PositionAtTop)
             detailPaneWasAlreadyVisible = detailPane_height() > 0
             detailPane_show()
@@ -1592,7 +1760,7 @@ class MyTableView(QTableView):
             if i_keyboardOriented and detailPaneWasAlreadyVisible:
                 detailPane_webEngineView.setFocus(Qt.OtherFocusReason)
 
-        elif i_modelIndex.column() == 1:
+        elif columnId == "play":
             rowNo = i_modelIndex.row()
             try:
                 gamebase.runGame(g_dbRows[rowNo][g_dbColumnNames.index("Filename")],
