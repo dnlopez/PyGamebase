@@ -127,6 +127,11 @@ QPushButton:pressed
     border-bottom-width: 2px;
     border-bottom-color: #666;
 }
+QPushButton:focus
+{
+    outline: 1px dotted #aaa;
+}
+
 .statusbar {
     background-color: #444;
     color: #fff;
