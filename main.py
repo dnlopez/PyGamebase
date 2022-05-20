@@ -255,20 +255,25 @@ def columns_getById(i_id):
             return column
     return None
 
-#def columns_visibleNoByNo(i_pos):
-#    """
-#    Params:
-#     i_pos:
-#      (int)
-#    """
-#    visibleNo = -1
-#    for column in g_columns:
-#        if column["visible"]:
-#            visibleNo += 1
-#        if i_pos == 0:
-#            return visibleNo
-#        i_pos -= 1
-#    return -1
+def columns_idToPos(i_id):
+    """
+    Get the position of the column with some ID.
+
+    Params:
+     i_id:
+      (str)
+
+    Returns:
+     (int)
+     Position of the column with the given ID.
+     -1: There was no column with this ID.
+    """
+    pos = -1
+    for column in g_columns:
+        pos += 1
+        if i_id == column["id"]:
+            return pos
+    return -1
 
 def columns_idToVisiblePos(i_id):
     """
@@ -283,12 +288,12 @@ def columns_idToVisiblePos(i_id):
      Visible position of the column with the given ID.
      -1: There was no column with this ID or it is not visible.
     """
-    visibleNo = -1
+    visiblePos = -1
     for column in g_columns:
         if column["visible"]:
-            visibleNo += 1
+            visiblePos += 1
         if i_id == column["id"]:
-            return visibleNo
+            return visiblePos
     return -1
 
 def columns_visible_count():
@@ -2318,6 +2323,7 @@ mainWindow.show()
 openDb()
 queryDb()
 tableView.requery()
+headerBar.sort(columns_idToPos("name"), False)  # TODO what if name column is initially not visible
 
 # + Subprocess output {{{
 
