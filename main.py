@@ -534,12 +534,18 @@ FROM
         sql += " OR ".join(["(" + andGroupStr + ")"  for andGroupStr in [" AND ".join(andGroup)  for andGroup in andGroups]])
 
     # ORDER BY
-    if headerBar.sort_columnNo != None:
+    if len(headerBar.sort_operations) > 0:
         sql += "\nORDER BY "
-        sql += columns_getByPos(headerBar.sort_columnNo)["qualifiedDbFieldName"]
-        if headerBar.sort_direction == -1:
-            sql += " DESC"
 
+        orderByTerms = []
+        for columnId, direction in headerBar.sort_operations:
+            term = columns_getById(columnId)["qualifiedDbFieldName"]
+            if direction == -1:
+                term += " DESC"
+            orderByTerms.append(term)
+        sql += ", ".join(orderByTerms)
+
+    # Execute
     #print(sql)
     cursor = g_db.execute(sql)
 
@@ -862,9 +868,19 @@ class HeaderBar(QWidget):
         self.resize_mouseToEdgeOffset = None
 
         # State of column sorting
-        self.sort_columnNo = None
-        self.sort_direction = None
-
+        self.sort_operations = []
+        # (list)
+        # Successive levels of sorting.
+        # Each element is:
+        #  (list)
+        #  List has elements:
+        #   0:
+        #    (str)
+        #    ID of the column to sort by
+        #   1:
+        #    (int)
+        #    1: sort in ascending order
+        #    -1: sort in descending order
 
         # Create header buttons
         self.recreateWidgets()
@@ -900,7 +916,7 @@ class HeaderBar(QWidget):
                 widgetDict["headingButton"] = headingButton
                 # Set its fixed properties (apart from position)
                 headingButton.setVisible(True)
-                headingButton.clicked.connect(functools.partial(self.button_onClicked, columnNo))
+                headingButton.clicked.connect(functools.partial(self.headingButton_onClicked, columnNo))
 
                 # Create filter edits
                 widgetDict["filterEdits"] = []
@@ -1040,35 +1056,80 @@ class HeaderBar(QWidget):
 
     # + }}}
 
-    def button_onClicked(self, i_columnNo):
+    # + Sorting {{{
+
+    def headingButton_onClicked(self, i_columnNo):
+        self.sort(i_columnNo, application.queryKeyboardModifiers() == Qt.ControlModifier)
+
+    def sort(self, i_columnNo, i_appendOrModify):
+        """
+        Params:
+         i_columnNo:
+          (int)
+         i_appendOrModify:
+          (bool)
+        """
+        # Get column object
+        clickedColumn = columns_getByPos(i_columnNo)
+
         # If column isn't sortable,
         # bail
-        if not columns_getByPos(i_columnNo)["sortable"]:
+        if not clickedColumn["sortable"]:
             return
 
-        # Remove old sort arrow from heading
-        if self.sort_columnNo != None:
-            headingButton = self.columnWidgets[columns_getByPos(self.sort_columnNo)["id"]]["headingButton"]
-            if headingButton.text().endswith("▲") or headingButton.text().endswith("▼"):
-                headingButton.setText(columns_getByPos(self.sort_columnNo)["headingText"])
-
-        # Update self.sort_columnNo and self.sort_direction
-        if self.sort_columnNo == i_columnNo:
-            self.sort_direction = -self.sort_direction
+        # Update list of sort operations
+        if not i_appendOrModify:
+            if len(self.sort_operations) == 1 and self.sort_operations[0][0] == clickedColumn["id"]:
+                self.sort_operations[0][1] = -self.sort_operations[0][1]
+            else:
+                self.sort_operations = [[clickedColumn["id"], 1]]
         else:
-            self.sort_direction = 1
-            self.sort_columnNo = i_columnNo
+            found = False
+            for operation in self.sort_operations:
+                if operation[0] == clickedColumn["id"]:
+                    operation[1] = -operation[1]
+                    found = True
+            if not found:
+                self.sort_operations.append([clickedColumn["id"], 1])
 
-        # Add new sort arrow to heading
-        headingButton = self.columnWidgets[columns_getByPos(self.sort_columnNo)["id"]]["headingButton"]
-        if self.sort_direction > 0:
-            headingButton.setText(headingButton.text() + "  ▲")
-        else:
-            headingButton.setText(headingButton.text() + "  ▼")
+        # Update header button texts with arrows
+        def subscriptDigit(i_digit):
+            """
+            Params:
+             i_digit:
+              (int)
+
+            Returns:
+             (str)
+            """
+            return "₀₁₂₃₄₅₆₇₈₉"[i_digit % 10]
+
+        for columnNo, column in enumerate(columns_visible_getBySlice()):
+            if column["filterable"]:
+                headingButton = self.columnWidgets[column["id"]]["headingButton"]
+
+                newCaption = column["name"]
+
+                sortIndex = 1
+                sortDirection = 0
+                for operation in self.sort_operations:
+                    if operation[0] == column["id"]:
+                        sortDirection = operation[1]
+                        break
+                    sortIndex += 1
+                if sortDirection != 0:
+                    if sortDirection == 1:
+                        newCaption += "  ▲" + subscriptDigit(sortIndex)
+                    else: # if sortDirection == -1:
+                        newCaption += "  ▼" + subscriptDigit(sortIndex)
+
+                headingButton.setText(newCaption)
 
         # Requery DB in new order
         queryDb()
         tableView.requery()
+
+    # + }}}
 
     def lineEdit_onTextChange(self, i_columnNo):
         self.filterChange.emit()
