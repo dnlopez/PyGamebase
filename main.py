@@ -1491,9 +1491,7 @@ class MyTableView(QTableView):
 
         # + Context menu {{{
 
-        self.contextMenu = QMenu(self)
-
-        self.contextMenu_filter = QMenu("Filter", self.contextMenu)
+        self.contextMenu_filter = QMenu("Use in filter")
 
         self.contextMenu_filter_or = QMenu("OR", self.contextMenu_filter)
         action = self.contextMenu_filter_or.addAction("Containing")
@@ -1538,12 +1536,6 @@ class MyTableView(QTableView):
         action = self.contextMenu_filter.addAction("Regular expression (/.../)")
         action.triggered.connect(functools.partial(self.contextMenu_filter_item_onTriggered, "AND", "/.../"))
 
-        self.contextMenu.addMenu(self.contextMenu_filter)
-
-        self.contextMenu.addSeparator()
-        action = self.contextMenu.addAction("Copy")
-        action.triggered.connect(self.clipboardCopy)
-        action.setShortcut(QKeySequence("Ctrl+C"))
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self.onCustomContextMenuRequested)
 
@@ -1612,7 +1604,23 @@ class MyTableView(QTableView):
     # + Context menu {{{
 
     def onCustomContextMenuRequested(self, i_pos):
-        self.contextMenu.popup(self.viewport().mapToGlobal(i_pos))
+        # Create a menu for this popup
+        contextMenu = QMenu(self)
+
+        # If selected column is filterable then add the submenu for filtering
+        selectedIndex = self.selectionModel().currentIndex()
+        column = columns_visible_getByPos(selectedIndex.column())
+        if column["filterable"]:
+            contextMenu.addMenu(self.contextMenu_filter)
+            contextMenu.addSeparator()
+
+        # Add remainder of top-level context menu actions
+        action = contextMenu.addAction("Copy")
+        action.triggered.connect(self.clipboardCopy)
+        action.setShortcut(QKeySequence("Ctrl+C"))
+
+        # Popup the menu
+        contextMenu.popup(self.viewport().mapToGlobal(i_pos))
 
     def contextMenu_filter_item_onTriggered(self, i_combiner, i_comparisonOperation): #, i_checked):
         selectedIndex = self.selectionModel().currentIndex()
