@@ -815,12 +815,16 @@ class HeaderBar(QWidget):
 
         # + }}}
 
-    class FilterEdit(QWidget):
+    class FilterEdit(QFrame):
         # Emitted after the text is changed
         textChange = Signal()
 
         def __init__(self, i_parent=None):
-            QWidget.__init__(self, i_parent)
+            QFrame.__init__(self, i_parent)
+
+            self.setAttribute(Qt.WA_StyledBackground, True)
+            self.setProperty("class", "FilterEdit")
+            self.setAutoFillBackground(True)
 
             self.layout = QHBoxLayout(self)
             self.setLayout(self.layout)
@@ -835,7 +839,7 @@ class HeaderBar(QWidget):
 
             self.clearButton = QPushButton("", self)
             self.clearButton.setIcon(self.style().standardIcon(QStyle.SP_DialogCloseButton))
-            self.clearButton.setStyleSheet("QPushButton { border: none; }");
+            self.clearButton.setStyleSheet("QPushButton { margin: 4px; border-width: 1px; border-radius: 10px; }");
             #self.clearButton.setFlat(True)
             self.clearButton.setFixedHeight(HeaderBar.filterRowHeight)
             self.clearButton.setFixedWidth(HeaderBar.filterRowHeight)

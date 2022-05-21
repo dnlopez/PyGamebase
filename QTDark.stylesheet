@@ -137,12 +137,22 @@ QPushButton:focus
     color: #fff;
 }
 
-HeaderBar QLineEdit
+FilterEdit
 {
 	background-color: rgb(34, 68, 34);
     border-width: 1px;
     border-color: #222;
     border-style: solid;
+}
+FilterEdit QPushButton
+{
+	background-color: #722;
+}
+
+FilterEdit QLineEdit
+{
+    border: none;
+	background-color: transparent;
     color: rgb(204, 238, 204);
 }
 
