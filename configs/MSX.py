@@ -130,9 +130,9 @@ def runGame(i_gamePath, i_fileToRun = None, i_gameInfo = None):
     gameFiles = gameFiles[:2]
 
     # Get game description
-    gameDescription = i_gameInfo["name"]
-    if i_gameInfo["publisher"]:
-        gameDescription += " (" + i_gameInfo["publisher"] + ")"
+    gameDescription = i_gameInfo["Name"]
+    if i_gameInfo["Publisher"]:
+        gameDescription += " (" + i_gameInfo["Publisher"] + ")"
 
     #
     runGameMenu(gameDescription, utils.joinPaths(tempDirPath, gameFiles), i_gameInfo["Gemus"])
@@ -147,9 +147,9 @@ def runExtra(i_extraPath, i_extraInfo, i_gameInfo):
         zipMembers = utils.extractZip(config_extrasBaseDirPath + i_extraPath, tempDirPath)
 
         # Get game description
-        gameDescription = i_gameInfo["name"]
-        if i_gameInfo["publisher"]:
-            gameDescription += " (" + i_gameInfo["publisher"] + ")"
+        gameDescription = i_gameInfo["Name"]
+        if i_gameInfo["Publisher"]:
+            gameDescription += " (" + i_gameInfo["Publisher"] + ")"
 
         #
         runGameMenu(gameDescription, utils.joinPaths(tempDirPath, zipMembers))

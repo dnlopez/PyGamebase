@@ -91,9 +91,9 @@ def runGame(i_gamePath, i_fileToRun = None, i_gameInfo = None):
     shutil.copyfile(basePath + romFilePath, tempDirPath + "/" + os.path.basename(romFilePath))
 
     # Get game description
-    gameDescription = i_gameInfo["name"]
-    if i_gameInfo["publisher"]:
-        gameDescription += " (" + i_gameInfo["publisher"] + ")"
+    gameDescription = i_gameInfo["Name"]
+    if i_gameInfo["Publisher"]:
+        gameDescription += " (" + i_gameInfo["Publisher"] + ")"
 
     #
     runGame2(gameDescription, utils.joinPaths(tempDirPath, [os.path.basename(romFilePath)]))
@@ -108,9 +108,9 @@ def runExtra(i_extraPath, i_extraInfo, i_gameInfo):
         zipMembers = utils.extractZip(config_extrasBaseDirPath + i_extraPath, tempDirPath)
 
         # Get game description
-        gameDescription = i_gameInfo["name"]
-        if i_gameInfo["publisher"]:
-            gameDescription += " (" + i_gameInfo["publisher"] + ")"
+        gameDescription = i_gameInfo["Name"]
+        if i_gameInfo["Publisher"]:
+            gameDescription += " (" + i_gameInfo["Publisher"] + ")"
 
         #
         runGame2(gameDescription, utils.joinPaths(tempDirPath, zipMembers))

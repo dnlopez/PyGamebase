@@ -1637,15 +1637,7 @@ def getGameInfoDict(i_dbRow):
      i_dbRow:
       (list)
     """
-    rv = {}
-    rv = dbRowToDict(i_dbRow, g_dbColumnNames)
-
-    rv["id"] = i_dbRow[g_dbColumnNames.index("GA_Id")]
-    rv["name"] = i_dbRow[g_dbColumnNames.index("Name")]
-    rv["year"] = i_dbRow[g_dbColumnNames.index("Year")]
-    rv["publisher"] = i_dbRow[g_dbColumnNames.index("Publisher")]
-
-    return rv
+    return dbRowToDict(i_dbRow, g_dbColumnNames)
 
 class MyTableView(QTableView):
     def __init__(self, i_parent=None):

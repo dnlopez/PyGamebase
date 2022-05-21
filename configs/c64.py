@@ -116,15 +116,15 @@ def runGame(i_gamePath, i_fileToRun = None, i_gameInfo = None):
         gameFiles = utils.moveElementToFront(gameFiles, i_fileToRun)
 
     # Get game description
-    gameDescription = i_gameInfo["name"]
-    if i_gameInfo["publisher"]:
-        gameDescription += " (" + i_gameInfo["publisher"] + ")"
+    gameDescription = i_gameInfo["Name"]
+    if i_gameInfo["Publisher"]:
+        gameDescription += " (" + i_gameInfo["Publisher"] + ")"
 
     #
     runGameInVice(gameDescription, utils.joinPaths(tempDirPath, gameFiles))
 
 def runExtra(i_extraPath, i_extraInfo, i_gameInfo):
-    #print('runExtra(' + pprint.pformat(i_extraPath) + ', ' + pprint.pformat(i_extraInfo) + ', ' + pprint.pformat(i_gameInfo) + ')')
+    print('runExtra(' + pprint.pformat(i_extraPath) + ', ' + pprint.pformat(i_extraInfo) + ', ' + pprint.pformat(i_gameInfo) + ')')
 
     # If file is a zip
     if utils.pathHasExtension(i_extraPath, ".ZIP"):
@@ -133,9 +133,9 @@ def runExtra(i_extraPath, i_extraInfo, i_gameInfo):
         zipMembers = utils.extractZip(config_extrasBaseDirPath + i_extraPath, tempDirPath)
 
         # Get game description
-        gameDescription = i_gameInfo["name"]
-        if i_gameInfo["publisher"]:
-            gameDescription += " (" + i_gameInfo["publisher"] + ")"
+        gameDescription = i_gameInfo["Name"]
+        if i_gameInfo["Publisher"]:
+            gameDescription += " (" + i_gameInfo["Publisher"] + ")"
 
         #
         runGameInVice(gameDescription, utils.joinPaths(tempDirPath, zipMembers))
