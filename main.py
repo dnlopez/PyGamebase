@@ -1698,6 +1698,7 @@ class MyTableView(QTableView):
         #self.rowHeight(200)
         self.verticalHeader().setSectionResizeMode(QHeaderView.Fixed)
         self.verticalHeader().setDefaultSectionSize(200)
+        self.verticalHeader().setMinimumSectionSize(2)
         self.verticalHeader().hide()
 
         #self.horizontalHeader().setSectionResizeMode(QHeaderView.Fixed)
@@ -1951,15 +1952,15 @@ class MyTableView(QTableView):
 
     # + Resizing rows by mouse dragging {{{
 
-    # Within this many pixels either side of a horizontal boundary between rows, allow dragging to resize a row.
-    resizeMargin = 10
-
     def rowHeight(self):
         """
         Returns:
          (int)
         """
         return self.verticalHeader().defaultSectionSize()
+
+    # Within this many pixels either side of a horizontal boundary between rows, allow dragging to resize a row.
+    resizeMargin = 10
 
     def _rowBoundaryNearPixelY(self, i_y):
         """
@@ -1984,16 +1985,21 @@ class MyTableView(QTableView):
         #
         rowHeight = self.rowHeight()
         offsetFromEdge = i_y % rowHeight
-        if offsetFromEdge >= rowHeight - MyTableView.resizeMargin:
+
+        effectiveResizeMargin = min(MyTableView.resizeMargin, self.rowHeight() / 8)
+
+        if offsetFromEdge >= rowHeight - effectiveResizeMargin:
             rowNo = int(i_y / rowHeight)
             return (rowNo, rowNo * rowHeight - self.verticalScrollBar().value())
-        elif offsetFromEdge <= MyTableView.resizeMargin:
+        elif offsetFromEdge <= effectiveResizeMargin:
             rowNo = int(i_y / rowHeight) - 1
             return (rowNo, rowNo * rowHeight - self.verticalScrollBar().value())
         else:
             return None, None
 
     def eventFilter(self, i_watched, i_event):
+        if i_watched != self.viewport():
+            return False
         #print(i_event.type())
 
         if i_event.type() == QEvent.MouseMove:
@@ -2054,6 +2060,9 @@ class MyTableView(QTableView):
 
                 #
                 return True
+
+        elif i_event.type() == QEvent.Leave:
+            self.unsetCursor()
 
         # Let event continue
         return False
