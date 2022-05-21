@@ -82,13 +82,13 @@ def runGame(i_gamePath, i_fileToRun = None, i_gameInfo = None):
     romFilePath = i_gamePath
 
     #
-    basePath = gamebaseBaseDirPath + "/roms/"
+    gamesBaseDirPath = gamebaseBaseDirPath + "/roms/"
     tempDirPath = "/tmp/gamebase"
 
     # Copy ROM file
     if not os.path.exists(tempDirPath):
         os.mkdir(tempDirPath)
-    shutil.copyfile(basePath + romFilePath, tempDirPath + "/" + os.path.basename(romFilePath))
+    shutil.copyfile(gamesBaseDirPath + romFilePath, tempDirPath + "/" + os.path.basename(romFilePath))
 
     # Get game description
     gameDescription = i_gameInfo["Name"]

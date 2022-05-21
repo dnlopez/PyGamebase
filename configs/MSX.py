@@ -105,13 +105,13 @@ def runGameMenu(i_gameDescription, i_gameFilePaths, i_gemusText=""):
 def runGame(i_gamePath, i_fileToRun = None, i_gameInfo = None):
     #print('runGame(' + pprint.pformat(i_gamePath) + ', ' + pprint.pformat(i_fileToRun) + ', ' + pprint.pformat(i_gameInfo) + ')')
 
-    basePath = gamebaseBaseDirPath + "/Games/"
+    gamesBaseDirPath = gamebaseBaseDirPath + "/Games/"
     tempDirPath = "/tmp/gamebase"
 
     # If file is a zip
     if utils.pathHasExtension(i_gamePath, ".ZIP"):
         # Extract it
-        zipMembers = utils.extractZip(basePath + i_gamePath, tempDirPath)
+        zipMembers = utils.extractZip(gamesBaseDirPath + i_gamePath, tempDirPath)
         # Filter non-game files out of zip member list
         gameFiles = [zipMember
                      for zipMember in zipMembers
@@ -119,7 +119,7 @@ def runGame(i_gamePath, i_fileToRun = None, i_gameInfo = None):
     # Else if file is not a zip
     else:
         # Copy it
-        shutil.copyfile(basePath + i_gamePath, tempDirPath + "/" + os.path.basename(i_gamePath))
+        shutil.copyfile(gamesBaseDirPath + i_gamePath, tempDirPath + "/" + os.path.basename(i_gamePath))
         gameFiles = [os.path.basename(i_gamePath)]
 
     #

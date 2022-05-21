@@ -46,9 +46,9 @@ def runGame(i_gamePath, i_fileToRun = None, i_gameInfo = None):
     #print('runGame(' + pprint.pformat(i_gamePath) + ', ' + pprint.pformat(i_fileToRun) + ', ' + pprint.pformat(i_gameInfo) + ')')
 
     # Extract zip
-    basePath = gamebaseBaseDirPath + "/Games/"
+    gamesBaseDirPath = gamebaseBaseDirPath + "/Games/"
     tempDirPath = "/tmp/gamebase"
-    zipMembers = utils.extractZip(basePath + i_gamePath, tempDirPath)
+    zipMembers = utils.extractZip(gamesBaseDirPath + i_gamePath, tempDirPath)
 
     # Filter non-game files out of zip member list
     gameFiles = [zipMember
