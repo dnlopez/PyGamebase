@@ -2323,7 +2323,6 @@ def detailPane_hide():
     # Give focus to the component next in line, ie. the table view
     tableView.setFocus(Qt.OtherFocusReason)
 
-detailPane_margin = QPushButton("x")
 def detailPane_height():
     """
     Returns:
@@ -2331,6 +2330,7 @@ def detailPane_height():
     """
     return splitter.sizes()[1]
 
+detailPane_margin = QPushButton("x")
 detailPane_margin.clicked.connect(detailPane_hide)
 #detailPane_margin = QWidget()
 detailPane_layout.addWidget(detailPane_margin)
