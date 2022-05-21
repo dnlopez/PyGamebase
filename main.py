@@ -1338,7 +1338,41 @@ class HeaderBar(QWidget):
     def eventFilter(self, i_watched, i_event):
         #print(i_event.type())
 
-        if i_event.type() == QEvent.MouseMove:
+        if i_event.type() == QEvent.MouseButtonPress:
+            # If pressed the left button
+            if i_event.button() == Qt.MouseButton.LeftButton:
+                # Get mouse pos relative to the HeaderBar
+                # and adjust for horizontal scroll amount
+                mousePos = i_watched.mapTo(self, i_event.pos())
+                mousePos.setX(mousePos.x() - self.scrollX)
+                # If holding Shift
+                if i_event.modifiers() & Qt.ShiftModifier:
+                    self.reorder_column = self._columnAtPixelX(mousePos.x())
+                    self.reorder_dropBeforeColumn = self.reorder_column
+
+                    # Show drop indicator
+                    self.reorderIndicator_widget.setGeometry(self._columnScreenX(self.reorder_column), 0, self.reorder_column["width"], HeaderBar.headingButtonHeight)
+                    self.reorderIndicator_widget.show()
+                    self.reorderIndicator_widget.raise_()
+
+                    return True
+                # Else if cursor is near a draggable vertical edge
+                else:
+                    leftColumn, rightColumn, edgeX = self._columnBoundaryNearPixelX(mousePos.x(), HeaderBar.resizeMargin)
+                    if leftColumn != None:
+                        #
+                        self.resize_column = leftColumn
+                        self.resize_columnLeftX = edgeX - self.resize_column["width"]
+
+                        # Get horizontal distance from mouse to the draggable vertical edge (ie. the right edge of the button being resized)
+                        #button = column["headingButton"]
+                        #buttonBottomRight = button.mapTo(self, QPoint(button.size().width(), button.size().height()))
+                        self.resize_mouseToEdgeOffset = edgeX - mousePos.x()
+
+                        #
+                        return True
+
+        elif i_event.type() == QEvent.MouseMove:
             # If currently resizing,
             # do the resize
             if self.resize_column != None:
@@ -1391,40 +1425,6 @@ class HeaderBar(QWidget):
                     self.setCursor(Qt.SizeHorCursor)
                 else:
                     self.unsetCursor()
-
-        elif i_event.type() == QEvent.MouseButtonPress:
-            # If pressed the left button
-            if i_event.button() == Qt.MouseButton.LeftButton:
-                # Get mouse pos relative to the HeaderBar
-                # and adjust for horizontal scroll amount
-                mousePos = i_watched.mapTo(self, i_event.pos())
-                mousePos.setX(mousePos.x() - self.scrollX)
-                # If holding Shift
-                if i_event.modifiers() & Qt.ShiftModifier:
-                    self.reorder_column = self._columnAtPixelX(mousePos.x())
-                    self.reorder_dropBeforeColumn = self.reorder_column
-
-                    # Show drop indicator
-                    self.reorderIndicator_widget.setGeometry(self._columnScreenX(self.reorder_column), 0, self.reorder_column["width"], HeaderBar.headingButtonHeight)
-                    self.reorderIndicator_widget.show()
-                    self.reorderIndicator_widget.raise_()
-
-                    return True
-                # Else if cursor is near a draggable vertical edge
-                else:
-                    leftColumn, rightColumn, edgeX = self._columnBoundaryNearPixelX(mousePos.x(), HeaderBar.resizeMargin)
-                    if leftColumn != None:
-                        #
-                        self.resize_column = leftColumn
-                        self.resize_columnLeftX = edgeX - self.resize_column["width"]
-
-                        # Get horizontal distance from mouse to the draggable vertical edge (ie. the right edge of the button being resized)
-                        #button = column["headingButton"]
-                        #buttonBottomRight = button.mapTo(self, QPoint(button.size().width(), button.size().height()))
-                        self.resize_mouseToEdgeOffset = edgeX - mousePos.x()
-
-                        #
-                        return True
 
         elif i_event.type() == QEvent.MouseButtonRelease:
             # If currently resizing and released the left button
@@ -2002,7 +2002,27 @@ class MyTableView(QTableView):
             return False
         #print(i_event.type())
 
-        if i_event.type() == QEvent.MouseMove:
+        if i_event.type() == QEvent.MouseButtonPress:
+            # If pressed the left button
+            if i_event.button() == Qt.MouseButton.LeftButton:
+                # Get mouse pos relative to the MyTableView
+                mousePos = i_watched.mapTo(self, i_event.pos())
+                # If cursor is near a draggable horizontal edge
+                # change the pointer shape
+                rowNo, _ = self._rowBoundaryNearPixelY(mousePos.y())
+                if rowNo != None:
+                    self.resize_rowNo = rowNo
+                    self.resize_lastMouseY = mousePos.y()
+
+                    # Remember where on the screen the row being resized is
+                    #selectedIndex = tableView.selectionModel().currentIndex()
+                    #self.resize_selectedRowId = g_dbRows[selectedIndex.row()][g_dbColumnNames.index("GA_Id")]
+                    self.resize_selectedRowTopY = tableView.rowViewportPosition(rowNo)
+
+                    #
+                    return True
+
+        elif i_event.type() == QEvent.MouseMove:
             # If not currently resizing,
             # then depending on whether cursor is near a draggable horizontal edge,
             # set cursor shape
@@ -2031,26 +2051,6 @@ class MyTableView(QTableView):
                 self.resize_lastMouseY = mousePos.y()
 
                 return True
-
-        elif i_event.type() == QEvent.MouseButtonPress:
-            # If pressed the left button
-            if i_event.button() == Qt.MouseButton.LeftButton:
-                # Get mouse pos relative to the MyTableView
-                mousePos = i_watched.mapTo(self, i_event.pos())
-                # If cursor is near a draggable horizontal edge
-                # change the pointer shape
-                rowNo, _ = self._rowBoundaryNearPixelY(mousePos.y())
-                if rowNo != None:
-                    self.resize_rowNo = rowNo
-                    self.resize_lastMouseY = mousePos.y()
-
-                    # Remember where on the screen the row being resized is
-                    #selectedIndex = tableView.selectionModel().currentIndex()
-                    #self.resize_selectedRowId = g_dbRows[selectedIndex.row()][g_dbColumnNames.index("GA_Id")]
-                    self.resize_selectedRowTopY = tableView.rowViewportPosition(rowNo)
-
-                    #
-                    return True
 
         elif i_event.type() == QEvent.MouseButtonRelease:
             # If currently resizing and released the left button
