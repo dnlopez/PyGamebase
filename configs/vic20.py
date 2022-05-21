@@ -106,7 +106,7 @@ def runExtra(i_extraPath, i_extraInfo, i_gameInfo):
     if utils.pathHasExtension(i_extraPath, ".ZIP"):
         # Extract zip
         tempDirPath = "/tmp/gamebase"
-        zipMembers = utils.extractZip(config_extrasBaseDirPath + i_extraPath, tempDirPath)
+        zipMembers = utils.extractZip(config_extrasBaseDirPath + "/" + i_extraPath, tempDirPath)
 
         # Get game description
         gameDescription = i_gameInfo["Name"]
