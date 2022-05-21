@@ -2130,13 +2130,13 @@ shortcut.activated.connect(escShortcut_onActivated)
 shortcut = QShortcut(QKeySequence("F12"), mainWindow)
 shortcut.setContext(Qt.ApplicationShortcut)
 def f12Shortcut_onActivated():
-    # If detail pane is closed,
-    # scroll selected row to top and
-    # open, populate and focus the detail pane
+    # If detail pane is closed
     if detailPane_height() == 0:
+        # Scroll selected row to top
         selectedIndex = tableView.selectionModel().currentIndex()
         tableView.scrollTo(selectedIndex, QAbstractItemView.PositionAtTop)
 
+        # Open, populate and focus the detail pane
         detailPane_show()
 
         if selectedIndex.row() != detailPane_currentRowNo:
@@ -2154,6 +2154,16 @@ mainWindow_layout = QVBoxLayout()
 mainWindow_layout.setSpacing(0)
 mainWindow_layout.setContentsMargins(0, 0, 0, 0)
 mainWindow.setLayout(mainWindow_layout)
+
+# Layout overview:
+#  mainWindow
+#   menuBar
+#   splitter
+#    gameTable
+#     headerBar
+#     tableView
+#    detailPane
+#   statusbar
 
 #
 menuBar = QMenuBar()
@@ -2220,10 +2230,18 @@ editMenu_action.addAction("Copy")
 #menuBar.addMenu("View")
 #menuBar.addMenu("Help")
 
+# Create splitter
+splitter = QSplitter(Qt.Vertical)
+mainWindow_layout.addWidget(splitter)
+splitter.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+
 #
 gameTable = QWidget()
 gameTable.setProperty("class", "gameTable")
-mainWindow_layout.addWidget(gameTable)
+splitter.addWidget(gameTable)
+splitter.setStretchFactor(0, 0)  # Don't stretch game table when window is resized
+#gameTable.setMinimumHeight(1)  # Allow splitter to slide all the way over this widget without snapping closed
+#gameTable.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Ignored)
 # Set background colour
 #gameTable.setStyleSheet("* { background-color: white; }")
 #gameTable.backgroundRole().setColor(QPalette.Window, QColor.red())
@@ -2237,6 +2255,13 @@ gameTable_layout = QVBoxLayout()
 gameTable_layout.setSpacing(0)
 gameTable_layout.setContentsMargins(0, 0, 0, 0)
 gameTable.setLayout(gameTable_layout)
+
+def splitter_onSplitterMoved(i_pos, i_index):
+    # If detail pane has been dragged closed,
+    # call detailPane_hide() to keep track
+    if splitter.sizes()[1] == 0:
+        detailPane_hide()
+splitter.splitterMoved.connect(splitter_onSplitterMoved)
 
 # Create header
 headerBar = HeaderBar()
@@ -2274,22 +2299,13 @@ def headerBar_onFilterChange():
             tableView.selectionModel().setCurrentIndex(tableView.selectionModel().model().index(newDbRowNo, selectedIndex.column()), QItemSelectionModel.ClearAndSelect)
 headerBar.filterChange.connect(headerBar_onFilterChange)
 
-splitter = QSplitter(Qt.Vertical)
-gameTable_layout.addWidget(splitter)
-splitter.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-
-def splitter_onSplitterMoved(i_pos, i_index):
-    # If detail pane has been dragged closed,
-    # call detailPane_hide() to keep track
-    if splitter.sizes()[1] == 0:
-        detailPane_hide()
-splitter.splitterMoved.connect(splitter_onSplitterMoved)
-
 # Create table
 tableView = MyTableView()
-splitter.addWidget(tableView)
-splitter.setStretchFactor(0, 0)  # Don't stretch table view when window is resized
+gameTable_layout.addWidget(tableView)
 tableView.setItemDelegate(MyStyledItemDelegate())
+# Set vertical size policy to 'Ignored' which lets widget shrink to zero
+#  https://stackoverflow.com/questions/18342590/setting-qlistwidget-minimum-height
+tableView.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Ignored)
 
 #  Set initial column widths
 tableView.resizeAllColumns([column["width"]  for column in columns_visible_getBySlice()])
@@ -2316,7 +2332,7 @@ detailPane_widget.setLayout(detailPane_layout)
 
 def detailPane_show():
     # Position splitter so that the table view shows exactly one row
-    topPaneHeight = tableView.rowHeight()
+    topPaneHeight = headerBar.geometry().height() + tableView.rowHeight()
     if tableView.horizontalScrollBar().isVisible():
         topPaneHeight += application.style().pixelMetric(QStyle.PM_ScrollBarExtent)  # Scrollbar height
     splitter.setSizes([topPaneHeight, splitter.geometry().height() - topPaneHeight])
