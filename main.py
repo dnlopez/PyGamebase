@@ -428,10 +428,27 @@ g_db_gamesColumnNames = None
 #  (list of str)
 
 def openDb():
+    if not hasattr(gamebase, "config_databaseFilePath"):
+        messageBox = QMessageBox(QMessageBox.Critical, "Error", "")
+        messageBox.setText("<big><b>Missing config setting:</b></big>")
+        messageBox.setInformativeText("config_databaseFilePath")
+        messageBox.exec()
+        return
+
     global g_db
     #g_db = sqlite3.connect(gamebase.config_databaseFilePath)
     #print("file:" + gamebase.config_databaseFilePath + "?mode=ro")
-    g_db = sqlite3.connect("file:" + normalizeDirPathFromConfig(gamebase.config_databaseFilePath) + "?mode=ro", uri=True)
+    try:
+        g_db = sqlite3.connect("file:" + normalizeDirPathFromConfig(gamebase.config_databaseFilePath) + "?mode=ro", uri=True)
+    except Exception as e:
+        import traceback
+        print(traceback.format_exc())
+        messageBox = QMessageBox(QMessageBox.Critical, "Error", "")
+        messageBox.setText("<big><b>When opening database file:</b></big>")
+        messageBox.setInformativeText("With path:\n" + gamebase.config_databaseFilePath + "\n\nAn error occurred:\n" + "\n".join(traceback.format_exception_only(e)))
+        #messageBox.setFixedWidth(800)
+        messageBox.exec()
+        sys.exit(1)
 
     # Add REGEXP function
     def functionRegex(i_pattern, i_value):
@@ -1797,7 +1814,7 @@ class MyTableView(QTableView):
             except Exception as e:
                 import traceback
                 print(traceback.format_exc())
-                messageBox = QMessageBox(QMessageBox.Critical, "Error", traceback.format_exc())
+                messageBox = QMessageBox(QMessageBox.Critical, "Error", "")
                 messageBox.setText("<big><b>In runGame():</b></big>")
                 messageBox.setInformativeText(traceback.format_exc())
                 #messageBox.setFixedWidth(800)
@@ -2524,7 +2541,7 @@ ORDER BY
                     except Exception as e:
                         import traceback
                         print(traceback.format_exc())
-                        messageBox = QMessageBox(QMessageBox.Critical, "Error", traceback.format_exc())
+                        messageBox = QMessageBox(QMessageBox.Critical, "Error", "")
                         messageBox.setText("<big><b>In runExtra():</b></big>")
                         messageBox.setInformativeText(traceback.format_exc())
                         #messageBox.setFixedWidth(800)
