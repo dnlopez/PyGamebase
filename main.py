@@ -369,6 +369,25 @@ def columns_visible_getBySlice(i_startPos=None, i_endPos=None):
 
 # + Screenshot file/URL resolving {{{
 
+def normalizeDirPathFromConfig(i_dirPath):
+    """
+    Strip trailing slash from a directory path, if present.
+
+    Params:
+     i_dirPath:
+      (str)
+      eg.
+       "/mnt/gamebase/games/"
+
+    Returns:
+     (str)
+     eg.
+      "/mnt/gamebase/games"
+    """
+    if i_dirPath.endswith("/") or i_dirPath.endswith("\\"):
+        i_dirPath = i_dirPath[:-1]
+    return i_dirPath
+
 def getScreenshotAbsolutePath(i_relativePath):
     """
     Params:
@@ -381,7 +400,7 @@ def getScreenshotAbsolutePath(i_relativePath):
     """
     if not hasattr(gamebase, "config_screenshotsBaseDirPath"):
         return None
-    return gamebase.config_screenshotsBaseDirPath + "/" + i_relativePath
+    return normalizeDirPathFromConfig(gamebase.config_screenshotsBaseDirPath) + "/" + i_relativePath
 
 def getScreenshotUrl(i_relativePath):
     """
@@ -412,7 +431,7 @@ def openDb():
     global g_db
     #g_db = sqlite3.connect(gamebase.config_databaseFilePath)
     #print("file:" + gamebase.config_databaseFilePath + "?mode=ro")
-    g_db = sqlite3.connect("file:" + gamebase.config_databaseFilePath + "?mode=ro", uri=True)
+    g_db = sqlite3.connect("file:" + normalizeDirPathFromConfig(gamebase.config_databaseFilePath) + "?mode=ro", uri=True)
 
     # Add REGEXP function
     def functionRegex(i_pattern, i_value):
@@ -1513,7 +1532,7 @@ class MyStyledItemDelegate(QStyledItemDelegate):
             screenshotPath = dbRow_getScreenshotRelativePath(g_dbRows[i_index.row()])
             if screenshotPath != None:
                 if hasattr(gamebase, "config_screenshotsBaseDirPath"):
-                    pixmap = QPixmap(gamebase.config_screenshotsBaseDirPath + "/" + screenshotPath)
+                    pixmap = QPixmap(normalizeDirPathFromConfig(gamebase.config_screenshotsBaseDirPath) + "/" + screenshotPath)
                     i_painter.drawPixmap(i_option.rect, pixmap)
         else:
             QStyledItemDelegate.paint(self, i_painter, i_option, i_index)
@@ -1557,7 +1576,7 @@ class MyTableModel(QAbstractTableModel):
             # (Done via delegate)
             #if i_role == Qt.DecorationRole:
             #    screenshotPath = g_dbRows[i_index.row()][g_dbColumnNames.index("ScrnshotFilename")]
-            #    pixmap = QPixmap(gamebase.config_screenshotsBaseDirPath + "/" + screenshotPath)
+            #    pixmap = QPixmap(normalizeDirPathFromConfig(gamebase.config_screenshotsBaseDirPath) + "/" + screenshotPath)
             #    return pixmap;
             pass
         # ID
@@ -2469,7 +2488,7 @@ ORDER BY
 
             html += '<a href="extra:///' + imageRow[extrasColumnNames.index("Path")] + '" style="display: inline-block; text-align: center;">'
             if hasattr(gamebase, "config_extrasBaseDirPath"):
-                html += '<img src="file://' + gamebase.config_extrasBaseDirPath + "/" + imageRow[extrasColumnNames.index("Path")] + '" style="height: 300px;">'
+                html += '<img src="file://' + normalizeDirPathFromConfig(gamebase.config_extrasBaseDirPath) + "/" + imageRow[extrasColumnNames.index("Path")] + '" style="height: 300px;">'
             #html += '<img src="https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_92x30dp.png" style="height: 300px;">'
             html += '<div>' + imageRow[extrasColumnNames.index("Name")] + '</div>'
             html += '</a>'
