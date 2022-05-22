@@ -8,6 +8,8 @@ import sqlite3
 import functools
 import os.path
 import re
+import copy
+import pprint
 
 # Qt
 from PySide2.QtCore import *
@@ -426,6 +428,7 @@ def getScreenshotUrl(i_relativePath):
 g_db = None
 g_db_gamesColumnNames = None
 #  (list of str)
+g_dbSchema = {}
 
 def openDb():
     if not hasattr(gamebase, "config_databaseFilePath"):
@@ -458,10 +461,18 @@ def openDb():
         return compiledPattern.search(str(i_value)) is not None
     g_db.create_function("REGEXP", 2, functionRegex)
 
+    # Get info about tables
+    g_db.row_factory = sqlite3.Row
+    global g_dbSchema
+    for tableName in ["Games", "Years", "Genres", "PGenres", "Publishers", "Programmers"]:
+        cursor = g_db.execute("PRAGMA table_info(" + tableName + ")")
+        rows = cursor.fetchall()
+        rows = [{keyName: row[keyName] for keyName in row.keys()}  for row in rows]  # Convert sqlite3.Row objects to plain dicts for easier viewing
+        g_dbSchema[tableName] = rows
+
     # Get columns in Games table
-    cursor = g_db.execute("PRAGMA table_info(Games)")
     global g_db_gamesColumnNames
-    g_db_gamesColumnNames = [row[1]  for row in cursor.fetchall()]
+    g_db_gamesColumnNames = [row["name"]  for row in g_dbSchema["Games"]]
 
 def closeDb():
     global g_db
