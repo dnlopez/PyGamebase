@@ -1980,20 +1980,33 @@ class MyTableView(QTableView):
             Row edge Y pixel position
           (None, None): There is not a row boundary near i_y.
         """
-        # Account for current scroll position
-        i_y += self.verticalScrollBar().value()
-        #
         rowHeight = self.rowHeight()
+
+        # Get current scroll position in pixels
+        #  If scrolling is per item,
+        #  temporarily turn that off
+        #  so that the scrollbar returns positions in pixels instead of items
+        if tableView.verticalScrollMode() == QAbstractItemView.ScrollPerPixel:
+            scrollY = self.verticalScrollBar().value()
+        else: # if tableView.verticalScrollMode() == QAbstractItemView.ScrollPerItem:
+            tableView.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel)
+            scrollY = self.verticalScrollBar().value()
+            tableView.setVerticalScrollMode(QAbstractItemView.ScrollPerItem)
+
+        # Add current scroll position to i_y to make it relative to the top of the content
+        i_y += scrollY
+
+        #
         offsetFromEdge = i_y % rowHeight
 
         effectiveResizeMargin = min(MyTableView.resizeMargin, self.rowHeight() / 8)
 
         if offsetFromEdge >= rowHeight - effectiveResizeMargin:
             rowNo = int(i_y / rowHeight)
-            return (rowNo, rowNo * rowHeight - self.verticalScrollBar().value())
+            return (rowNo, rowNo * rowHeight - scrollY)
         elif offsetFromEdge <= effectiveResizeMargin:
             rowNo = int(i_y / rowHeight) - 1
-            return (rowNo, rowNo * rowHeight - self.verticalScrollBar().value())
+            return (rowNo, rowNo * rowHeight - scrollY)
         else:
             return None, None
 
@@ -2013,11 +2026,18 @@ class MyTableView(QTableView):
                 if rowNo != None:
                     self.resize_rowNo = rowNo
                     self.resize_lastMouseY = mousePos.y()
+                    self.resize_scrollModeIsPerItem = tableView.verticalScrollMode() == QAbstractItemView.ScrollPerItem
 
                     # Remember where on the screen the row being resized is
                     #selectedIndex = tableView.selectionModel().currentIndex()
                     #self.resize_selectedRowId = g_dbRows[selectedIndex.row()][g_dbColumnNames.index("GA_Id")]
                     self.resize_selectedRowTopY = tableView.rowViewportPosition(rowNo)
+
+                    # If scrolling is per item,
+                    # temporarily turn that off for the duration of the resize
+                    # so that the scrollbar returns positions in pixels and we can resize smoothly
+                    if self.resize_scrollModeIsPerItem:
+                        self.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel)
 
                     #
                     return True
@@ -2057,6 +2077,9 @@ class MyTableView(QTableView):
             if self.resize_rowNo != None and i_event.button() == Qt.MouseButton.LeftButton:
                 # Stop resizing
                 self.resize_rowNo = None
+
+                if self.resize_scrollModeIsPerItem:
+                    self.setVerticalScrollMode(QAbstractItemView.ScrollPerItem)
 
                 #
                 return True
