@@ -491,41 +491,104 @@ def stringLooksLikeNumber(i_str):
     except ValueError:
         return False
 
-def queryDb():
-    # SELECT
-    sql = """
-SELECT
- Games.GA_Id,
- Games.Name,
- Games.Comment,
- Games.Gemus,
- Years.Year,
- Games.Filename,
- Games.FileToRun,
- Games.ScrnshotFilename,
- Genres.Genre,
- PGenres.ParentGenre,
- Publishers.Publisher,
- Programmers.Programmer,
- Games.MemoText"""
-    if "CloneOf" in g_db_gamesColumnNames:
-        sql += ", CloneOfGame.Name AS CloneOfName"
-    if "WebLink_Name" in g_db_gamesColumnNames:
-        sql += ", Games.WebLink_Name"
-    if "WebLink_URL" in g_db_gamesColumnNames:
-        sql += ", Games.WebLink_URL"
+def getJoinTermsToTable(i_tableName, io_tableConnections):
+    """
+    Params:
+     i_tableName:
+      (str)
+     io_tableConnections:
+      (dict)
+      Mapping of table names to join clauses and dependencies
+      eg.
+       {
+           "PGenres": {
+               "dependencies": ["Genres"],
+               "fromTerm": "LEFT JOIN PGenres ON Genres.PG_Id = PGenres.PG_Id"
+           },
+           "Genres": {
+               "dependencies": [],
+               "fromTerm": "LEFT JOIN Genres ON Games.GE_Id = Genres.GE_Id"
+           },
+       }
 
-    # FROM
-    sql += """
-FROM
- Games
- LEFT JOIN Years ON Games.YE_Id = Years.YE_Id
- LEFT JOIN Genres ON Games.GE_Id = Genres.GE_Id
- LEFT JOIN PGenres ON Genres.PG_Id = PGenres.PG_Id
- LEFT JOIN Publishers ON Games.PU_Id = Publishers.PU_Id
- LEFT JOIN Programmers ON Games.PR_Id = Programmers.PR_Id"""
+    Returns:
+     Function return value:
+      (list of str)
+     io_tableConnections:
+      The used connections will be removed from the list.
+    """
+    rv = []
+
+    if i_tableName in io_tableConnections:
+        tableConnection = io_tableConnections[i_tableName]
+        for dependency in tableConnection["dependencies"]:
+            rv += getJoinTermsToTable(dependency, io_tableConnections)
+        rv.append(tableConnection["fromTerm"])
+        del(io_tableConnections[i_tableName])
+
+    return rv
+
+connectionsFromGamesTable = {
+    "Years": {
+        "dependencies": [],
+        "fromTerm": "LEFT JOIN Years ON Games.YE_Id = Years.YE_Id"
+    },
+    "Genres": {
+        "dependencies": [],
+        "fromTerm": "LEFT JOIN Genres ON Games.GE_Id = Genres.GE_Id"
+    },
+    "PGenres": {
+        "dependencies": ["Genres"],
+        "fromTerm": "LEFT JOIN PGenres ON Genres.PG_Id = PGenres.PG_Id"
+    },
+    "Publishers": {
+        "dependencies": [],
+        "fromTerm": "LEFT JOIN Publishers ON Games.PU_Id = Publishers.PU_Id"
+    },
+    "Programmers": {
+        "dependencies": [],
+        "fromTerm": "LEFT JOIN Programmers ON Games.PR_Id = Programmers.PR_Id"
+    },
+}
+
+def queryDb():
+    selectTerms = [
+        "Games.GA_Id",
+        "Games.ScrnshotFilename",
+        "Games.Comment",
+        "Games.Gemus",
+        "Games.Filename",
+        "Games.FileToRun",
+        "Games.MemoText"
+    ]
+
+    fromTerms = [
+        "Games"
+    ]
+
+    tableConnections = copy.deepcopy(connectionsFromGamesTable)
+    visibleFieldNames = [column["qualifiedDbFieldName"]  for column in columns_visible_getBySlice()  if "qualifiedDbFieldName" in column]
+    for visibleFieldName in visibleFieldNames:
+        tableName, fieldName = visibleFieldName.split(".")
+
+        fromTerms += getJoinTermsToTable(tableName, tableConnections)
+
+        if tableName == "Games" and fieldName == "GA_Id":
+            pass
+        else:
+            selectTerms.append(visibleFieldName)
+
     if "CloneOf" in g_db_gamesColumnNames:
-        sql += "\nLEFT JOIN Games AS CloneOfGame ON Games.CloneOf = CloneOfGame.GA_Id"
+        selectTerms.append("CloneOfGame.Name AS CloneOfName")
+        fromTerms.append("LEFT JOIN Games AS CloneOfGame ON Games.CloneOf = CloneOfGame.GA_Id")
+    if "WebLink_Name" in g_db_gamesColumnNames:
+        selectTerms.append("Games.WebLink_Name")
+    if "WebLink_URL" in g_db_gamesColumnNames:
+        selectTerms.append("Games.WebLink_URL")
+
+    # SELECT
+    sql = "SELECT " + ", ".join(selectTerms)
+    sql += "\nFROM " + " ".join(fromTerms)
 
     # WHERE
     andGroups = []
@@ -631,6 +694,62 @@ FROM
 
     label_statusbar.setText("Showing " + str(len(g_dbRows)) + " games.")
 
+def getGameRecord(i_gameId):
+    # Select all fields from Games table
+    fromTerms = [
+        "Games"
+    ]
+    fullyQualifiedFieldNames = False
+    if fullyQualifiedFieldNames:
+        selectTerms = [
+        ]
+        for field in g_dbSchema["Games"]:
+            selectTerms.append("Games." + field["name"] + " AS [Games." + field["name"] + "]")
+
+    # For all other relevant tables
+    tableConnections = copy.deepcopy(connectionsFromGamesTable)
+    tableNames = list(tableConnections.keys())
+    for tableName in tableNames:
+        # Join to it
+        fromTerms += getJoinTermsToTable(tableName, tableConnections)
+        # Select all fields from it
+        if fullyQualifiedFieldNames:
+            for field in g_dbSchema[tableName]:
+                selectTerms.append(tableName + "." + field["name"] + " AS [" + tableName + "." + field["name"] + "]")
+
+    # Build SQL string
+    #  SELECT
+    if fullyQualifiedFieldNames:
+        sql = "SELECT " + ", ".join(selectTerms)
+    else:
+        sql = "SELECT *"
+    #  FROM
+    sql += "\nFROM " + " ".join(fromTerms)
+    #  WHERE
+    sql += "\nWHERE Games.GA_Id = " + str(i_gameId)
+
+    # Execute
+    g_db.row_factory = sqlite3.Row
+    cursor = g_db.execute(sql)
+
+    row = cursor.fetchone()
+    row = {keyName: row[keyName] for keyName in row.keys()}  # Convert sqlite3.Row objects to plain dicts for easier viewing
+    return row
+
+def getExtrasRecords(i_gameId):
+    # Build SQL string
+    sql = "SELECT * FROM Extras"
+    sql += "\nWHERE GA_Id = " + str(i_gameId)
+    sql += "\nORDER BY DisplayOrder"
+
+    # Execute
+    g_db.row_factory = sqlite3.Row
+    cursor = g_db.execute(sql)
+
+    rows = cursor.fetchall()
+    rows = [{keyName: row[keyName] for keyName in row.keys()}  for row in rows]  # Convert sqlite3.Row objects to plain dicts for easier viewing
+    return rows
+
 def dbRow_getScreenshotRelativePath(i_row):
     """
     Get the path of a game's first screenshot picture.
@@ -638,7 +757,7 @@ def dbRow_getScreenshotRelativePath(i_row):
 
     Params:
      i_row:
-      (tuple)
+      (sqlite3.Row)
       A row from the 'Games' table
 
     Returns:
@@ -651,7 +770,7 @@ def dbRow_getScreenshotRelativePath(i_row):
     # compute and cache it now
     if True:#(!i_row.screenshotRelativePath)
         #i_row.
-        screenshotRelativePath = i_row[g_dbColumnNames.index("ScrnshotFilename")]
+        screenshotRelativePath = i_row["ScrnshotFilename"]
         if screenshotRelativePath != None:
             screenshotRelativePath = screenshotRelativePath.replace("\\", "/")
 
@@ -667,7 +786,7 @@ def dbRow_getTitleshotRelativePath(i_row):
 
     Params:
      i_row:
-      (tuple)
+      (sqlite3.Row)
       A row from the 'Games' table
 
     Returns:
@@ -690,7 +809,7 @@ def dbRow_getSupplementaryScreenshotPaths(i_row, i_simulateCount=None):
     """
     Params:
      i_row:
-      (tuple)
+      (sqlite3.Row)
      i_simulateCount:
       Either (int)
       or (None)
@@ -1664,6 +1783,7 @@ class MyTableModel(QAbstractTableModel):
 
         return None
 
+# [No longer used]
 def dbRowToDict(i_row, i_columnNames):
     """
     Params:
@@ -1682,6 +1802,7 @@ def dbRowToDict(i_row, i_columnNames):
 
     return rv
 
+# [No longer used]
 def getGameInfoDict(i_dbRow):
     """
     Params:
@@ -1824,9 +1945,10 @@ class MyTableView(QTableView):
         elif columnId == "play":
             rowNo = i_modelIndex.row()
             try:
+                gameId = g_dbRows[rowNo][g_dbColumnNames.index("GA_Id")]
                 gamebase.runGame(g_dbRows[rowNo][g_dbColumnNames.index("Filename")],
                                  g_dbRows[rowNo][g_dbColumnNames.index("FileToRun")],
-                                 getGameInfoDict(g_dbRows[rowNo]))
+                                 getGameRecord(gameId))
             except Exception as e:
                 import traceback
                 print(traceback.format_exc())
@@ -2419,7 +2541,7 @@ def detailPane_populate(i_rowNo):
     global detailPane_currentRowNo
     detailPane_currentRowNo = i_rowNo
 
-    gameRow = g_dbRows[i_rowNo]
+    gameRow = getGameRecord(g_dbRows[i_rowNo][g_dbColumnNames.index("GA_Id")])
 
     html = ""
 
@@ -2434,11 +2556,11 @@ def detailPane_populate(i_rowNo):
 
     # If this game is a clone,
     # insert a link to the original
-    if "CloneOfName" in g_dbColumnNames and gameRow[g_dbColumnNames.index("CloneOfName")] != None:
+    if "CloneOfName" in gameRow and gameRow["CloneOfName"] != None:  # [broken]
         html += '<p style="white-space: pre-wrap;">'
         html += 'Clone of: '
 
-        html += '<a href="#">' + gameRow[g_dbColumnNames.index("CloneOfName")] + '</a>'
+        html += '<a href="#">' + gameRow["CloneOfName"] + '</a>'
         #link.addEventListener("click", function (i_event) {
         #    i_event.preventDefault();
         #
@@ -2463,23 +2585,23 @@ def detailPane_populate(i_rowNo):
         html += '</p>'
 
     # Insert memo text
-    if gameRow[g_dbColumnNames.index("MemoText")] != None:
+    if gameRow["MemoText"] != None:
         html += '<p style="white-space: pre-wrap;">'
-        html += gameRow[g_dbColumnNames.index("MemoText")]
+        html += gameRow["MemoText"]
         html += '</p>'
 
     # Insert comment
-    if gameRow[g_dbColumnNames.index("Comment")] != None:
+    if gameRow["Comment"] != None:
         html += '<p style="white-space: pre-wrap;">'
-        html += gameRow[g_dbColumnNames.index("Comment")]
+        html += gameRow["Comment"]
         html += '</p>'
 
     # Insert weblink(s)
-    if "WebLink_Name" in g_dbColumnNames and gameRow[g_dbColumnNames.index("WebLink_Name")] != None:
+    if "WebLink_Name" in g_dbColumnNames and gameRow["WebLink_Name"] != None:
         html += '<p style="white-space: pre-wrap;">'
 
-        html += gameRow[g_dbColumnNames.index("WebLink_Name")] + ": "
-        url = gameRow[g_dbColumnNames.index("WebLink_URL")]
+        html += gameRow["WebLink_Name"] + ": "
+        url = gameRow["WebLink_URL"]
         html += '<a target="_blank" href="' + url + '">'
         html += url
         html += '</a>'
@@ -2489,7 +2611,7 @@ def detailPane_populate(i_rowNo):
         #});
 
         # If it's a World Of Spectrum link then insert a corresponding Spectrum Computing link
-        if "WebLink_Name" in g_dbColumnNames and gameRow[g_dbColumnNames.index("WebLink_Name")] == "WOS":
+        if "WebLink_Name" in g_dbColumnNames and gameRow["WebLink_Name"] == "WOS":
             # Separator
             html += '<span style="margin-left: 8px; margin-right: 8px; border-left: 1px dotted #666;"></span>'
             # Label
@@ -2508,28 +2630,13 @@ def detailPane_populate(i_rowNo):
         html += '</p>'
 
     # Get extras
-    sql = """
-SELECT
- Extras.EX_Id,
- Extras.Name,
- Extras.Path
-FROM
- Extras
-WHERE
- Extras.GA_Id = """ + str(gameRow[g_dbColumnNames.index("GA_Id")]) + """
-ORDER BY
- Extras.DisplayOrder"""
-
-    dbCursor = g_db.execute(sql)
-
-    extrasColumnNames = [column[0]  for column in dbCursor.description]
-    extrasRows = dbCursor.fetchall()
+    extrasRows = getExtrasRecords(str(gameRow["GA_Id"]))
 
     # Seperate extras which are and aren't images
     imageRows = []
     nonImageRows = []
     for extrasRow in extrasRows:
-        path = extrasRow[extrasColumnNames.index("Path")]
+        path = extrasRow["Path"]
         if path != None and (path.lower().endswith(".jpg") or path.lower().endswith(".jpeg") or path.lower().endswith(".gif") or path.lower().endswith(".png")):
             imageRows.append(extrasRow)
         else:
@@ -2548,11 +2655,11 @@ ORDER BY
                 html += '<span style="margin-left: 8px; margin-right: 8px; border-left: 1px dotted #666;"></span>'
 
             html += '<a'
-            path = nonImageRow[extrasColumnNames.index("Path")]
+            path = nonImageRow["Path"]
             if path != None:
                 html += ' href="extra:///' + path + '"'
             html += '>'
-            html += nonImageRow[extrasColumnNames.index("Name")]
+            html += nonImageRow["Name"]
             html += '</a>'
 
         html += "</div>"
@@ -2566,11 +2673,11 @@ ORDER BY
             #print("imageRow: " + str(imageRow))
             #var cell = document.createElement("div");
 
-            html += '<a href="extra:///' + imageRow[extrasColumnNames.index("Path")] + '" style="display: inline-block; text-align: center;">'
+            html += '<a href="extra:///' + imageRow["Path"] + '" style="display: inline-block; text-align: center;">'
             if hasattr(gamebase, "config_extrasBaseDirPath"):
-                html += '<img src="file://' + normalizeDirPathFromConfig(gamebase.config_extrasBaseDirPath) + "/" + imageRow[extrasColumnNames.index("Path")] + '" style="height: 300px;">'
+                html += '<img src="file://' + normalizeDirPathFromConfig(gamebase.config_extrasBaseDirPath) + "/" + imageRow["Path"] + '" style="height: 300px;">'
             #html += '<img src="https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_92x30dp.png" style="height: 300px;">'
-            html += '<div>' + imageRow[extrasColumnNames.index("Name")] + '</div>'
+            html += '<div>' + imageRow["Name"] + '</div>'
             html += '</a>'
 
             #cell.appendChild(link);
@@ -2597,8 +2704,8 @@ ORDER BY
                 url = i_qUrl.toString()
                 if url.startswith("extra:///"):
                     extraPath = url[9:]
-                    extraInfo = [row  for row in self.extrasRows  if row[extrasColumnNames.index("Path")] == extraPath][0]
-                    gameInfo = getGameInfoDict(self.gameRow)
+                    extraInfo = [row  for row in self.extrasRows  if row["Path"] == extraPath][0]
+                    gameInfo = self.gameRow
                     try:
                         gamebase.runExtra(extraPath, extraInfo, gameInfo)
                     except Exception as e:
