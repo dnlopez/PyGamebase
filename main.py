@@ -101,7 +101,8 @@ g_columns = [
       "visible": True,
       "width": 35,
       "sortable": False,
-      "filterable": False
+      "filterable": False,
+      "textAlignment": "center"
     },
     { "id": "play",
       "name": "Start game (▶)",
@@ -109,7 +110,8 @@ g_columns = [
       "visible": True,
       "width": 35,
       "sortable": False,
-      "filterable": False
+      "filterable": False,
+      "textAlignment": "center"
     },
     { "id": "pic",
       "name": "Picture",
@@ -134,7 +136,8 @@ g_columns = [
       "sortable": False,
       "filterable": False,
       "qualifiedDbFieldName": "Games.GA_Id",
-      "unqualifiedDbFieldName": "GA_Id"
+      "unqualifiedDbFieldName": "GA_Id",
+      "textAlignment": "left"
     },
     { "id": "name",
       "headingText": "Name",
@@ -144,7 +147,8 @@ g_columns = [
       "sortable": True,
       "filterable": True,
       "qualifiedDbFieldName": "Games.Name",
-      "unqualifiedDbFieldName": "Name"
+      "unqualifiedDbFieldName": "Name",
+      "textAlignment": "left"
     },
     { "id": "year",
       "headingText": "Year",
@@ -154,8 +158,20 @@ g_columns = [
       "sortable": True,
       "filterable": True,
       "qualifiedDbFieldName": "Years.Year",
-      "unqualifiedDbFieldName": "Year"
+      "unqualifiedDbFieldName": "Year",
+      "textAlignment": "left"
     },
+    #{ "id": "playerssim",
+    #  "headingText": "Players",
+    #  "name": "Players",
+    #  "visible": True,
+    #  "width": 75,
+    #  "sortable": True,
+    #  "filterable": True,
+    #  "qualifiedDbFieldName": "Games.PlayersSim",
+    #  "unqualifiedDbFieldName": "PlayersSim",
+    #  "textAlignment": "left"
+      #},
     { "id": "publisher",
       "headingText": "Publisher",
       "name": "Publisher",
@@ -164,7 +180,8 @@ g_columns = [
       "sortable": True,
       "filterable": True,
       "qualifiedDbFieldName": "Publishers.Publisher",
-      "unqualifiedDbFieldName": "Publisher"
+      "unqualifiedDbFieldName": "Publisher",
+      "textAlignment": "left"
     },
     { "id": "programmer",
       "headingText": "Programmer",
@@ -174,7 +191,8 @@ g_columns = [
       "sortable": True,
       "filterable": True,
       "qualifiedDbFieldName": "Programmers.Programmer",
-      "unqualifiedDbFieldName": "Programmer"
+      "unqualifiedDbFieldName": "Programmer",
+      "textAlignment": "left"
     },
     { "id": "parent_genre",
       "headingText": "Parent genre",
@@ -184,7 +202,8 @@ g_columns = [
       "sortable": True,
       "filterable": True,
       "qualifiedDbFieldName": "PGenres.ParentGenre",
-      "unqualifiedDbFieldName": "ParentGenre"
+      "unqualifiedDbFieldName": "ParentGenre",
+      "textAlignment": "left"
     },
     { "id": "genre",
       "headingText": "Genre",
@@ -194,7 +213,8 @@ g_columns = [
       "sortable": True,
       "filterable": True,
       "qualifiedDbFieldName": "Genres.Genre",
-      "unqualifiedDbFieldName": "Genre"
+      "unqualifiedDbFieldName": "Genre",
+      "textAlignment": "left"
     }
 ]
 # (list of Column)
@@ -1730,48 +1750,15 @@ class MyTableModel(QAbstractTableModel):
             #    pixmap = QPixmap(normalizeDirPathFromConfig(gamebase.config_screenshotsBaseDirPath) + "/" + screenshotPath)
             #    return pixmap;
             pass
-        # ID
-        elif column["id"] == "id":
+        #
+        else:
             if i_role == Qt.DisplayRole:
-                return g_dbRows[i_index.row()][g_dbColumnNames.index("GA_Id")]
+                return g_dbRows[i_index.row()][column["unqualifiedDbFieldName"]]
             elif i_role == Qt.TextAlignmentRole:
-                return Qt.AlignLeft
-        # Name
-        elif column["id"] == "name":
-            if i_role == Qt.DisplayRole:
-                return g_dbRows[i_index.row()][g_dbColumnNames.index("Name")]
-            elif i_role == Qt.TextAlignmentRole:
-                return Qt.AlignLeft
-        # Year
-        elif column["id"] == "year":
-            if i_role == Qt.DisplayRole:
-                return g_dbRows[i_index.row()][g_dbColumnNames.index("Year")]
-            elif i_role == Qt.TextAlignmentRole:
-                return Qt.AlignLeft
-        # Publisher
-        elif column["id"] == "publisher":
-            if i_role == Qt.DisplayRole:
-                return g_dbRows[i_index.row()][g_dbColumnNames.index("Publisher")]
-            elif i_role == Qt.TextAlignmentRole:
-                return Qt.AlignLeft
-        # Programmer
-        elif column["id"] == "programmer":
-            if i_role == Qt.DisplayRole:
-                return g_dbRows[i_index.row()][g_dbColumnNames.index("Programmer")]
-            elif i_role == Qt.TextAlignmentRole:
-                return Qt.AlignLeft
-        # Parent genre
-        elif column["id"] == "parent_genre":
-            if i_role == Qt.DisplayRole:
-                return g_dbRows[i_index.row()][g_dbColumnNames.index("ParentGenre")]
-            elif i_role == Qt.TextAlignmentRole:
-                return Qt.AlignLeft
-        # Genre
-        elif column["id"] == "genre":
-            if i_role == Qt.DisplayRole:
-                return g_dbRows[i_index.row()][g_dbColumnNames.index("Genre")]
-            elif i_role == Qt.TextAlignmentRole:
-                return Qt.AlignLeft
+                if column["textAlignment"] == "center":
+                    return Qt.AlignCenter
+                elif column["textAlignment"] == "left":
+                    return Qt.AlignLeft
 
         return None
 
