@@ -616,7 +616,7 @@ def queryDb():
     for filterRowNo in range(0, len(headerBar.filterRows)):
         andTerms = []
 
-        for column in g_columns:
+        for column in columns_getBySlice():
             if column["filterable"] and column["visible"]:
                 value = headerBar.columnWidgets[column["id"]]["filterEdits"][filterRowNo].text()
                 value = value.strip()
@@ -953,7 +953,7 @@ class HeaderBar(QWidget):
             action = contextMenu.addAction("Columns")
             action.setEnabled(False)
             contextMenu.addSeparator()
-            for columnNo, column in enumerate(g_columns):
+            for columnNo, column in enumerate(columns_getBySlice()):
                 action = contextMenu.addAction(column["name"])
                 action.setCheckable(True)
                 action.setChecked(column["visible"])
@@ -1151,8 +1151,7 @@ class HeaderBar(QWidget):
         """
         # For each new filterable, visible column
         # that does not already have header widgets
-        global g_columns
-        for columnNo, column in enumerate(g_columns):
+        for columnNo, column in enumerate(columns_getBySlice()):
             if column["filterable"] and column["visible"] and \
                (column["id"] not in self.columnWidgets):
 
@@ -1220,8 +1219,7 @@ class HeaderBar(QWidget):
         newRow["deleteRow_pushButton"] = deleteRow_pushButton
 
         # Add per-column GUI widgets
-        global g_columns
-        for columnNo, column in enumerate(g_columns):
+        for columnNo, column in enumerate(columns_getBySlice()):
             if column["filterable"] and column["visible"]:
                 # Create FilterEdit
                 headerFilter = HeaderBar.FilterEdit(self)
@@ -1244,7 +1242,7 @@ class HeaderBar(QWidget):
           (int)
         """
         # Remove per-column widgets
-        for columnNo, column in enumerate(g_columns):
+        for columnNo, column in enumerate(columns_getBySlice()):
             if column["filterable"] and column["visible"]:
                 # From the GUI
                 self.columnWidgets[column["id"]]["filterEdits"][i_position].setParent(None)
@@ -1269,7 +1267,7 @@ class HeaderBar(QWidget):
          i_position:
           (int)
         """
-        for columnNo, column in enumerate(g_columns):
+        for columnNo, column in enumerate(columns_getBySlice()):
             if column["filterable"] and column["visible"]:
                 self.columnWidgets[column["id"]]["filterEdits"][i_position].setText("")
 
@@ -1458,7 +1456,7 @@ class HeaderBar(QWidget):
             return None
 
         x = 0
-        for columnNo, column in enumerate(g_columns):
+        for columnNo, column in enumerate(columns_getBySlice()):
             if column["visible"]:
                 x += column["width"]
                 if i_x < x:
@@ -1477,7 +1475,7 @@ class HeaderBar(QWidget):
          or (None)
         """
         x = 0
-        for columnNo, column in enumerate(g_columns):
+        for columnNo, column in enumerate(columns_getBySlice()):
             if column["visible"]:
                 if column == i_column:
                     return x
@@ -1619,7 +1617,7 @@ class HeaderBar(QWidget):
         x = 0
         x += self.scrollX  # Adjust for horizontal scroll amount
         y = 0
-        for column in g_columns:
+        for column in columns_getBySlice():
             if column["visible"]:
                 if column["filterable"]:
                     self.columnWidgets[column["id"]]["headingButton"].setGeometry(x, y, column["width"], HeaderBar.headingButtonHeight)
@@ -1631,7 +1629,7 @@ class HeaderBar(QWidget):
         for filterRowNo, filterRow in enumerate(self.filterRows):
             x = 0
             x += self.scrollX  # Adjust for horizontal scroll amount
-            for columnNo, column in enumerate(g_columns):
+            for columnNo, column in enumerate(columns_getBySlice()):
                 if column["visible"]:
                     if column["filterable"]:
                         self.columnWidgets[column["id"]]["filterEdits"][filterRowNo].setGeometry(x, y, column["width"], HeaderBar.filterRowHeight)
@@ -1649,7 +1647,7 @@ class HeaderBar(QWidget):
         previousWidget = None
 
         # For each heading button
-        for column in g_columns:
+        for column in columns_getBySlice():
             if column["filterable"] and column["visible"]:
                 nextWidget = self.columnWidgets[column["id"]]["headingButton"]
                 if previousWidget != None:
@@ -1658,7 +1656,7 @@ class HeaderBar(QWidget):
 
         # For each filter edit
         for filterRowNo, filterRow in enumerate(self.filterRows):
-            for column in g_columns:
+            for column in columns_getBySlice():
                 if column["filterable"] and column["visible"]:
                     nextWidget = self.columnWidgets[column["id"]]["filterEdits"][filterRowNo].lineEdit
                     if previousWidget != None:
