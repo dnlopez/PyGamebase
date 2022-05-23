@@ -311,6 +311,18 @@ g_availableColumns = [
         "filterable": True,
         "textAlignment": "left",
     },
+    {
+        "id": "music",
+        "screenName": "Music",
+        "dbTableName": "Games",
+        "dbFieldName": "SidFilename",
+        "dbType": "Memo/Hyperlink (255)",
+        "defaultWidth": 35,
+        "sortable": False,
+        "filterable": False,
+        "textAlignment": "center",
+        "comment": "Music Filename within Music Path"
+    },
 ]
 
 def availableColumn_getById(i_id):
@@ -2021,6 +2033,14 @@ class MyTableModel(QAbstractTableModel):
                 return "▶"
             elif i_role == Qt.TextAlignmentRole:
                 return Qt.AlignCenter
+        # Music
+        elif column["id"] == "music":
+            if i_role == Qt.DisplayRole:
+                if g_dbRows[i_index.row()][g_dbColumnNames.index("SidFilename")] == None:
+                    return ""
+                return "M"
+            elif i_role == Qt.TextAlignmentRole:
+                return Qt.AlignCenter
         # Screenshot
         elif column["id"] == "pic":
             # (Done via delegate)
@@ -2220,6 +2240,21 @@ class MyTableView(QTableView):
                 print(traceback.format_exc())
                 messageBox = QMessageBox(QMessageBox.Critical, "Error", "")
                 messageBox.setText("<big><b>In runGame():</b></big>")
+                messageBox.setInformativeText(traceback.format_exc())
+                #messageBox.setFixedWidth(800)
+                messageBox.exec()
+
+        elif columnId == "music":
+            rowNo = i_modelIndex.row()
+            try:
+                gameId = g_dbRows[rowNo][g_dbColumnNames.index("GA_Id")]
+                gamebase.runMusic(g_dbRows[rowNo][g_dbColumnNames.index("SidFilename")],
+                                  getGameRecord(gameId))
+            except Exception as e:
+                import traceback
+                print(traceback.format_exc())
+                messageBox = QMessageBox(QMessageBox.Critical, "Error", "")
+                messageBox.setText("<big><b>In runMusic():</b></big>")
                 messageBox.setInformativeText(traceback.format_exc())
                 #messageBox.setFixedWidth(800)
                 messageBox.exec()

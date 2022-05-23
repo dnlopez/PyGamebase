@@ -21,6 +21,7 @@ gamebaseBaseDirPath = driveBasePath + "/games/Commodore C64/gamebases/GameBase64
 config_databaseFilePath = gamebaseBaseDirPath + "/GBC_v18.sqlite"
 config_screenshotsBaseDirPath = gamebaseBaseDirPath + "/Screenshots"
 config_photosBaseDirPath = gamebaseBaseDirPath + "/Photos"
+config_musicBaseDirPath = gamebaseBaseDirPath + "/C64Music"
 config_extrasBaseDirPath = gamebaseBaseDirPath + "/Extras"
 
 
@@ -142,3 +143,8 @@ def runExtra(i_extraPath, i_extraInfo, i_gameInfo):
         runGameInVice(gameDescription, utils.joinPaths(tempDirPath, zipMembers))
     else:
         utils.openInDefaultApplication(config_extrasBaseDirPath + "/" + i_extraPath)
+
+def runMusic(i_musicPath, i_gameInfo):
+    #print('runMusic(' + pprint.pformat(i_musicPath) + ', ' + pprint.pformat(i_gameInfo) + ')')
+
+    utils.openInDefaultApplication(config_musicBaseDirPath + "/" + i_musicPath)
