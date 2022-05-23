@@ -276,10 +276,10 @@ def startProcess(i_viaShell, i_executableAndArguments):
     return popen
 
 def directStartProcess(i_executableAndArguments):
-    startProcess(False, i_executableAndArguments)
+    return startProcess(False, i_executableAndArguments)
 
 def shellStartProcess(i_executableAndArguments):
-    startProcess(True, i_executableAndArguments)
+    return startProcess(True, i_executableAndArguments)
 
 def runProcess(i_viaShell, i_executableAndArguments):
     """
@@ -306,10 +306,10 @@ def runProcess(i_viaShell, i_executableAndArguments):
     return (popen.returncode, stdOutput)
 
 def directRunProcess(i_executableAndArguments):
-    runProcess(False, i_executableAndArguments)
+    return runProcess(False, i_executableAndArguments)
 
 def shellRunProcess(i_executableAndArguments):
-    runProcess(True, i_executableAndArguments)
+    return runProcess(True, i_executableAndArguments)
 
 
 # Python std
