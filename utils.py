@@ -369,8 +369,10 @@ class Task():
             self.popen = startProcess(i_viaShell, i_executableAndArguments)
         except Exception as e:
             import traceback
-            print(traceback.format_exc())
-            self.output = "\n".join(traceback.format_exception_only(e))
+            exceptionInfo = traceback.format_exc()
+            print(exceptionInfo)
+            self.output = exceptionInfo
+            #self.output = "\n".join(exceptionInfo)
             return
 
         # Read output until streams close
