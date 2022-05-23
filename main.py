@@ -96,8 +96,7 @@ gamebase = importlib.import_module(os.path.splitext(os.path.basename(param_confi
 
 g_columns = [
     { "id": "detail",
-      "name": "Show detail (+)",
-      "headingText": "",
+      "screenName": "Show detail (+)",
       "visible": True,
       "width": 35,
       "sortable": False,
@@ -105,8 +104,7 @@ g_columns = [
       "textAlignment": "center"
     },
     { "id": "play",
-      "name": "Start game (▶)",
-      "headingText": "",
+      "screenName": "Start game (▶)",
       "visible": True,
       "width": 35,
       "sortable": False,
@@ -114,23 +112,21 @@ g_columns = [
       "textAlignment": "center"
     },
     { "id": "pic",
-      "name": "Picture",
-      "headingText": "",#"Pic",
+      "screenName": "Picture",
       "visible": True,
       "width": 320,
       "sortable": False,
       "filterable": False
     },
     #{ "id": "pic2",
-    #  "headingText": "Pic",
+    #  "screenName": "Picture 2",
     #  "visible": True,
     #  "width": 320,
     #  "sortable": False,
     #  "filterable": False
     #},
     { "id": "id",
-      "headingText": "",
-      "name": "ID",
+      "screenName": "ID",
       "visible": True,
       "width": 50,
       "sortable": False,
@@ -140,8 +136,7 @@ g_columns = [
       "textAlignment": "left"
     },
     { "id": "name",
-      "headingText": "Name",
-      "name": "Name",
+      "screenName": "Name",
       "visible": True,
       "width": 250,
       "sortable": True,
@@ -151,8 +146,7 @@ g_columns = [
       "textAlignment": "left"
     },
     { "id": "year",
-      "headingText": "Year",
-      "name": "Year",
+      "screenName": "Year",
       "visible": True,
       "width": 75,
       "sortable": True,
@@ -162,8 +156,7 @@ g_columns = [
       "textAlignment": "left"
     },
     #{ "id": "playerssim",
-    #  "headingText": "Players",
-    #  "name": "Players",
+    #  "screenName": "Players",
     #  "visible": True,
     #  "width": 75,
     #  "sortable": True,
@@ -173,8 +166,7 @@ g_columns = [
     #  "textAlignment": "left"
       #},
     { "id": "publisher",
-      "headingText": "Publisher",
-      "name": "Publisher",
+      "screenName": "Publisher",
       "visible": True,
       "width": 250,
       "sortable": True,
@@ -183,9 +175,18 @@ g_columns = [
       "unqualifiedDbFieldName": "Publisher",
       "textAlignment": "left"
     },
+    { "id": "developer",
+      "screenName": "Developer",
+      "visible": True,
+      "width": 250,
+      "sortable": True,
+      "filterable": True,
+      "qualifiedDbFieldName": "Developers.Developer",
+      "unqualifiedDbFieldName": "Developer",
+      "textAlignment": "left"
+    },
     { "id": "programmer",
-      "headingText": "Programmer",
-      "name": "Programmer",
+      "screenName": "Programmer",
       "visible": True,
       "width": 250,
       "sortable": True,
@@ -195,8 +196,7 @@ g_columns = [
       "textAlignment": "left"
     },
     { "id": "parent_genre",
-      "headingText": "Parent genre",
-      "name": "Parent genre",
+      "screenName": "Parent genre",
       "visible": True,
       "width": 150,
       "sortable": True,
@@ -206,8 +206,7 @@ g_columns = [
       "textAlignment": "left"
     },
     { "id": "genre",
-      "headingText": "Genre",
-      "name": "Genre",
+      "screenName": "Genre",
       "visible": True,
       "width": 150,
       "sortable": True,
@@ -222,8 +221,11 @@ g_columns = [
 # Type: Column
 #  (dict)
 #  Has keys:
-#   headingText:
+#   screenName:
 #    (str)
+#    Used in
+#     heading button, if it's visible
+#     list of fields on right-click menu
 #   visible:
 #    (bool)
 #   width:
@@ -484,7 +486,7 @@ def openDb():
     # Get info about tables
     g_db.row_factory = sqlite3.Row
     global g_dbSchema
-    for tableName in ["Games", "Years", "Genres", "PGenres", "Publishers", "Programmers"]:
+    for tableName in ["Games", "Years", "Genres", "PGenres", "Publishers", "Developers", "Programmers"]:
         cursor = g_db.execute("PRAGMA table_info(" + tableName + ")")
         rows = cursor.fetchall()
         rows = [{keyName: row[keyName] for keyName in row.keys()}  for row in rows]  # Convert sqlite3.Row objects to plain dicts for easier viewing
@@ -564,6 +566,10 @@ connectionsFromGamesTable = {
     "Publishers": {
         "dependencies": [],
         "fromTerm": "LEFT JOIN Publishers ON Games.PU_Id = Publishers.PU_Id"
+    },
+    "Developers": {
+        "dependencies": [],
+        "fromTerm": "LEFT JOIN Developers ON Games.DE_Id = Developers.DE_Id"
     },
     "Programmers": {
         "dependencies": [],
@@ -954,7 +960,7 @@ class HeaderBar(QWidget):
             action.setEnabled(False)
             contextMenu.addSeparator()
             for columnNo, column in enumerate(columns_getBySlice()):
-                action = contextMenu.addAction(column["name"])
+                action = contextMenu.addAction(column["screenName"])
                 action.setCheckable(True)
                 action.setChecked(column["visible"])
                 action.triggered.connect(functools.partial(action_onTriggered, columnNo))
@@ -1159,7 +1165,7 @@ class HeaderBar(QWidget):
                 widgetDict = {}
 
                 # Create header button
-                headingButton = HeaderBar.HeadingButton(column["headingText"], column["filterable"], self)
+                headingButton = HeaderBar.HeadingButton(column["screenName"], column["filterable"], self)
                 widgetDict["headingButton"] = headingButton
                 # Set its fixed properties (apart from position)
                 headingButton.setVisible(True)
@@ -1354,7 +1360,7 @@ class HeaderBar(QWidget):
             if column["filterable"]:
                 headingButton = self.columnWidgets[column["id"]]["headingButton"]
 
-                newCaption = column["name"]
+                newCaption = column["screenName"]
 
                 sortIndex = 1
                 sortDirection = 0
@@ -1764,7 +1770,7 @@ class MyTableModel(QAbstractTableModel):
     def headerData(self, i_columnNo, i_orientation, i_role):
         if i_orientation == Qt.Horizontal and i_role == Qt.DisplayRole:
             column = columns_getByPos(i_columnNo)
-            return column["headingText"]
+            return column["screenName"]
 
         return None
 
