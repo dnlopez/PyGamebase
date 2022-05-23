@@ -323,6 +323,49 @@ g_availableColumns = [
         "textAlignment": "center",
         "comment": "Music Filename within Music Path"
     },
+    {
+        "id": "pal_ntsc",
+        "screenName": "PAL/NTSC",
+        "dbTableName": "Games",
+        "dbFieldName": "V_PalNTSC",
+        "dbType": "Long Integer",
+        "type": "enum",
+        "enumMap": {
+            0: "PAL",
+            1: "both",
+            2: "NTSC",
+            3: "PAL[+NTSC?]"
+        },
+        "defaultWidth": 75,
+        "sortable": True,
+        "filterable": True,
+        "textAlignment": "left",
+        "comment": "Game version is PAL, NTSC or BOTH (0=PAL, 1=BOTH, 2=NTSC, 3=PAL[+NTSC?])"
+    },
+    {
+        "id": "control",
+        "screenName": "Control",
+        "dbTableName": "Games",
+        "dbFieldName": "Control",
+        "dbType": "Long Integer",
+        "type": "enum",
+        "enumMap": {
+            0: "JoyPort2",
+            1: "JoyPort1",
+            2: "Keyboard",
+            3: "PaddlePort2",
+            4: "PaddlePort1",
+            5: "Mouse",
+            6: "LightPen",
+            7: "KoalaPad",
+            8: "LightGun"
+        },
+        "defaultWidth": 100,
+        "sortable": True,
+        "filterable": True,
+        "textAlignment": "left",
+        "comment": "Game's control method (0=JoyPort2, 1=JoyPort1, 2=Keyboard, 3=PaddlePort2, 4=PaddlePort1, 5=Mouse, 6=LightPen, 7=KoalaPad, 8=LightGun"
+    },
 ]
 
 def availableColumn_getById(i_id):
@@ -1979,6 +2022,8 @@ class MyStyledItemDelegate(QStyledItemDelegate):
             QStyledItemDelegate.paint(self, i_painter, i_option, i_index)
 
 class MyTableModel(QAbstractTableModel):
+    FilterRole = Qt.UserRole + 1
+
     def __init__(self, i_parent, *args):
         QAbstractTableModel.__init__(self, i_parent, *args)
 
@@ -2000,13 +2045,13 @@ class MyTableModel(QAbstractTableModel):
 
         # Detail
         if column["id"] == "detail":
-            if i_role == Qt.DisplayRole:
+            if i_role == Qt.DisplayRole or i_role == MyTableModel.FilterRole:
                 return "+"
             elif i_role == Qt.TextAlignmentRole:
                 return Qt.AlignCenter
         # Play
         elif column["id"] == "play":
-            if i_role == Qt.DisplayRole:
+            if i_role == Qt.DisplayRole or i_role == MyTableModel.FilterRole:
                 if g_dbRows[i_index.row()][g_dbColumnNames.index("Filename")] == None:
                     return ""
                 return "▶"
@@ -2014,7 +2059,7 @@ class MyTableModel(QAbstractTableModel):
                 return Qt.AlignCenter
         # Music
         elif column["id"] == "music":
-            if i_role == Qt.DisplayRole:
+            if i_role == Qt.DisplayRole or i_role == MyTableModel.FilterRole:
                 if g_dbRows[i_index.row()][g_dbColumnNames.index("SidFilename")] == None:
                     return ""
                 return "M"
@@ -2030,14 +2075,30 @@ class MyTableModel(QAbstractTableModel):
             pass
         #
         else:
-            if i_role == Qt.DisplayRole:
-                availableColumn = availableColumn_getById(column["id"])
-                return g_dbRows[i_index.row()][availableColumn["dbFieldName"]]
-            elif i_role == Qt.TextAlignmentRole:
-                if column["textAlignment"] == "center":
-                    return Qt.AlignCenter
-                elif column["textAlignment"] == "left":
-                    return Qt.AlignLeft
+            availableColumn = availableColumn_getById(column["id"])
+            # Enum field
+            if "type" in availableColumn and availableColumn["type"] == "enum":
+                if i_role == MyTableModel.FilterRole:
+                    return g_dbRows[i_index.row()][availableColumn["dbFieldName"]]
+                elif i_role == Qt.DisplayRole:
+                    value = g_dbRows[i_index.row()][availableColumn["dbFieldName"]]
+                    if value in availableColumn["enumMap"]:
+                        value = str(value) + ": " + availableColumn["enumMap"][value]
+                    return value
+                elif i_role == Qt.TextAlignmentRole:
+                    if column["textAlignment"] == "center":
+                        return Qt.AlignCenter
+                    elif column["textAlignment"] == "left":
+                        return Qt.AlignLeft
+            # Other ordinary text field
+            else:
+                if i_role == Qt.DisplayRole or i_role == MyTableModel.FilterRole:
+                    return g_dbRows[i_index.row()][availableColumn["dbFieldName"]]
+                elif i_role == Qt.TextAlignmentRole:
+                    if column["textAlignment"] == "center":
+                        return Qt.AlignCenter
+                    elif column["textAlignment"] == "left":
+                        return Qt.AlignLeft
 
         return None
 
@@ -2272,7 +2333,7 @@ class MyTableView(QTableView):
 
     def contextMenu_filter_item_onTriggered(self, i_combiner, i_comparisonOperation): #, i_checked):
         selectedIndex = self.selectionModel().currentIndex()
-        selectedValue = self.tableModel.data(selectedIndex, Qt.DisplayRole)
+        selectedValue = self.tableModel.data(selectedIndex, MyTableModel.FilterRole)
 
         formattedCriteria = None
         if i_comparisonOperation == "nc":
