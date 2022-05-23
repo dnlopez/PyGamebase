@@ -138,6 +138,87 @@ def joinPaths(i_basePath, i_relativePaths):
     """
     return [joinPath(i_basePath, relativePath)  for relativePath in i_relativePaths]
 
+def findFileSequence(i_baseDirPath, i_filePath):
+    """
+    Find additional files that exist for as long as
+    the last number is incremented or the last uppercase letter is advanced through the alphabet.
+
+    Params:
+     i_baseDirPath:
+      (str)
+      eg.
+       "/home/daniel/gamebases/Gamebase Amiga 2.3/Games"
+       "/home/daniel/gamebases/Amstrad CPC/Games"
+     i_filePath:
+      (str)
+      eg.
+       "A/Air Warrior_Disk1.zip"
+       "C/Cabal (E) - Side A.cdt"
+       "G/Game, Set & Match 2 (E) - Side 1A.cdt"
+
+    Returns:
+     (list of str)
+     eg.
+      ["A/Air Warrior_Disk1.zip", "A/Air Warrior_Disk2.zip", "A/Air Warrior_Disk3.zip"]
+      ["C/Cabal (E) - Side A.cdt", "C/Cabal (E) - Side B.cdt"]
+      ["G/Game, Set & Match 2 (E) - Side 1A.cdt", "G/Game, Set & Match 2 (E) - Side 1B.cdt", "G/Game, Set & Match 2 (E) - Side 2A.cdt", "G/Game, Set & Match 2 (E) - Side 2B.cdt", "G/Game, Set & Match 2 (E) - Side 3A.cdt", "G/Game, Set & Match 2 (E) - Side 3B.cdt", "G/Game, Set & Match 2 (E) - Side 4A.cdt", "G/Game, Set & Match 2 (E) - Side 4B.cdt"]
+    """
+    rv = [i_filePath]
+
+    stem, extension = os.path.splitext(i_filePath)
+
+    # If the name ends with a number and letter pair
+    import re
+    match = re.search("[0-9]+[A-Z]$", stem)
+    if match:
+        numberlessStem = stem[ : -len(match.group(0))]
+        number = int(match.group(0)[:-1])
+        startLetter = match.group(0)[-1]
+        letter = chr(ord(startLetter) + 1)
+        while True:
+            while True:
+                possibleFilePath = numberlessStem + str(number) + letter + extension
+                if not os.path.isfile(i_baseDirPath + "/" + possibleFilePath):
+                    break
+                rv.append(possibleFilePath)
+
+                letter = chr(ord(letter) + 1)
+
+            if letter == startLetter:
+                break
+            number += 1
+            letter = startLetter
+
+        return rv
+
+    # Else if the name ends with a number
+    match = re.search("[0-9]+$", stem)
+    if match:
+        numberlessStem = stem[ : -len(match.group(0))]
+        number = int(match.group(0))
+        while True:
+            number += 1
+            possibleFilePath = numberlessStem + str(number) + extension
+            if not os.path.isfile(i_baseDirPath + "/" + possibleFilePath):
+                break
+            rv.append(possibleFilePath)
+        return rv
+
+    # Else if the name ends with a letter
+    match = re.search("[A-Z]$", stem)
+    if match:
+        letterlessStem = stem[ : -1]
+        letter = stem[-1]
+        while True:
+            letter = chr(ord(letter) + 1)
+            possibleFilePath = letterlessStem + letter + extension
+            if not os.path.isfile(i_baseDirPath + "/" + possibleFilePath):
+                break
+            rv.append(possibleFilePath)
+        return rv
+
+    return rv
+
 # + }}}
 
 # + Zip files {{{
