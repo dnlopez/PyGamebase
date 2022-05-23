@@ -366,6 +366,57 @@ g_availableColumns = [
         "textAlignment": "left",
         "comment": "Game's control method (0=JoyPort2, 1=JoyPort1, 2=Keyboard, 3=PaddlePort2, 4=PaddlePort1, 5=Mouse, 6=LightPen, 7=KoalaPad, 8=LightGun"
     },
+    {
+        "id": "clone_of",
+        "screenName": "Clone of",
+        "dbTableName": "Games",
+        "dbFieldName": "CloneOf",
+        "dbType": "Long Integer",
+        "type": "gameId",
+        "defaultWidth": 100,
+        "sortable": True,
+        "filterable": True,
+        "textAlignment": "left",
+    },
+    {
+        "id": "prequel",
+        "screenName": "Prequel",
+        "dbTableName": "Games",
+        "dbFieldName": "Prequel",
+        "dbType": "Long Integer NOT NULL",
+        "type": "gameId",
+        "defaultWidth": 100,
+        "sortable": True,
+        "filterable": True,
+        "textAlignment": "left",
+        "comment": "Link to GA_ID of prequel game (0 if no prequel)"
+    },
+    {
+        "id": "sequel",
+        "screenName": "Sequel",
+        "dbTableName": "Games",
+        "dbFieldName": "Sequel",
+        "dbType": "Long Integer NOT NULL",
+        "type": "gameId",
+        "defaultWidth": 100,
+        "sortable": True,
+        "filterable": True,
+        "textAlignment": "left",
+        "comment": "Link to GA_ID of sequel game (0 if no sequel)"
+    },
+    {
+        "id": "related",
+        "screenName": "Related",
+        "dbTableName": "Games",
+        "dbFieldName": "Related",
+        "dbType": "Long Integer NOT NULL",
+        "type": "gameId",
+        "defaultWidth": 100,
+        "sortable": True,
+        "filterable": True,
+        "textAlignment": "left",
+        "comment": "Link to GA_ID of related game (0 if no related game)"
+    },
 ]
 
 def availableColumn_getById(i_id):
@@ -1580,6 +1631,15 @@ class HeaderBar(QWidget):
             if column["filterable"]:
                 self.columnWidgets[column["id"]]["filterEdits"][i_position].setText("")
 
+    def clearAllFilterRows(self):
+        while len(self.filterRows) > 1:
+            self.deleteFilterRow(len(self.filterRows) - 1)
+        self.clearFilterRow(0)
+
+        self.repositionFilterEdits()
+        #self.repositionTabOrder()
+        self.filterChange.emit()
+
     def deleteRow_pushButton_onClicked(self, i_filterRow):
         if len(self.filterRows) == 1:
             self.clearFilterRow(0)
@@ -2090,6 +2150,20 @@ class MyTableModel(QAbstractTableModel):
                         return Qt.AlignCenter
                     elif column["textAlignment"] == "left":
                         return Qt.AlignLeft
+            # Game ID field
+            if "type" in availableColumn and availableColumn["type"] == "gameId":
+                if i_role == MyTableModel.FilterRole:
+                    return g_dbRows[i_index.row()][availableColumn["dbFieldName"]]
+                elif i_role == Qt.DisplayRole:
+                    value = g_dbRows[i_index.row()][availableColumn["dbFieldName"]]
+                    if value == 0:
+                        return ""
+                    return ">" + str(value)
+                elif i_role == Qt.TextAlignmentRole:
+                    if column["textAlignment"] == "center":
+                        return Qt.AlignCenter
+                    elif column["textAlignment"] == "left":
+                        return Qt.AlignLeft
             # Other ordinary text field
             else:
                 if i_role == Qt.DisplayRole or i_role == MyTableModel.FilterRole:
@@ -2137,6 +2211,13 @@ def getGameInfoDict(i_dbRow):
       (list)
     """
     return dbRowToDict(i_dbRow, g_dbColumnNames)
+
+def findGameWithId(i_id):
+    idColumnNo = g_dbColumnNames.index("GA_Id")
+    for rowNo, row in enumerate(g_dbRows):
+        if row[idColumnNo] == i_id:
+            return rowNo
+    return None
 
 class MyTableView(QTableView):
     def __init__(self, i_parent=None):
@@ -2271,8 +2352,9 @@ class MyTableView(QTableView):
 
         elif columnId == "play":
             rowNo = i_modelIndex.row()
+            gameId = g_dbRows[rowNo][g_dbColumnNames.index("GA_Id")]
+
             try:
-                gameId = g_dbRows[rowNo][g_dbColumnNames.index("GA_Id")]
                 gamebase.runGame(g_dbRows[rowNo][g_dbColumnNames.index("Filename")],
                                  g_dbRows[rowNo][g_dbColumnNames.index("FileToRun")],
                                  getGameRecord(gameId))
@@ -2287,8 +2369,9 @@ class MyTableView(QTableView):
 
         elif columnId == "music":
             rowNo = i_modelIndex.row()
+            gameId = g_dbRows[rowNo][g_dbColumnNames.index("GA_Id")]
+
             try:
-                gameId = g_dbRows[rowNo][g_dbColumnNames.index("GA_Id")]
                 gamebase.runMusic(g_dbRows[rowNo][g_dbColumnNames.index("SidFilename")],
                                   getGameRecord(gameId))
             except Exception as e:
@@ -2299,6 +2382,25 @@ class MyTableView(QTableView):
                 messageBox.setInformativeText(traceback.format_exc())
                 #messageBox.setFixedWidth(800)
                 messageBox.exec()
+
+        else:
+            availableColumn = availableColumn_getById(columnId)
+            if availableColumn["type"] == "gameId":
+                # Get the target game ID
+                rowNo = i_modelIndex.row()
+                gameId = g_dbRows[rowNo][g_dbColumnNames.index(availableColumn["dbFieldName"])]
+
+                # Look for row in table,
+                # and if not found then clear filter and look again
+                rowNo = findGameWithId(gameId)
+                if rowNo == None:
+                    headerBar.clearAllFilterRows()
+                    rowNo = findGameWithId(gameId)
+
+                # If found, select it
+                if rowNo != None:
+                    selectedIndex = self.selectionModel().currentIndex()
+                    tableView.selectionModel().setCurrentIndex(tableView.selectionModel().model().index(rowNo, selectedIndex.column()), QItemSelectionModel.ClearAndSelect)
 
     def selectionChanged(self, i_selected, i_deselected):
         QTableView.selectionChanged(self, i_selected, i_deselected)
