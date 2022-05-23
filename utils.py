@@ -262,9 +262,9 @@ def startProcess(i_viaShell, i_executableAndArguments):
     # so do our own conversions to that
     else:
         # If we have a string then nothing to do,
-        # else if we have a list then quote and join the arguments
+        # else if we have a list then flatten it, then quote and join the arguments
         if not isinstance(i_executableAndArguments, str):
-            i_executableAndArguments = " ".join([quoteArgumentForNativeShell(arg)  for arg in i_executableAndArguments])
+            i_executableAndArguments = " ".join([quoteArgumentForNativeShell(arg)  for arg in flattenList(i_executableAndArguments)])
 
     # Start program with stderr merged into stdout and stdout readable through a pipe
     import subprocess
