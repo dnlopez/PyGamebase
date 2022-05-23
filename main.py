@@ -377,8 +377,6 @@ g_visibleColumns = [
       "width": 50,
       "sortable": False,
       "filterable": False,
-      "qualifiedDbFieldName": "Games.GA_Id",
-      "unqualifiedDbFieldName": "GA_Id",
       "textAlignment": "left"
     },
     { "id": "name",
@@ -386,8 +384,6 @@ g_visibleColumns = [
       "width": 250,
       "sortable": True,
       "filterable": True,
-      "qualifiedDbFieldName": "Games.Name",
-      "unqualifiedDbFieldName": "Name",
       "textAlignment": "left"
     },
     { "id": "year",
@@ -395,8 +391,6 @@ g_visibleColumns = [
       "width": 75,
       "sortable": True,
       "filterable": True,
-      "qualifiedDbFieldName": "Years.Year",
-      "unqualifiedDbFieldName": "Year",
       "textAlignment": "left"
     },
     #{ "id": "playerssim",
@@ -404,8 +398,6 @@ g_visibleColumns = [
     #  "width": 75,
     #  "sortable": True,
     #  "filterable": True,
-    #  "qualifiedDbFieldName": "Games.PlayersSim",
-    #  "unqualifiedDbFieldName": "PlayersSim",
     #  "textAlignment": "left"
       #},
     { "id": "publisher",
@@ -413,8 +405,6 @@ g_visibleColumns = [
       "width": 250,
       "sortable": True,
       "filterable": True,
-      "qualifiedDbFieldName": "Publishers.Publisher",
-      "unqualifiedDbFieldName": "Publisher",
       "textAlignment": "left"
     },
     { "id": "developer",
@@ -422,8 +412,6 @@ g_visibleColumns = [
       "width": 250,
       "sortable": True,
       "filterable": True,
-      "qualifiedDbFieldName": "Developers.Developer",
-      "unqualifiedDbFieldName": "Developer",
       "textAlignment": "left"
     },
     { "id": "programmer",
@@ -431,8 +419,6 @@ g_visibleColumns = [
       "width": 250,
       "sortable": True,
       "filterable": True,
-      "qualifiedDbFieldName": "Programmers.Programmer",
-      "unqualifiedDbFieldName": "Programmer",
       "textAlignment": "left"
     },
     { "id": "parent_genre",
@@ -440,8 +426,6 @@ g_visibleColumns = [
       "width": 150,
       "sortable": True,
       "filterable": True,
-      "qualifiedDbFieldName": "PGenres.ParentGenre",
-      "unqualifiedDbFieldName": "ParentGenre",
       "textAlignment": "left"
     },
     { "id": "genre",
@@ -449,8 +433,6 @@ g_visibleColumns = [
       "width": 150,
       "sortable": True,
       "filterable": True,
-      "qualifiedDbFieldName": "Genres.Genre",
-      "unqualifiedDbFieldName": "Genre",
       "textAlignment": "left"
     }
 ]
@@ -480,11 +462,6 @@ def visibleColumn_add(i_id):
         "filterable": availableColumn["filterable"],
         "textAlignment": availableColumn["textAlignment"]
     }
-
-    # temp
-    if "dbTableName" in availableColumn and "dbFieldName" in availableColumn:
-        visibleColumn["qualifiedDbFieldName"] = availableColumn["dbTableName"] + "." + availableColumn["dbFieldName"]
-        visibleColumn["unqualifiedDbFieldName"] = availableColumn["dbFieldName"]
 
     g_visibleColumns.append(visibleColumn)
 
@@ -846,16 +823,16 @@ def queryDb():
     ]
 
     tableConnections = copy.deepcopy(connectionsFromGamesTable)
-    visibleFieldNames = [column["qualifiedDbFieldName"]  for column in visibleColumn_getBySlice()  if "qualifiedDbFieldName" in column]
-    for visibleFieldName in visibleFieldNames:
-        tableName, fieldName = visibleFieldName.split(".")
-
+    visibleDbNames = [(availableColumn["dbTableName"], availableColumn["dbFieldName"])
+                      for availableColumn in [availableColumn_getById(column["id"])  for column in visibleColumn_getBySlice()]
+                      if "dbTableName" in availableColumn and "dbFieldName" in availableColumn]
+    for tableName, fieldName in visibleDbNames:
         fromTerms += getJoinTermsToTable(tableName, tableConnections)
 
         if tableName == "Games" and fieldName == "GA_Id":
             pass
         else:
-            selectTerms.append(visibleFieldName)
+            selectTerms.append(tableName + "." + fieldName)
 
     if "CloneOf" in g_db_gamesColumnNames:
         selectTerms.append("CloneOfGame.Name AS CloneOfName")
@@ -876,6 +853,7 @@ def queryDb():
         andTerms = []
 
         for column in visibleColumn_getBySlice():
+            availableColumn = availableColumn_getById(column["id"])
             if column["filterable"]:
                 value = headerBar.columnWidgets[column["id"]]["filterEdits"][filterRowNo].text()
                 value = value.strip()
@@ -883,7 +861,7 @@ def queryDb():
                     # If range operator
                     betweenValues = value.split("~")
                     if len(betweenValues) == 2 and stringLooksLikeNumber(betweenValues[0]) and stringLooksLikeNumber(betweenValues[1]):
-                        andTerms.append(column["qualifiedDbFieldName"] + " BETWEEN " + betweenValues[0] + " AND " + betweenValues[1])
+                        andTerms.append(availableColumn["dbTableName"] + "." + availableColumn["dbFieldName"] + " BETWEEN " + betweenValues[0] + " AND " + betweenValues[1])
 
                     # Else if regular expression
                     elif len(value) > 2 and value.startswith("/") and value.endswith("/"):
@@ -895,7 +873,7 @@ def queryDb():
                         value = "'" + value + "'"
 
                         #
-                        andTerms.append(column["qualifiedDbFieldName"] + " REGEXP " + value)
+                        andTerms.append(availableColumn["dbTableName"] + "." + availableColumn["dbFieldName"] + " REGEXP " + value)
                         # Format value as a string
                         value = value.replace("'", "''")
                         value = "'" + value + "'"
@@ -921,7 +899,7 @@ def queryDb():
                             value = "'" + value + "'"
 
                         #
-                        andTerms.append(column["qualifiedDbFieldName"] + " " + operator + " " + value)
+                        andTerms.append(availableColumn["dbTableName"] + "." + availableColumn["dbFieldName"] + " " + operator + " " + value)
 
                     # Else if LIKE expression (contains an unescaped %)
                     elif value.replace("\\%", "").find("%") != -1:
@@ -930,7 +908,7 @@ def queryDb():
                         value = "'" + value + "'"
 
                         #
-                        andTerms.append(column["qualifiedDbFieldName"] + " LIKE " + value + " ESCAPE '\\'")
+                        andTerms.append(availableColumn["dbTableName"] + "." + availableColumn["dbFieldName"] + " LIKE " + value + " ESCAPE '\\'")
 
                     # Else if a plain string
                     else:
@@ -941,7 +919,7 @@ def queryDb():
                         value = "'" + value + "'"
 
                         #
-                        andTerms.append(column["qualifiedDbFieldName"] + " LIKE " + value + " ESCAPE '\\'")
+                        andTerms.append(availableColumn["dbTableName"] + "." + availableColumn["dbFieldName"] + " LIKE " + value + " ESCAPE '\\'")
 
         if len(andTerms) > 0:
             andGroups.append(andTerms)
@@ -956,7 +934,8 @@ def queryDb():
 
         orderByTerms = []
         for columnId, direction in headerBar.sort_operations:
-            term = visibleColumn_getById(columnId)["qualifiedDbFieldName"]
+            availableColumn = availableColumn_getById(columnId)
+            term = availableColumn["dbTableName"] + "." + availableColumn["dbFieldName"]
             if direction == -1:
                 term += " DESC"
             orderByTerms.append(term)
@@ -2052,7 +2031,8 @@ class MyTableModel(QAbstractTableModel):
         #
         else:
             if i_role == Qt.DisplayRole:
-                return g_dbRows[i_index.row()][column["unqualifiedDbFieldName"]]
+                availableColumn = availableColumn_getById(column["id"])
+                return g_dbRows[i_index.row()][availableColumn["dbFieldName"]]
             elif i_role == Qt.TextAlignmentRole:
                 if column["textAlignment"] == "center":
                     return Qt.AlignCenter
