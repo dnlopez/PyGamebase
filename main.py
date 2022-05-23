@@ -266,6 +266,51 @@ g_availableColumns = [
         "filterable": True,
         "textAlignment": "left",
     },
+    {
+        "id": "musician_name",
+        "screenName": "Musician",
+        "dbTableName": "Musicians",
+        "dbFieldName": "Musician",
+        "dbType": "Text (510)",
+        "defaultWidth": 150,
+        "sortable": True,
+        "filterable": True,
+        "textAlignment": "left",
+    },
+    {
+        "id": "musician_photo",
+        "screenName": "Musician photo",
+        "dbTableName": "Musicians",
+        "dbFieldName": "Photo",
+        "dbType": "Text (510)",
+        "defaultWidth": 100,
+        "sortable": True,
+        "filterable": True,
+        "textAlignment": "left",
+        "comment": "Musician Photo within Photo Path"
+    },
+    {
+        "id": "musician_group",
+        "screenName": "Musician group",
+        "dbTableName": "Musicians",
+        "dbFieldName": "Grp",
+        "dbType": "Text (510)",
+        "defaultWidth": 150,
+        "sortable": True,
+        "filterable": True,
+        "textAlignment": "left",
+    },
+    {
+        "id": "musician_nick",
+        "screenName": "Musician nick",
+        "dbTableName": "Musicians",
+        "dbFieldName": "Nick",
+        "dbType": "Text (510)",
+        "defaultWidth": 150,
+        "sortable": True,
+        "filterable": True,
+        "textAlignment": "left",
+    },
 ]
 
 def availableColumn_getById(i_id):
@@ -658,7 +703,7 @@ def openDb():
     # Get info about tables
     g_db.row_factory = sqlite3.Row
     global g_dbSchema
-    for tableName in ["Games", "Years", "Genres", "PGenres", "Publishers", "Developers", "Programmers", "Languages", "Crackers", "Artists", "Licenses", "Rarities"]:
+    for tableName in ["Games", "Years", "Genres", "PGenres", "Publishers", "Developers", "Programmers", "Languages", "Crackers", "Artists", "Licenses", "Rarities", "Musicians"]:
         cursor = g_db.execute("PRAGMA table_info(" + tableName + ")")
         rows = cursor.fetchall()
         rows = [{keyName: row[keyName] for keyName in row.keys()}  for row in rows]  # Convert sqlite3.Row objects to plain dicts for easier viewing
@@ -766,6 +811,10 @@ connectionsFromGamesTable = {
     "Rarities": {
         "dependencies": [],
         "fromTerm": "LEFT JOIN Rarities ON Games.RA_Id = Rarities.RA_Id"
+    },
+    "Musicians": {
+        "dependencies": [],
+        "fromTerm": "LEFT JOIN Musicians ON Games.MU_Id = Musicians.MU_Id"
     },
 }
 
@@ -1071,6 +1120,34 @@ def dbRow_getSupplementaryScreenshotPaths(i_row, i_simulateCount=None):
     # Return it from cache
     #return i_row.
     return supplementaryScreenshotPaths
+
+def dbRow_getPhotoRelativePath(i_row):
+    """
+    Get the path of a game's (musician) photo.
+    This comes from the 'Photo' database field.
+
+    Params:
+     i_row:
+      (sqlite3.Row)
+      A row from the 'Games' table
+
+    Returns:
+     Either (str)
+      Path of image, relative to the 'Photos' folder.
+     or (None)
+      The database didn't specify a photo file path.
+    """
+    # If there's not already a cached value,
+    # compute and cache it now
+    if True:#(!i_row.photoRelativePath)
+        #i_row.
+        photoRelativePath = i_row["Photo"]
+        if photoRelativePath != None:
+            photoRelativePath = photoRelativePath.replace("\\", "/")
+
+    # Return it from cache
+    #return i_row.
+    return photoRelativePath
 
 # + }}}
 
@@ -1900,6 +1977,12 @@ class MyStyledItemDelegate(QStyledItemDelegate):
             if screenshotPath != None:
                 if hasattr(gamebase, "config_screenshotsBaseDirPath"):
                     pixmap = QPixmap(normalizeDirPathFromConfig(gamebase.config_screenshotsBaseDirPath) + "/" + screenshotPath)
+                    i_painter.drawPixmap(i_option.rect, pixmap)
+        elif column["id"] == "musician_photo":
+            photoPath = dbRow_getPhotoRelativePath(g_dbRows[i_index.row()])
+            if photoPath != None:
+                if hasattr(gamebase, "config_photosBaseDirPath"):
+                    pixmap = QPixmap(normalizeDirPathFromConfig(gamebase.config_photosBaseDirPath) + "/" + photoPath)
                     i_painter.drawPixmap(i_option.rect, pixmap)
         else:
             QStyledItemDelegate.paint(self, i_painter, i_option, i_index)

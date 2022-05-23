@@ -20,6 +20,7 @@ config_title = "Commodore C64 (Gamebase64 v18)"
 gamebaseBaseDirPath = driveBasePath + "/games/Commodore C64/gamebases/GameBase64_V18/GBC_v18"
 config_databaseFilePath = gamebaseBaseDirPath + "/GBC_v18.sqlite"
 config_screenshotsBaseDirPath = gamebaseBaseDirPath + "/Screenshots"
+config_photosBaseDirPath = gamebaseBaseDirPath + "/Photos"
 config_extrasBaseDirPath = gamebaseBaseDirPath + "/Extras"
 
 
