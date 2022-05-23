@@ -1924,7 +1924,7 @@ class MyTableView(QTableView):
             self.scrollTo(i_modelIndex, QAbstractItemView.PositionAtTop)
             detailPaneWasAlreadyVisible = detailPane_height() > 0
             detailPane_show()
-            if i_modelIndex.row() != detailPane_currentRowNo:
+            if g_dbRows[i_modelIndex.row()][g_dbColumnNames.index("GA_Id")] != detailPane_currentGameId:
                 detailPane_populate(i_modelIndex.row())
             if i_keyboardOriented and detailPaneWasAlreadyVisible:
                 detailPane_webEngineView.setFocus(Qt.OtherFocusReason)
@@ -1952,7 +1952,7 @@ class MyTableView(QTableView):
         # repopulate it from the new row
         if detailPane_height() > 0:
             selectedIndex = self.selectionModel().currentIndex()
-            if selectedIndex.row() != detailPane_currentRowNo:
+            if g_dbRows[selectedIndex.row()][g_dbColumnNames.index("GA_Id")] != detailPane_currentGameId:
                 detailPane_populate(selectedIndex.row())
 
     # + Context menu {{{
@@ -2282,7 +2282,7 @@ def f12Shortcut_onActivated():
         # Open, populate and focus the detail pane
         detailPane_show()
 
-        if selectedIndex.row() != detailPane_currentRowNo:
+        if g_dbRows[selectedIndex.row()][g_dbColumnNames.index("GA_Id")] != detailPane_currentGameId:
             detailPane_populate(selectedIndex.row())
 
         detailPane_webEngineView.setFocus(Qt.OtherFocusReason)
@@ -2518,17 +2518,17 @@ detailPane_webEngineView = QWebEngineView()
 detailPane_webEngineView.setProperty("class", "webEngineView")
 detailPane_layout.addWidget(detailPane_webEngineView)
 
-detailPane_currentRowNo = None
+detailPane_currentGameId = None
 def detailPane_populate(i_rowNo):
     """
     Params:
      i_rowNo:
       (int)
     """
-    global detailPane_currentRowNo
-    detailPane_currentRowNo = i_rowNo
-
     gameRow = getGameRecord(g_dbRows[i_rowNo][g_dbColumnNames.index("GA_Id")])
+
+    global detailPane_currentGameId
+    detailPane_currentGameId = gameRow["GA_Id"]
 
     html = ""
 
