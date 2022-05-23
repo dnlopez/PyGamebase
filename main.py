@@ -94,9 +94,9 @@ gamebase = importlib.import_module(os.path.splitext(os.path.basename(param_confi
 
 # + Columns {{{
 
-# + + Available {{{
+# + + Usable {{{
 
-g_availableColumns = [
+g_usableColumns = [
     {
         "id": "detail",
         "screenName": "Show detail (+)",
@@ -419,7 +419,7 @@ g_availableColumns = [
     },
 ]
 
-def availableColumn_getById(i_id):
+def usableColumn_getById(i_id):
     """
     Params:
      i_id:
@@ -429,7 +429,7 @@ def availableColumn_getById(i_id):
      Either (Column)
      or (None)
     """
-    columns = [column  for column in g_availableColumns  if column["id"] == i_id]
+    columns = [column  for column in g_usableColumns  if column["id"] == i_id]
     if len(columns) == 0:
         return None
     return columns[0]
@@ -437,9 +437,9 @@ def availableColumn_getById(i_id):
 
 # + + }}}
 
-# + + Visible {{{
+# + + In GUI table view {{{
 
-g_visibleColumns = [
+g_tableColumns = [
     { "id": "detail",
       "screenName": "Show detail (+)",
       "width": 35,
@@ -546,27 +546,27 @@ g_visibleColumns = [
 
 # + + + New column accessors {{{
 
-def visibleColumn_add(i_id):
-    availableColumn = availableColumn_getById(i_id)
-    visibleColumn = {
-        "id": availableColumn["id"],
-        "screenName": availableColumn["screenName"],
-        "width": availableColumn["defaultWidth"],
-        "sortable": availableColumn["sortable"],
-        "filterable": availableColumn["filterable"],
-        "textAlignment": availableColumn["textAlignment"]
+def tableColumn_add(i_id):
+    usableColumn = usableColumn_getById(i_id)
+    tableColumn = {
+        "id": usableColumn["id"],
+        "screenName": usableColumn["screenName"],
+        "width": usableColumn["defaultWidth"],
+        "sortable": usableColumn["sortable"],
+        "filterable": usableColumn["filterable"],
+        "textAlignment": usableColumn["textAlignment"]
     }
 
-    g_visibleColumns.append(visibleColumn)
+    g_tableColumns.append(tableColumn)
 
-def visibleColumn_remove(i_id):
+def tableColumn_remove(i_id):
     foundColumnNo = None
-    for columnNo, column in enumerate(g_visibleColumns):
+    for columnNo, column in enumerate(g_tableColumns):
         if column["id"] == i_id:
             foundColumnNo = columnNo
             break
     if foundColumnNo != None:
-        del(g_visibleColumns[foundColumnNo])
+        del(g_tableColumns[foundColumnNo])
 
     #
     foundSortOperationNo = None
@@ -578,14 +578,14 @@ def visibleColumn_remove(i_id):
         del(headerBar.sort_operations[foundSortOperationNo])
         headerBar.sort_updateGui()
 
-def visibleColumn_toggle(i_id):
-    visible = visibleColumn_getById(i_id)
-    if not visible:
-        visibleColumn_add(i_id)
+def tableColumn_toggle(i_id):
+    present = tableColumn_getById(i_id)
+    if not present:
+        tableColumn_add(i_id)
     else:
-        visibleColumn_remove(i_id)
+        tableColumn_remove(i_id)
 
-def visibleColumn_move(i_moveColumn, i_beforeColumn):
+def tableColumn_move(i_moveColumn, i_beforeColumn):
     """
     Move a column.
 
@@ -600,24 +600,24 @@ def visibleColumn_move(i_moveColumn, i_beforeColumn):
        Move to the end.
     """
     # Delete column from original position
-    del(g_visibleColumns[g_visibleColumns.index(i_moveColumn)])
+    del(g_tableColumns[g_tableColumns.index(i_moveColumn)])
 
     # Reinsert/append in new position
     if i_beforeColumn == None:
-        g_visibleColumns.append(i_moveColumn)
+        g_tableColumns.append(i_moveColumn)
     else:
-        g_visibleColumns.insert(g_visibleColumns.index(i_beforeColumn), i_moveColumn)
+        g_tableColumns.insert(g_tableColumns.index(i_beforeColumn), i_moveColumn)
 
-def visibleColumn_count():
+def tableColumn_count():
     """
     Count the visible columns.
 
     Returns:
      (int)
     """
-    return len(g_visibleColumns)
+    return len(g_tableColumns)
 
-def visibleColumn_getBySlice(i_startPos=None, i_endPos=None):
+def tableColumn_getBySlice(i_startPos=None, i_endPos=None):
     """
     Get the objects of a range of visible columns.
 
@@ -629,9 +629,9 @@ def visibleColumn_getBySlice(i_startPos=None, i_endPos=None):
     Returns:
      (list of Column)
     """
-    return g_visibleColumns[i_startPos:i_endPos]
+    return g_tableColumns[i_startPos:i_endPos]
 
-def visibleColumn_getByPos(i_pos):
+def tableColumn_getByPos(i_pos):
     """
     Get the object of the n'th column.
 
@@ -643,11 +643,11 @@ def visibleColumn_getByPos(i_pos):
      Either (Column)
      or (None)
     """
-    if i_pos < 0 or i_pos >= len(g_visibleColumns):
+    if i_pos < 0 or i_pos >= len(g_tableColumns):
         return None
-    return g_visibleColumns[i_pos]
+    return g_tableColumns[i_pos]
 
-def visibleColumn_getById(i_id):
+def tableColumn_getById(i_id):
     """
     Get the object of the column with some ID.
 
@@ -660,12 +660,12 @@ def visibleColumn_getById(i_id):
      or (None)
     """
     # [could shorten with next()]
-    for column in g_visibleColumns:
+    for column in g_tableColumns:
         if column["id"] == i_id:
             return column
     return None
 
-def visibleColumn_idToPos(i_id):
+def tableColumn_idToPos(i_id):
     """
     Get the visible position of the column with some ID.
 
@@ -679,7 +679,7 @@ def visibleColumn_idToPos(i_id):
      -1: There was no visible column with this ID.
     """
     visiblePos = -1
-    for column in g_visibleColumns:
+    for column in g_tableColumns:
         visiblePos += 1
         if i_id == column["id"]:
             return visiblePos
@@ -783,14 +783,32 @@ def openDb():
         return compiledPattern.search(str(i_value)) is not None
     g_db.create_function("REGEXP", 2, functionRegex)
 
+    # Get names of tables
+    cursor = g_db.execute("SELECT name FROM sqlite_master WHERE type = 'table'")
+    rows = cursor.fetchall()
+    dbTableNames = [row[0]  for row in rows]
+
+    # Remove columns from g_usableColumns whose tables don't exist in the database
+    global g_usableColumns
+    def validateUsableColumn(i_usableColumn):
+        if not ("dbTableName" in i_usableColumn):
+            return True
+        return i_usableColumn["dbTableName"] in dbTableNames
+    g_usableColumns = [column  for column in g_usableColumns  if validateUsableColumn(column)]
+
+    # Remove columns from g_tableColumns that don't exist in g_usableColumns
+    global g_tableColumns
+    g_tableColumns = [column  for column in g_tableColumns  if usableColumn_getById(column["id"])]
+
     # Get info about tables
     g_db.row_factory = sqlite3.Row
     global g_dbSchema
     for tableName in ["Games", "Years", "Genres", "PGenres", "Publishers", "Developers", "Programmers", "Languages", "Crackers", "Artists", "Licenses", "Rarities", "Musicians"]:
-        cursor = g_db.execute("PRAGMA table_info(" + tableName + ")")
-        rows = cursor.fetchall()
-        rows = [{keyName: row[keyName] for keyName in row.keys()}  for row in rows]  # Convert sqlite3.Row objects to plain dicts for easier viewing
-        g_dbSchema[tableName] = rows
+        if tableName in dbTableNames:
+            cursor = g_db.execute("PRAGMA table_info(" + tableName + ")")
+            rows = cursor.fetchall()
+            rows = [{keyName: row[keyName] for keyName in row.keys()}  for row in rows]  # Convert sqlite3.Row objects to plain dicts for easier viewing
+            g_dbSchema[tableName] = rows
 
     # Get columns in Games table
     global g_db_gamesColumnNames
@@ -917,9 +935,9 @@ def queryDb():
     ]
 
     tableConnections = copy.deepcopy(connectionsFromGamesTable)
-    visibleDbNames = [(availableColumn["dbTableName"], availableColumn["dbFieldName"])
-                      for availableColumn in [availableColumn_getById(column["id"])  for column in visibleColumn_getBySlice()]
-                      if "dbTableName" in availableColumn and "dbFieldName" in availableColumn]
+    visibleDbNames = [(usableColumn["dbTableName"], usableColumn["dbFieldName"])
+                      for usableColumn in [usableColumn_getById(column["id"])  for column in tableColumn_getBySlice()]
+                      if "dbTableName" in usableColumn and "dbFieldName" in usableColumn]
     for tableName, fieldName in visibleDbNames:
         fromTerms += getJoinTermsToTable(tableName, tableConnections)
 
@@ -946,8 +964,8 @@ def queryDb():
     for filterRowNo in range(0, len(headerBar.filterRows)):
         andTerms = []
 
-        for column in visibleColumn_getBySlice():
-            availableColumn = availableColumn_getById(column["id"])
+        for column in tableColumn_getBySlice():
+            usableColumn = usableColumn_getById(column["id"])
             if column["filterable"]:
                 value = headerBar.columnWidgets[column["id"]]["filterEdits"][filterRowNo].text()
                 value = value.strip()
@@ -955,7 +973,7 @@ def queryDb():
                     # If range operator
                     betweenValues = value.split("~")
                     if len(betweenValues) == 2 and stringLooksLikeNumber(betweenValues[0]) and stringLooksLikeNumber(betweenValues[1]):
-                        andTerms.append(availableColumn["dbTableName"] + "." + availableColumn["dbFieldName"] + " BETWEEN " + betweenValues[0] + " AND " + betweenValues[1])
+                        andTerms.append(usableColumn["dbTableName"] + "." + usableColumn["dbFieldName"] + " BETWEEN " + betweenValues[0] + " AND " + betweenValues[1])
 
                     # Else if regular expression
                     elif len(value) > 2 and value.startswith("/") and value.endswith("/"):
@@ -967,7 +985,7 @@ def queryDb():
                         value = "'" + value + "'"
 
                         #
-                        andTerms.append(availableColumn["dbTableName"] + "." + availableColumn["dbFieldName"] + " REGEXP " + value)
+                        andTerms.append(usableColumn["dbTableName"] + "." + usableColumn["dbFieldName"] + " REGEXP " + value)
                         # Format value as a string
                         value = value.replace("'", "''")
                         value = "'" + value + "'"
@@ -993,7 +1011,7 @@ def queryDb():
                             value = "'" + value + "'"
 
                         #
-                        andTerms.append(availableColumn["dbTableName"] + "." + availableColumn["dbFieldName"] + " " + operator + " " + value)
+                        andTerms.append(usableColumn["dbTableName"] + "." + usableColumn["dbFieldName"] + " " + operator + " " + value)
 
                     # Else if LIKE expression (contains an unescaped %)
                     elif value.replace("\\%", "").find("%") != -1:
@@ -1002,7 +1020,7 @@ def queryDb():
                         value = "'" + value + "'"
 
                         #
-                        andTerms.append(availableColumn["dbTableName"] + "." + availableColumn["dbFieldName"] + " LIKE " + value + " ESCAPE '\\'")
+                        andTerms.append(usableColumn["dbTableName"] + "." + usableColumn["dbFieldName"] + " LIKE " + value + " ESCAPE '\\'")
 
                     # Else if a plain string
                     else:
@@ -1013,7 +1031,7 @@ def queryDb():
                         value = "'" + value + "'"
 
                         #
-                        andTerms.append(availableColumn["dbTableName"] + "." + availableColumn["dbFieldName"] + " LIKE " + value + " ESCAPE '\\'")
+                        andTerms.append(usableColumn["dbTableName"] + "." + usableColumn["dbFieldName"] + " LIKE " + value + " ESCAPE '\\'")
 
         if len(andTerms) > 0:
             andGroups.append(andTerms)
@@ -1028,8 +1046,8 @@ def queryDb():
 
         orderByTerms = []
         for columnId, direction in headerBar.sort_operations:
-            availableColumn = availableColumn_getById(columnId)
-            term = availableColumn["dbTableName"] + "." + availableColumn["dbFieldName"]
+            usableColumn = usableColumn_getById(columnId)
+            term = usableColumn["dbTableName"] + "." + usableColumn["dbFieldName"]
             if direction == -1:
                 term += " DESC"
             orderByTerms.append(term)
@@ -1058,9 +1076,10 @@ def getGameRecord(i_gameId):
         for field in g_dbSchema["Games"]:
             selectTerms.append("Games." + field["name"] + " AS [Games." + field["name"] + "]")
 
-    # For all other relevant tables
+    # For all other tables connected to Games
+    # that are present in this database
     tableConnections = copy.deepcopy(connectionsFromGamesTable)
-    tableNames = list(tableConnections.keys())
+    tableNames = [tableName  for tableName in tableConnections.keys()  if tableName in g_dbSchema.keys()]
     for tableName in tableNames:
         # Join to it
         fromTerms += getJoinTermsToTable(tableName, tableConnections)
@@ -1287,7 +1306,7 @@ class HeaderBar(QWidget):
             contextMenu = QMenu(self)
 
             def action_onTriggered(i_columnId):
-                visibleColumn_toggle(i_columnId)
+                tableColumn_toggle(i_columnId)
 
                 # Update GUI
                 # If the following recreateWidgets() call deletes the button which we right-clicked to open this context menu,
@@ -1305,18 +1324,18 @@ class HeaderBar(QWidget):
                     queryDb()
                     tableView.requery()
                     #
-                    tableView.resizeAllColumns([column["width"]  for column in visibleColumn_getBySlice()])
+                    tableView.resizeAllColumns([column["width"]  for column in tableColumn_getBySlice()])
                 continueTimer.timeout.connect(on_continueTimer)
                 continueTimer.start(0)
 
             action = contextMenu.addAction("Columns")
             action.setEnabled(False)
             contextMenu.addSeparator()
-            for availableColumnNo, availableColumn in enumerate(g_availableColumns):
-                action = contextMenu.addAction(availableColumn["screenName"])
+            for usableColumnNo, usableColumn in enumerate(g_usableColumns):
+                action = contextMenu.addAction(usableColumn["screenName"])
                 action.setCheckable(True)
-                columnId = availableColumn["id"]
-                action.setChecked(visibleColumn_getById(columnId) != None)
+                columnId = usableColumn["id"]
+                action.setChecked(tableColumn_getById(columnId) != None)
                 action.triggered.connect(functools.partial(action_onTriggered, columnId))
 
             contextMenu.popup(self.mapToGlobal(i_pos))
@@ -1499,6 +1518,11 @@ class HeaderBar(QWidget):
 
         self.insertFilterRow(0)
 
+        self.initFromColumns()
+
+    def initFromColumns(self):
+        # Create header buttons
+        self.recreateWidgets()
         # Initially set all widget positions
         self.repositionHeadingButtons()
         self.repositionFilterEdits()
@@ -1506,12 +1530,12 @@ class HeaderBar(QWidget):
 
     def recreateWidgets(self):
         """
-        Call this when a filterable column is added or removed in the master description in g_visibleColumns
+        Call this when a filterable column is added or removed in the master description in g_tableColumns
         to create/delete GUI widgets as necessary, bringing self.columnWidgets into sync with it.
         """
         # For each new filterable, visible column
         # that does not already have header widgets
-        for columnNo, column in enumerate(visibleColumn_getBySlice()):
+        for columnNo, column in enumerate(tableColumn_getBySlice()):
             if column["filterable"] and \
                (column["id"] not in self.columnWidgets):
 
@@ -1541,7 +1565,7 @@ class HeaderBar(QWidget):
         # which no longer corresponds to an existing, filterable, visible column
         columnIds = list(self.columnWidgets.keys())
         for columnId in columnIds:
-            column = visibleColumn_getById(columnId)
+            column = tableColumn_getById(columnId)
             if column != None:
                 if not column["filterable"]:
                     column = None
@@ -1579,7 +1603,7 @@ class HeaderBar(QWidget):
         newRow["deleteRow_pushButton"] = deleteRow_pushButton
 
         # Add per-column GUI widgets
-        for columnNo, column in enumerate(visibleColumn_getBySlice()):
+        for columnNo, column in enumerate(tableColumn_getBySlice()):
             if column["filterable"]:
                 # Create FilterEdit
                 headerFilter = HeaderBar.FilterEdit(self)
@@ -1602,7 +1626,7 @@ class HeaderBar(QWidget):
           (int)
         """
         # Remove per-column widgets
-        for columnNo, column in enumerate(visibleColumn_getBySlice()):
+        for columnNo, column in enumerate(tableColumn_getBySlice()):
             if column["filterable"]:
                 # From the GUI
                 self.columnWidgets[column["id"]]["filterEdits"][i_position].setParent(None)
@@ -1627,7 +1651,7 @@ class HeaderBar(QWidget):
          i_position:
           (int)
         """
-        for columnNo, column in enumerate(visibleColumn_getBySlice()):
+        for columnNo, column in enumerate(tableColumn_getBySlice()):
             if column["filterable"]:
                 self.columnWidgets[column["id"]]["filterEdits"][i_position].setText("")
 
@@ -1685,7 +1709,7 @@ class HeaderBar(QWidget):
           (bool)
         """
         # Get column object
-        clickedColumn = visibleColumn_getById(i_columnId)
+        clickedColumn = tableColumn_getById(i_columnId)
 
         # If column isn't sortable,
         # bail
@@ -1727,7 +1751,7 @@ class HeaderBar(QWidget):
             """
             return "₀₁₂₃₄₅₆₇₈₉"[i_digit % 10]
 
-        for columnNo, column in enumerate(visibleColumn_getBySlice()):
+        for columnNo, column in enumerate(tableColumn_getBySlice()):
             if column["filterable"]:
                 headingButton = self.columnWidgets[column["id"]]["headingButton"]
 
@@ -1787,21 +1811,21 @@ class HeaderBar(QWidget):
         """
         # If no visible columns,
         # return none
-        visibleColumns = visibleColumn_getBySlice()
-        if len(visibleColumns) == 0:
+        tableColumns = tableColumn_getBySlice()
+        if len(tableColumns) == 0:
             return None, None, None
 
         # Indicate left edge of first column
         columnEdgeX = 0
-        nearest = (None, visibleColumns[0], columnEdgeX)
+        nearest = (None, tableColumns[0], columnEdgeX)
 
         # For each column, replace result with its right edge if it's nearer
-        for visibleColumnNo, column in enumerate(visibleColumns):
+        for tableColumnNo, column in enumerate(tableColumns):
             columnEdgeX += column["width"]
             if abs(i_x - columnEdgeX) <= abs(i_x - nearest[2]):
                 nextColumn = None
-                if visibleColumnNo + 1 < len(visibleColumns):
-                    nextColumn = visibleColumns[visibleColumnNo + 1]
+                if tableColumnNo + 1 < len(tableColumns):
+                    nextColumn = tableColumns[tableColumnNo + 1]
                 nearest = (column, nextColumn, columnEdgeX)
 
         # If requested a maximum margin and closest edge is not within that,
@@ -1829,7 +1853,7 @@ class HeaderBar(QWidget):
             return None
 
         x = 0
-        for columnNo, column in enumerate(visibleColumn_getBySlice()):
+        for columnNo, column in enumerate(tableColumn_getBySlice()):
             x += column["width"]
             if i_x < x:
                 return column
@@ -1847,7 +1871,7 @@ class HeaderBar(QWidget):
          or (None)
         """
         x = 0
-        for columnNo, column in enumerate(visibleColumn_getBySlice()):
+        for columnNo, column in enumerate(tableColumn_getBySlice()):
             if column == i_column:
                 return x
             x += column["width"]
@@ -1911,7 +1935,7 @@ class HeaderBar(QWidget):
                 self.repositionHeadingButtons()
                 self.repositionFilterEdits()
                 #
-                tableView.horizontalHeader().resizeSection(visibleColumn_idToPos(self.resize_column["id"]), newWidth)
+                tableView.horizontalHeader().resizeSection(tableColumn_idToPos(self.resize_column["id"]), newWidth)
 
                 return True
 
@@ -1957,7 +1981,7 @@ class HeaderBar(QWidget):
             # Else if currently reordering and released the left button
             if self.reorder_column != None and i_event.button() == Qt.MouseButton.LeftButton:
                 if self.reorder_column != self.reorder_dropBeforeColumn:
-                    visibleColumn_move(self.reorder_column, self.reorder_dropBeforeColumn)
+                    tableColumn_move(self.reorder_column, self.reorder_dropBeforeColumn)
 
                 # Stop reordering
                 self.reorder_column = None
@@ -1971,7 +1995,7 @@ class HeaderBar(QWidget):
                 #
                 tableView.requery()
                 #
-                tableView.resizeAllColumns([column["width"]  for column in visibleColumn_getBySlice()])
+                tableView.resizeAllColumns([column["width"]  for column in tableColumn_getBySlice()])
                 #self.reorderIndicator_widget.setFrameRect(QRect(edgeX - 2, 0, 4, 20))
                 #self.reorderIndicator_widget.setFrameRect(QRect(2, 2, 50, 10))
                 #print(leftColumn["id"], rightColumn["id"], edgeX)
@@ -1988,7 +2012,7 @@ class HeaderBar(QWidget):
         x = 0
         x += self.scrollX  # Adjust for horizontal scroll amount
         y = 0
-        for column in visibleColumn_getBySlice():
+        for column in tableColumn_getBySlice():
             if column["filterable"]:
                 self.columnWidgets[column["id"]]["headingButton"].setGeometry(x, y, column["width"], HeaderBar.headingButtonHeight)
             x += column["width"]
@@ -1999,7 +2023,7 @@ class HeaderBar(QWidget):
         for filterRowNo, filterRow in enumerate(self.filterRows):
             x = 0
             x += self.scrollX  # Adjust for horizontal scroll amount
-            for columnNo, column in enumerate(visibleColumn_getBySlice()):
+            for columnNo, column in enumerate(tableColumn_getBySlice()):
                 if column["filterable"]:
                     self.columnWidgets[column["id"]]["filterEdits"][filterRowNo].setGeometry(x, y, column["width"], HeaderBar.filterRowHeight)
                 x += column["width"]
@@ -2016,7 +2040,7 @@ class HeaderBar(QWidget):
         previousWidget = None
 
         # For each heading button
-        for column in visibleColumn_getBySlice():
+        for column in tableColumn_getBySlice():
             if column["filterable"]:
                 nextWidget = self.columnWidgets[column["id"]]["headingButton"]
                 if previousWidget != None:
@@ -2025,7 +2049,7 @@ class HeaderBar(QWidget):
 
         # For each filter edit
         for filterRowNo, filterRow in enumerate(self.filterRows):
-            for column in visibleColumn_getBySlice():
+            for column in tableColumn_getBySlice():
                 if column["filterable"]:
                     nextWidget = self.columnWidgets[column["id"]]["filterEdits"][filterRowNo].lineEdit
                     if previousWidget != None:
@@ -2063,7 +2087,7 @@ class MyStyledItemDelegate(QStyledItemDelegate):
         #if i_option.state & QStyle.State_Selected:
         #    i_painter.fillRect(i_option.rect, i_option.palette.highlight())
 
-        column = visibleColumn_getByPos(i_index.column())
+        column = tableColumn_getByPos(i_index.column())
 
         # Screenshot
         if column["id"] == "pic":
@@ -2093,7 +2117,7 @@ class MyTableModel(QAbstractTableModel):
         return len(g_dbRows)
 
     def columnCount(self, i_parent):
-        return visibleColumn_count()
+        return tableColumn_count()
 
     #https://stackoverflow.com/questions/7988182/displaying-an-image-from-a-qabstracttablemodel
     #https://forum.qt.io/topic/5195/qtableview-extra-column-space-solved/8
@@ -2101,7 +2125,7 @@ class MyTableModel(QAbstractTableModel):
         if not i_index.isValid():
             return None
 
-        column = visibleColumn_getByPos(i_index.column())
+        column = tableColumn_getByPos(i_index.column())
 
         # Detail
         if column["id"] == "detail":
@@ -2135,15 +2159,15 @@ class MyTableModel(QAbstractTableModel):
             pass
         #
         else:
-            availableColumn = availableColumn_getById(column["id"])
+            usableColumn = usableColumn_getById(column["id"])
             # Enum field
-            if "type" in availableColumn and availableColumn["type"] == "enum":
+            if "type" in usableColumn and usableColumn["type"] == "enum":
                 if i_role == MyTableModel.FilterRole:
-                    return g_dbRows[i_index.row()][availableColumn["dbFieldName"]]
+                    return g_dbRows[i_index.row()][usableColumn["dbFieldName"]]
                 elif i_role == Qt.DisplayRole:
-                    value = g_dbRows[i_index.row()][availableColumn["dbFieldName"]]
-                    if value in availableColumn["enumMap"]:
-                        value = str(value) + ": " + availableColumn["enumMap"][value]
+                    value = g_dbRows[i_index.row()][usableColumn["dbFieldName"]]
+                    if value in usableColumn["enumMap"]:
+                        value = str(value) + ": " + usableColumn["enumMap"][value]
                     return value
                 elif i_role == Qt.TextAlignmentRole:
                     if column["textAlignment"] == "center":
@@ -2151,11 +2175,11 @@ class MyTableModel(QAbstractTableModel):
                     elif column["textAlignment"] == "left":
                         return Qt.AlignLeft
             # Game ID field
-            if "type" in availableColumn and availableColumn["type"] == "gameId":
+            if "type" in usableColumn and usableColumn["type"] == "gameId":
                 if i_role == MyTableModel.FilterRole:
-                    return g_dbRows[i_index.row()][availableColumn["dbFieldName"]]
+                    return g_dbRows[i_index.row()][usableColumn["dbFieldName"]]
                 elif i_role == Qt.DisplayRole:
-                    value = g_dbRows[i_index.row()][availableColumn["dbFieldName"]]
+                    value = g_dbRows[i_index.row()][usableColumn["dbFieldName"]]
                     if value == 0:
                         return ""
                     return ">" + str(value)
@@ -2167,7 +2191,7 @@ class MyTableModel(QAbstractTableModel):
             # Other ordinary text field
             else:
                 if i_role == Qt.DisplayRole or i_role == MyTableModel.FilterRole:
-                    return g_dbRows[i_index.row()][availableColumn["dbFieldName"]]
+                    return g_dbRows[i_index.row()][usableColumn["dbFieldName"]]
                 elif i_role == Qt.TextAlignmentRole:
                     if column["textAlignment"] == "center":
                         return Qt.AlignCenter
@@ -2179,7 +2203,7 @@ class MyTableModel(QAbstractTableModel):
     # [Not used anymore since the native QTableView headers are hidden]
     def headerData(self, i_columnNo, i_orientation, i_role):
         if i_orientation == Qt.Horizontal and i_role == Qt.DisplayRole:
-            column = visibleColumn_getByPos(i_columnNo)
+            column = tableColumn_getByPos(i_columnNo)
             return column["screenName"]
 
         return None
@@ -2339,7 +2363,7 @@ class MyTableView(QTableView):
          i_modelIndex:
           (QModelIndex)
         """
-        columnId = visibleColumn_getByPos(i_modelIndex.column())["id"]
+        columnId = tableColumn_getByPos(i_modelIndex.column())["id"]
 
         if columnId == "detail":
             self.scrollTo(i_modelIndex, QAbstractItemView.PositionAtTop)
@@ -2384,11 +2408,11 @@ class MyTableView(QTableView):
                 messageBox.exec()
 
         else:
-            availableColumn = availableColumn_getById(columnId)
-            if availableColumn["type"] == "gameId":
+            usableColumn = usableColumn_getById(columnId)
+            if usableColumn["type"] == "gameId":
                 # Get the target game ID
                 rowNo = i_modelIndex.row()
-                gameId = g_dbRows[rowNo][g_dbColumnNames.index(availableColumn["dbFieldName"])]
+                gameId = g_dbRows[rowNo][g_dbColumnNames.index(usableColumn["dbFieldName"])]
 
                 # Look for row in table,
                 # and if not found then clear filter and look again
@@ -2420,7 +2444,7 @@ class MyTableView(QTableView):
 
         # If selected column is filterable then add the submenu for filtering
         selectedIndex = self.selectionModel().currentIndex()
-        column = visibleColumn_getByPos(selectedIndex.column())
+        column = tableColumn_getByPos(selectedIndex.column())
         if column["filterable"]:
             contextMenu.addMenu(self.contextMenu_filter)
             contextMenu.addSeparator()
@@ -2450,7 +2474,7 @@ class MyTableView(QTableView):
             headerBar.repositionFilterEdits()
             headerBar.repositionTabOrder()
 
-        columnId = visibleColumn_getByPos(selectedIndex.column())["id"]
+        columnId = tableColumn_getByPos(selectedIndex.column())["id"]
         headerBar.columnWidgets[columnId]["filterEdits"][-1].setText(formattedCriteria)
         headerBar.filterChange.emit()
 
@@ -2475,7 +2499,7 @@ class MyTableView(QTableView):
         QTableView.updateGeometries(self)
 
         # Calculate and set new scrollbar maximum
-        allColumnsWidth = sum([column["width"]  for column in visibleColumn_getBySlice()])
+        allColumnsWidth = sum([column["width"]  for column in tableColumn_getBySlice()])
         newMaximum = allColumnsWidth - self.horizontalScrollBar().pageStep() + HeaderBar.filterRowHeight*2 + self.verticalScrollBar().width()
         if newMaximum < 0:
             newMaximum = 0
@@ -2699,12 +2723,12 @@ def ctrlFShortcut_onActivated():
     # If table view has the focus and the selected column is filterable,
     # target that
     selectedIndex = tableView.selectionModel().currentIndex()
-    selectedColumn = visibleColumn_getByPos(selectedIndex.column())
+    selectedColumn = tableColumn_getByPos(selectedIndex.column())
     if tableView.hasFocus() and selectedColumn["filterable"]:
         targetColumn = selectedColumn
     # Else target the first visible and filterable column
     else:
-        for column in visibleColumn_getBySlice():
+        for column in tableColumn_getBySlice():
             if column["filterable"]:
                 targetColumn = column
                 break
@@ -2908,7 +2932,7 @@ tableView.setItemDelegate(MyStyledItemDelegate())
 tableView.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Ignored)
 
 #  Set initial column widths
-tableView.resizeAllColumns([column["width"]  for column in visibleColumn_getBySlice()])
+tableView.resizeAllColumns([column["width"]  for column in tableColumn_getBySlice()])
 
 # Create detail pane
 #class DetailPane(QWidget):
@@ -2963,9 +2987,9 @@ detailPane_layout.addWidget(detailPane_margin)
 #detailPane_margin.setLayout(detailPane_margin_layout)
 
 detailPane_margin.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Expanding)
-#detailPane_margin.setGeometry(0, 0, visibleColumn_getByPos(0)["width"], 100)
-detailPane_margin.setFixedWidth(visibleColumn_getByPos(0)["width"])
-#print(visibleColumn_getByPos(0)["width"])
+#detailPane_margin.setGeometry(0, 0, tableColumn_getByPos(0)["width"], 100)
+detailPane_margin.setFixedWidth(tableColumn_getByPos(0)["width"])
+#print(tableColumn_getByPos(0)["width"])
 
 #detailPane_margin_layout.addWidget(QPushButton())
 #detailPane_margin_layout.addWidget(QPushButton())
@@ -3008,9 +3032,9 @@ def detailPane_populate(i_rowNo):
         #link.addEventListener("click", function (i_event) {
         #    i_event.preventDefault();
         #
-        #    for (var columnNo = 0, columnCount = g_visibleColumns.length; columnNo < columnCount; ++columnNo)
+        #    for (var columnNo = 0, columnCount = g_tableColumns.length; columnNo < columnCount; ++columnNo)
         #    {
-        #        var column = visibleColumn_getByPos(columnNo);
+        #        var column = tableColumn_getByPos(columnNo);
         #
         #        if (column.filterable)
         #        {
@@ -3229,8 +3253,12 @@ detailPane_hide()
 mainWindow.show()
 
 openDb()
+
+headerBar.initFromColumns()
 queryDb()
 tableView.requery()
+tableView.resizeAllColumns([column["width"]  for column in tableColumn_getBySlice()])
+
 headerBar.sort("name", False)  # TODO what if name column is initially not visible
 
 # + Subprocess output {{{
