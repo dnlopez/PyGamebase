@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 # Given a GameBase database (in SQLite format),
-# for all paths to external files recorded within it, specifically those to games, screenshots, music and extras,
+# for all paths to external files recorded within it, specifically those to games, screenshots, music, photos and extras,
 # check for the existence of the file on disk with case-insensitive path comparison (even though the file system may be case-sensitive),
 # and if found on disk with differing case to the path in the database,
 # update the path in the database to match that which exists on disk.
@@ -181,7 +181,7 @@ def fixFilename(i_basePath, i_filename):
     #
     return [fixedFilename, "Found, changed"]
 
-def fixFilenames(i_basePathForGames, i_basePathForScreenshots, i_basePathForSids, i_basePathForExtras, i_dryRun):
+def fixFilenames(i_basePathForGames, i_basePathForScreenshots, i_basePathForSids, i_basePathForPhotos, i_basePathForExtras, i_verbose, i_dryRun):
     """
     Params:
      i_basePathForGames:
@@ -199,14 +199,22 @@ def fixFilenames(i_basePathForGames, i_basePathForScreenshots, i_basePathForSids
        Base path for values in Games.SidFilename
       or (None)
        Don't try and correct this field
+     i_basePathForPhotos:
+      Either (str)
+       Base path for values in Musicians.Photo
+      or (None)
+       Don't try and correct this field
      i_basePathForExtras:
       Either (str)
        Base path for values in Extras.Path
       or (None)
        Don't try and correct this field
+     i_verbose:
+      (bool)
+      True: Print details of progress.
      i_dryRun:
       (bool)
-      false: Don't make any actual changes, only print the SQL that would normally be executed.
+      False: Don't make any actual changes, only print the SQL that would normally be executed.
 
     Returns:
      (Promise)
@@ -239,37 +247,70 @@ def fixFilenames(i_basePathForGames, i_basePathForScreenshots, i_basePathForSids
         return "UPDATE " + i_tableName + " SET " + i_filenameFieldName + " = '" + fixedFilename.replace("'", "''") + "' WHERE " + i_tableKeyFieldName + " = " + str(i_row[i_columnNames.index(i_tableKeyFieldName)]) + ';\n'
 
     # Fix fields Games.Filename, Games.ScrnshotFilename and Games.SidFilename
-    cursor = g_db.execute("SELECT * FROM Games")
-    columnNames = [column[0]  for column in cursor.description]
-    rows = cursor.fetchall()
-    for row in rows:
+    if i_basePathForGames != None or i_basePathForScreenshots != None or i_basePathForSids != None:
+        if i_verbose:
+            print("Reading table 'Games'")
+        cursor = g_db.execute("SELECT * FROM Games")
+        columnNames = [column[0]  for column in cursor.description]
+        rows = cursor.fetchall()
+
         if i_basePathForGames != None:
-            combinedSql += fixFilenameAndUpdateDb(columnNames, row, "Games", "GA_Id", "Filename", i_basePathForGames)
+            if i_verbose:
+                print("Fixing up field 'Games.Filename'")
+            for row in rows:
+                combinedSql += fixFilenameAndUpdateDb(columnNames, row, "Games", "GA_Id", "Filename", i_basePathForGames)
 
         if i_basePathForScreenshots != None:
-            combinedSql += fixFilenameAndUpdateDb(columnNames, row, "Games", "GA_Id", "ScrnshotFilename", i_basePathForScreenshots)
+            if i_verbose:
+                print("Fixing up field 'Games.ScrnshotFilename'")
+            for row in rows:
+                combinedSql += fixFilenameAndUpdateDb(columnNames, row, "Games", "GA_Id", "ScrnshotFilename", i_basePathForScreenshots)
 
         if i_basePathForSids != None:
-            combinedSql += fixFilenameAndUpdateDb(columnNames, row, "Games", "GA_Id", "SidFilename", i_basePathForSids)
+            if i_verbose:
+                print("Fixing up field 'Games.SidFilename'")
+            for row in rows:
+                combinedSql += fixFilenameAndUpdateDb(columnNames, row, "Games", "GA_Id", "SidFilename", i_basePathForSids)
+
+    # Fix field Musicians.Photo
+    if i_basePathForPhotos != None:
+        if i_verbose:
+            print("Reading table 'Musicians'")
+        cursor = g_db.execute("SELECT * FROM Musicians")
+        columnNames = [column[0]  for column in cursor.description]
+        rows = cursor.fetchall()
+
+        if i_verbose:
+            print("Fixing up field 'Musicians.Photo'")
+        for row in rows:
+            combinedSql += fixFilenameAndUpdateDb(columnNames, row, "Musicians", "MU_Id", "Photo", i_basePathForPhotos)
 
     # Fix field Extras.Path
-    cursor = g_db.execute("SELECT * FROM Extras")
-    columnNames = [column[0]  for column in cursor.description]
-    rows = cursor.fetchall()
-    for row in rows:
-        if i_basePathForExtras != None:
+    if i_basePathForExtras != None:
+        if i_verbose:
+            print("Reading table 'Extras'")
+        cursor = g_db.execute("SELECT * FROM Extras")
+        columnNames = [column[0]  for column in cursor.description]
+        rows = cursor.fetchall()
+
+        if i_verbose:
+            print("Fixing up field 'Extras.Path'")
+        for row in rows:
             combinedSql += fixFilenameAndUpdateDb(columnNames, row, "Extras", "EX_Id", "Path", i_basePathForExtras)
 
     #
     combinedSql += "COMMIT TRANSACTION;";
 
     #
-    print("SQL to be executed: ---")
-    print(combinedSql)
-    print("---")
+    if i_verbose:
+        print("SQL to be executed: ---")
+        print(combinedSql)
+        print("---")
 
     # Execute
     if not i_dryRun:
+        if i_verbose:
+            print("Executing SQL...")
         g_db.executescript(combinedSql)
 
 #openDb(g_config.databasePath);
@@ -428,7 +469,7 @@ if __name__ == "__main__":
 GameBase fix path case utility.
 
 Given a GameBase database (in SQLite format),
-for all paths to external files recorded within it, specifically those to games, screenshots, music and extras,
+for all paths to external files recorded within it, specifically those to games, screenshots, music, photos and extras,
 check for the existence of the file on disk with case-insensitive path comparison (even though the file system may be case-sensitive),
 and if found on disk with differing case to the path in the database,
 update the path in the database to match that which exists on disk.
@@ -449,12 +490,16 @@ Options:
     Base folder that contains screenshot files.
   -m/--music <folder path>
     Base folder that contains music files.
+  -p/--photos <folder path>
+    Base folder that contains photo files.
   -e/--extras <folder path>
     Base folder that contains extras files.
 
  Info:
   -h/--help
     Show this help.
+  -v/--verbose
+    Show details of progress.
   -d/--dry-run
     Don't make any actual changes, only print the SQL that would normally be executed.
 ''')
@@ -464,7 +509,9 @@ Options:
     gamesFilePath = None
     screenshotsFilePath = None
     musicFilePath = None
+    photosFilePath = None
     extrasFilePath = None
+    verbose = False
     dryRun = False
 
     # For each argument
@@ -497,12 +544,22 @@ Options:
                 musicFilePath = sys.argv[argNo]
                 argNo += 1
 
+            elif arg == "-p" or arg == "--photos":
+                if argNo >= len(sys.argv):
+                    print("ERROR: -m/--photos requires a value.")
+                    sys.exit(-1)
+                photosFilePath = sys.argv[argNo]
+                argNo += 1
+
             elif arg == "-e" or arg == "--extras":
                 if argNo >= len(sys.argv):
                     print("ERROR: -e/--extras requires a value.")
                     sys.exit(-1)
                 extrasFilePath = sys.argv[argNo]
                 argNo += 1
+
+            elif arg == "-v" or arg == "--verbose":
+                verbose = True
 
             elif arg == "-d" or arg == "--dry-run":
                 dryRun = True
@@ -554,18 +611,33 @@ Options:
         screenshotsFilePath = screenshotsFilePath[:-1]
     if musicFilePath != None and musicFilePath.endswith("/"):
         musicFilePath = musicFilePath[:-1]
+    if photosFilePath != None and photosFilePath.endswith("/"):
+        photosFilePath = photosFilePath[:-1]
     if extrasFilePath != None and extrasFilePath.endswith("/"):
         extrasFilePath = extrasFilePath[:-1]
 
     #
-    print("databaseFilePath: " + str(databaseFilePath))
-    print("gamesFilePath: " + str(gamesFilePath))
-    print("screenshotsFilePath: " + str(screenshotsFilePath))
-    print("musicFilePath: " + str(musicFilePath))
-    print("extrasFilePath: " + str(extrasFilePath))
+    if verbose:
+        print("Option summary:")
+        print(" databaseFilePath: " + str(databaseFilePath))
+        print(" gamesFilePath: " + str(gamesFilePath))
+        print(" screenshotsFilePath: " + str(screenshotsFilePath))
+        print(" musicFilePath: " + str(musicFilePath))
+        print(" photosFilePath: " + str(photosFilePath))
+        print(" extrasFilePath: " + str(extrasFilePath))
 
     #
+    if verbose:
+        print("Opening database...")
     openDb(databaseFilePath)
-    fixFilenames(gamesFilePath, screenshotsFilePath, musicFilePath, extrasFilePath, dryRun)
+
+    if verbose:
+        print("Fixing file paths...")
+    fixFilenames(gamesFilePath, screenshotsFilePath, musicFilePath, photosFilePath, extrasFilePath, verbose, dryRun)
+
+    if verbose:
+        print("Closing database...")
     closeDb()
-    print("end of script")
+
+    if verbose:
+        print("End of script.")

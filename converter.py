@@ -26,7 +26,7 @@ else:
 # Create a top-level window by creating a widget with no parent
 myWindow = QWidget()
 #myWindow.adjustSize()
-myWindow.resize(800, 330)
+myWindow.resize(800, 400)
 myWindow.move(QApplication.desktop().rect().center() - myWindow.rect().center())
 myWindow.move(QApplication.desktop().rect().center() - myWindow.rect().center())
 myWindow.setWindowTitle("GameBase converter")
@@ -47,6 +47,7 @@ def autoDetectByGamebaseFolderButton_onClicked():
         step2_gamesFolderPath_lineEdit.setText("")
         step2_screenshotsFolderPath_lineEdit.setText("")
         step2_musicFolderPath_lineEdit.setText("")
+        step2_photosFolderPath_lineEdit.setText("")
         step2_extrasFolderPath_lineEdit.setText("")
         step3_gamebaseName_lineEdit.setText("")
         step3_emulatorExecutable_lineEdit.setText("")
@@ -74,6 +75,10 @@ def autoDetectByGamebaseFolderButton_onClicked():
         candidates = [e  for e in dirEntries  if e.upper() == "MUSIC" or e.upper() == "C64MUSIC"]
         if len(candidates) > 0:
             step2_musicFolderPath_lineEdit.setText(os.path.join(dirPath, candidates[0]))
+
+        candidates = [e  for e in dirEntries  if e.upper() == "PHOTOS" or e.upper() == "MUSICIAN PHOTOS"]
+        if len(candidates) > 0:
+            step2_photosFolderPath_lineEdit.setText(os.path.join(dirPath, candidates[0]))
 
         candidates = [e  for e in dirEntries  if e.upper() == "EXTRAS"]
         if len(candidates) > 0:
@@ -366,6 +371,8 @@ step2_gamesFolderPath_lineEdit = makeLabelledEditField("Games folder: ", i_brows
 step2_screenshotsFolderPath_lineEdit = makeLabelledEditField("Screenshots folder: ", i_browseFor="directory", i_browseCaption="Choose Screenshots folder location", i_shareWidget=widget_group)
 # Music path
 step2_musicFolderPath_lineEdit = makeLabelledEditField("Music folder: ", i_browseFor="directory", i_browseCaption="Choose Music folder location", i_shareWidget=widget_group)
+# Photos path
+step2_photosFolderPath_lineEdit = makeLabelledEditField("Photos folder: ", i_browseFor="directory", i_browseCaption="Choose Photos folder location", i_shareWidget=widget_group)
 # Extras path
 step2_extrasFolderPath_lineEdit = makeLabelledEditField("Extras folder: ", i_browseFor="directory", i_browseCaption="Choose Extras folder location", i_shareWidget=widget_group)
 #
@@ -397,8 +404,12 @@ def step2_go_button_onClicked():
         command += ["--screenshots", step2_screenshotsFolderPath_lineEdit.text()]
     if step2_musicFolderPath_lineEdit.text() != "":
         command += ["--music", step2_musicFolderPath_lineEdit.text()]
+    if step2_photosFolderPath_lineEdit.text() != "":
+        command += ["--photos", step2_photosFolderPath_lineEdit.text()]
     if step2_extrasFolderPath_lineEdit.text() != "":
         command += ["--extras", step2_extrasFolderPath_lineEdit.text()]
+
+    command += ["--verbose"]
 
     global currentSubprocess
     currentSubprocess = AsyncQTimerSubprocess(command, onOutput, onDone)
@@ -424,7 +435,7 @@ step3_labelDetail.setStyleSheet("QLabel { background-color: #666; color: white; 
 step3_labelDetail.setWordWrap(True)
 step3_vBoxLayout.addWidget(step3_labelDetail)
 
-step3_fromPreviousTabs_label = QLabel("(From previous tabs: SQLite database file, Games/Screenshots/Music/Extras folder)")
+step3_fromPreviousTabs_label = QLabel("(From previous tabs: SQLite database file, Games/Screenshots/Music/Photos/Extras folder)")
 step3_labelDetail.setWordWrap(True)
 step3_vBoxLayout.addWidget(step3_fromPreviousTabs_label)
 
