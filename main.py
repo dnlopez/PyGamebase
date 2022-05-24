@@ -546,9 +546,23 @@ g_tableColumns = [
 
 # + + + New column accessors {{{
 
-def tableColumn_add(i_id):
+def tableColumn_add(i_id, i_beforeColumnId=None):
+    """
+    Add a column to the live table view.
+
+    Params:
+     i_id:
+      (str)
+      ID of column to add to the table view.
+      Details of it should exist in g_usableColumns.
+     i_beforeColumnId:
+      Either (str)
+       ID of column already present in the table view to insert this column before.
+      or (None)
+       Add the new column as the last one.
+    """
     usableColumn = usableColumn_getById(i_id)
-    tableColumn = {
+    newTableColumn = {
         "id": usableColumn["id"],
         "screenName": usableColumn["screenName"],
         "width": usableColumn["defaultWidth"],
@@ -557,7 +571,11 @@ def tableColumn_add(i_id):
         "textAlignment": usableColumn["textAlignment"]
     }
 
-    g_tableColumns.append(tableColumn)
+    # Either append column at end or insert it before i_beforeColumnId
+    if i_beforeColumnId == None:
+        g_tableColumns.append(newTableColumn)
+    else:
+        g_tableColumns.insert(tableColumn_idToPos(i_beforeColumnId), newTableColumn)
 
 def tableColumn_remove(i_id):
     foundColumnNo = None
@@ -578,10 +596,10 @@ def tableColumn_remove(i_id):
         del(headerBar.sort_operations[foundSortOperationNo])
         headerBar.sort_updateGui()
 
-def tableColumn_toggle(i_id):
+def tableColumn_toggle(i_id, i_addBeforeColumnId=None):
     present = tableColumn_getById(i_id)
     if not present:
-        tableColumn_add(i_id)
+        tableColumn_add(i_id, i_addBeforeColumnId)
     else:
         tableColumn_remove(i_id)
 
@@ -1303,10 +1321,19 @@ class HeaderBar(QWidget):
         # + Context menu {{{
 
         def onCustomContextMenuRequested(self, i_pos):
+            # Get context menu invocation position (normally mouse position, but could also be centre of header button if pressed keyboard menu button) relative to the HeaderBar
+            # and adjust for horizontal scroll amount
+            invocationPos = self.mapTo(self.parent(), i_pos)
+            invocationPos.setX(invocationPos.x() - self.parent().scrollX)
+            # Get the specific column on which the context menu was invoked,
+            # so if we end up showing any new columns, they can be inserted at that position
+            contextColumn = self.parent()._columnAtPixelX(invocationPos.x())
+
+            # Build popup menu
             contextMenu = QMenu(self)
 
-            def action_onTriggered(i_columnId):
-                tableColumn_toggle(i_columnId)
+            def action_onTriggered(i_selectedColumnId, i_contextMenuColumnId):
+                tableColumn_toggle(i_selectedColumnId, i_contextMenuColumnId)
 
                 # Update GUI
                 # If the following recreateWidgets() call deletes the button which we right-clicked to open this context menu,
@@ -1336,8 +1363,9 @@ class HeaderBar(QWidget):
                 action.setCheckable(True)
                 columnId = usableColumn["id"]
                 action.setChecked(tableColumn_getById(columnId) != None)
-                action.triggered.connect(functools.partial(action_onTriggered, columnId))
+                action.triggered.connect(functools.partial(action_onTriggered, columnId, contextColumn["id"]))
 
+            # Show popup menu
             contextMenu.popup(self.mapToGlobal(i_pos))
         #def mousePressEvent(self, i_event):
         #    if i_event.button() == Qt.MouseButton.RightButton:
