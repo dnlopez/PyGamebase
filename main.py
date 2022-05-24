@@ -417,6 +417,17 @@ g_usableColumns = [
         "textAlignment": "left",
         "comment": "Link to GA_ID of related game (0 if no related game)"
     },
+    {
+        "id": "gemus",
+        "screenName": "Gemus",
+        "dbTableName": "Games",
+        "dbFieldName": "Gemus",
+        "dbType": "Memo/Hyperlink (255)",
+        "defaultWidth": 200,
+        "sortable": True,
+        "filterable": True,
+        "textAlignment": "left",
+    },
 ]
 
 def usableColumn_getById(i_id):
