@@ -2418,9 +2418,9 @@ class MyTableView(QTableView):
         columnId = tableColumn_getByPos(i_modelIndex.column())["id"]
 
         if columnId == "detail":
-            self.scrollTo(i_modelIndex, QAbstractItemView.PositionAtTop)
             detailPaneWasAlreadyVisible = detailPane_height() > 0
             detailPane_show()
+            self.scrollTo(i_modelIndex, QAbstractItemView.PositionAtTop)
             if g_dbRows[i_modelIndex.row()][g_dbColumnNames.index("GA_Id")] != detailPane_currentGameId:
                 detailPane_populate(i_modelIndex.row())
             if i_keyboardOriented and detailPaneWasAlreadyVisible:
