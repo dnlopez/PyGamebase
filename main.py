@@ -1387,8 +1387,10 @@ class HeaderBar(QWidget):
         # Emitted after the text is changed
         textChange = Signal()
 
-        def __init__(self, i_parent=None):
+        def __init__(self, i_columnId, i_parent=None):
             QFrame.__init__(self, i_parent)
+
+            self.columnId = i_columnId
 
             self.setAttribute(Qt.WA_StyledBackground, True)
             self.setProperty("class", "FilterEdit")
@@ -1428,6 +1430,7 @@ class HeaderBar(QWidget):
                 self.textChange.emit()
             else:
                 tableView.setFocus()
+                tableView.selectCellInColumnWithId(self.columnId)
 
         def lineEdit_onTextEdited(self, i_text):
             # Hide or show clear button depending on whether there's text
@@ -1591,7 +1594,7 @@ class HeaderBar(QWidget):
                 # Create filter edits
                 widgetDict["filterEdits"] = []
                 for filterRowNo in range(0, len(self.filterRows)):
-                    headerFilter = HeaderBar.FilterEdit(self)
+                    headerFilter = HeaderBar.FilterEdit(column["id"], self)
                     widgetDict["filterEdits"].append(headerFilter)
                     # Set its fixed properties (apart from position)
                     headerFilter.setVisible(True)
@@ -1645,7 +1648,7 @@ class HeaderBar(QWidget):
         for columnNo, column in enumerate(tableColumn_getBySlice()):
             if column["filterable"]:
                 # Create FilterEdit
-                headerFilter = HeaderBar.FilterEdit(self)
+                headerFilter = HeaderBar.FilterEdit(column["id"], self)
                 # Set its fixed properties (apart from position)
                 headerFilter.setVisible(True)
                 headerFilter.textChange.connect(self.lineEdit_onTextChange)
@@ -2393,6 +2396,16 @@ class MyTableView(QTableView):
         self.resize_selectedRowTopY = None
 
         #self.verticalScrollBar().setSingleStep(30)
+
+    def selectCellInColumnWithId(self, i_id):
+        """
+        Params:
+         i_id:
+          (str)
+        """
+        columnNo = tableColumn_idToPos(i_id)
+        selectedIndex = self.selectionModel().currentIndex()
+        tableView.selectionModel().setCurrentIndex(tableView.selectionModel().model().index(selectedIndex.row(), columnNo), QItemSelectionModel.ClearAndSelect)
 
     def onActivatedOrClicked(self, i_keyboardOriented, i_modelIndex):
         """
