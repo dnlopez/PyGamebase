@@ -3313,6 +3313,8 @@ tableView.resizeAllColumns([column["width"]  for column in tableColumn_getBySlic
 
 headerBar.sort("name", False)  # TODO what if name column is initially not visible
 
+tableView.selectionModel().setCurrentIndex(tableView.selectionModel().model().index(0, 0), QItemSelectionModel.ClearAndSelect)
+
 # + Subprocess output {{{
 
 class Log(QPlainTextEdit):
