@@ -1342,7 +1342,25 @@ class HeaderBar(QWidget):
             contextColumn = self.parent()._columnAtPixelX(invocationPos.x())
 
             # Build popup menu
-            contextMenu = QMenu(self)
+            class StayOpenMenu(QMenu):
+                """
+                A menu which stays open after something is selected
+                so you can make multiple selections in one go.
+                """
+                def __init__(self, i_parent=None):
+                    QMenu.__init__(self, i_parent)
+                    self.installEventFilter(self)
+
+                def eventFilter(self, i_watched, i_event):
+                    if i_event.type() == QEvent.MouseButtonRelease:
+                        if i_watched.activeAction():
+                            # If the selected action does not have a submenu,
+                            # trigger the function and eat the event
+                            if not i_watched.activeAction().menu():
+                                i_watched.activeAction().trigger()
+                                return True
+                    return QMenu.eventFilter(self, i_watched, i_event)
+            contextMenu = StayOpenMenu(self)
 
             def action_onTriggered(i_selectedColumnId, i_contextMenuColumnId):
                 tableColumn_toggle(i_selectedColumnId, i_contextMenuColumnId)
