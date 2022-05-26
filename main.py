@@ -578,9 +578,10 @@ def tableColumn_add(i_id, i_beforeColumnId=None):
         "screenName": usableColumn["screenName"],
         "width": usableColumn["defaultWidth"],
         "sortable": usableColumn["sortable"],
-        "filterable": usableColumn["filterable"],
-        "textAlignment": usableColumn["textAlignment"]
+        "filterable": usableColumn["filterable"]
     }
+    if "textAlignment" in usableColumn:
+        newTableColumn["textAlignment"] = usableColumn["textAlignment"]
 
     # Either append column at end or insert it before i_beforeColumnId
     if i_beforeColumnId == None:
