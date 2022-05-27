@@ -977,14 +977,6 @@ def queryDb():
         else:
             selectTerms.append(tableName + "." + fieldName)
 
-    if "CloneOf" in g_db_gamesColumnNames:
-        selectTerms.append("CloneOfGame.Name AS CloneOfName")
-        fromTerms.append("LEFT JOIN Games AS CloneOfGame ON Games.CloneOf = CloneOfGame.GA_Id")
-    if "WebLink_Name" in g_db_gamesColumnNames:
-        selectTerms.append("Games.WebLink_Name")
-    if "WebLink_URL" in g_db_gamesColumnNames:
-        selectTerms.append("Games.WebLink_URL")
-
     # SELECT
     sql = "SELECT " + ", ".join(selectTerms)
     sql += "\nFROM " + " ".join(fromTerms)
@@ -1095,17 +1087,38 @@ def queryDb():
 
     label_statusbar.setText("Showing " + str(len(g_dbRows)) + " games.")
 
-def getGameRecord(i_gameId):
-    # Select all fields from Games table
+def getGameRecord(i_gameId, i_includeRelatedGameNames=False):
+    """
+    Params:
+     i_gameId:
+      (int)
+     i_includeRelatedGameNames:
+      (bool)
+    """
+    # From Games table, select all fields
     fromTerms = [
         "Games"
     ]
+
+    selectTerms = [
+    ]
     fullyQualifiedFieldNames = False
     if fullyQualifiedFieldNames:
-        selectTerms = [
-        ]
         for field in g_dbSchema["Games"]:
             selectTerms.append("Games." + field["name"] + " AS [Games." + field["name"] + "]")
+    else:
+        selectTerms.append("Games.*")
+
+    #
+    if i_includeRelatedGameNames:
+        fromTerms.append("LEFT JOIN Games AS CloneOf_Games ON Games.CloneOf = CloneOf_Games.GA_Id")
+        selectTerms.append("CloneOf_Games.Name AS CloneOf_Name")
+        fromTerms.append("LEFT JOIN Games AS Prequel_Games ON Games.Prequel = Prequel_Games.GA_Id")
+        selectTerms.append("Prequel_Games.Name AS Prequel_Name")
+        fromTerms.append("LEFT JOIN Games AS Sequel_Games ON Games.Sequel = Sequel_Games.GA_Id")
+        selectTerms.append("Sequel_Games.Name AS Sequel_Name")
+        fromTerms.append("LEFT JOIN Games AS Related_Games ON Games.Related = Related_Games.GA_Id")
+        selectTerms.append("Related_Games.Name AS Related_Name")
 
     # For all other tables connected to Games
     # that are present in this database
@@ -1121,10 +1134,7 @@ def getGameRecord(i_gameId):
 
     # Build SQL string
     #  SELECT
-    if fullyQualifiedFieldNames:
-        sql = "SELECT " + ", ".join(selectTerms)
-    else:
-        sql = "SELECT *"
+    sql = "SELECT " + ", ".join(selectTerms)
     #  FROM
     sql += "\nFROM " + " ".join(fromTerms)
     #  WHERE
@@ -2525,18 +2535,21 @@ class MyTableView(QTableView):
                 # Get the target game ID
                 rowNo = i_modelIndex.row()
                 gameId = g_dbRows[rowNo][g_dbColumnNames.index(usableColumn["dbFieldName"])]
+                #
+                self.selectGameWithId(gameId)
 
-                # Look for row in table,
-                # and if not found then clear filter and look again
-                rowNo = findGameWithId(gameId)
-                if rowNo == None:
-                    headerBar.clearAllFilterRows()
-                    rowNo = findGameWithId(gameId)
+    def selectGameWithId(self, i_gameId):
+        # Look for row in table,
+        # and if not found then clear filter and look again
+        rowNo = findGameWithId(i_gameId)
+        if rowNo == None:
+            headerBar.clearAllFilterRows()
+            rowNo = findGameWithId(i_gameId)
 
-                # If found, select it
-                if rowNo != None:
-                    selectedIndex = self.selectionModel().currentIndex()
-                    self.selectionModel().setCurrentIndex(self.selectionModel().model().index(rowNo, selectedIndex.column()), QItemSelectionModel.ClearAndSelect)
+        # If found, select it
+        if rowNo != None:
+            selectedIndex = self.selectionModel().currentIndex()
+            self.selectionModel().setCurrentIndex(self.selectionModel().model().index(rowNo, selectedIndex.column()), QItemSelectionModel.ClearAndSelect)
 
     def selectionChanged(self, i_selected, i_deselected):  # override from QAbstractItemView
         QTableView.selectionChanged(self, i_selected, i_deselected)
@@ -3128,7 +3141,7 @@ def detailPane_populate(i_rowNo):
      i_rowNo:
       (int)
     """
-    gameRow = getGameRecord(g_dbRows[i_rowNo][g_dbColumnNames.index("GA_Id")])
+    gameRow = getGameRecord(g_dbRows[i_rowNo][g_dbColumnNames.index("GA_Id")], True)
 
     global detailPane_currentGameId
     detailPane_currentGameId = gameRow["GA_Id"]
@@ -3144,34 +3157,30 @@ def detailPane_populate(i_rowNo):
         if screenshotUrl != None:
             html += '<img src="' + screenshotUrl + '">'
 
-    # If this game is a clone,
-    # insert a link to the original
-    if "CloneOfName" in gameRow and gameRow["CloneOfName"] != None:  # [broken]
+    # If there are related games,
+    # insert links to the originals
+    if "CloneOf_Name" in gameRow and gameRow["CloneOf_Name"] != None:
         html += '<p style="white-space: pre-wrap;">'
         html += 'Clone of: '
+        html += '<a href="game:///' + str(gameRow["CloneOf"]) + '">' + gameRow["CloneOf_Name"] + '</a>'
+        html += '</p>'
 
-        html += '<a href="#">' + gameRow["CloneOfName"] + '</a>'
-        #link.addEventListener("click", function (i_event) {
-        #    i_event.preventDefault();
-        #
-        #    for (var columnNo = 0, columnCount = g_tableColumns.length; columnNo < columnCount; ++columnNo)
-        #    {
-        #        var column = tableColumn_getByPos(columnNo);
-        #
-        #        if (column.filterable)
-        #        {
-        #            if (column.id == "name")
-        #                column.headerFilter.setValue(i_gameRow.CloneOfName);
-        #            else
-        #                column.headerFilter.setValue("");
-        #        }
-        #    }
-        #
-        #    queryDb();
-        #    tableView.requery()
-        #    //showDetailPane(0);
-        #    g_dynamicTable.scrollTop = 0;
-        #});
+    if "Prequel_Name" in gameRow and gameRow["Prequel_Name"] != None:
+        html += '<p style="white-space: pre-wrap;">'
+        html += 'Prequel: '
+        html += '<a href="game:///' + str(gameRow["Prequel"]) + '">' + gameRow["Prequel_Name"] + '</a>'
+        html += '</p>'
+
+    if "Sequel_Name" in gameRow and gameRow["Sequel_Name"] != None:
+        html += '<p style="white-space: pre-wrap;">'
+        html += 'Sequel: '
+        html += '<a href="game:///' + str(gameRow["Sequel"]) + '">' + gameRow["Sequel_Name"] + '</a>'
+        html += '</p>'
+
+    if "Related_Name" in gameRow and gameRow["Related_Name"] != None:
+        html += '<p style="white-space: pre-wrap;">'
+        html += 'Related: '
+        html += '<a href="game:///' + str(gameRow["Related"]) + '">' + gameRow["Related_Name"] + '</a>'
         html += '</p>'
 
     # Insert memo text
@@ -3187,7 +3196,7 @@ def detailPane_populate(i_rowNo):
         html += '</p>'
 
     # Insert weblink(s)
-    if "WebLink_Name" in g_dbColumnNames and gameRow["WebLink_Name"] != None:
+    if "WebLink_Name" in gameRow and gameRow["WebLink_Name"] != None:
         html += '<p style="white-space: pre-wrap;">'
 
         html += gameRow["WebLink_Name"] + ": "
@@ -3201,7 +3210,7 @@ def detailPane_populate(i_rowNo):
         #});
 
         # If it's a World Of Spectrum link then insert a corresponding Spectrum Computing link
-        if "WebLink_Name" in g_dbColumnNames and gameRow["WebLink_Name"] == "WOS":
+        if gameRow["WebLink_Name"] == "WOS":
             # Separator
             html += '<span style="margin-left: 8px; margin-right: 8px; border-left: 1px dotted #666;"></span>'
             # Label
@@ -3306,6 +3315,11 @@ def detailPane_populate(i_rowNo):
                         messageBox.setInformativeText(traceback.format_exc())
                         #messageBox.setFixedWidth(800)
                         messageBox.exec()
+                # If it's a link to a game,
+                # select it in the table view
+                elif url.startswith("game:///"):
+                    gameId = int(url[8:])
+                    tableView.selectGameWithId(gameId)
                 # Else if it's a normal link,
                 # open it with the default browser
                 else:
