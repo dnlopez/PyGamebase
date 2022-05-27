@@ -950,38 +950,12 @@ connectionsFromGamesTable = {
 }
 
 
-def queryDb():
-    selectTerms = [
-        "Games.GA_Id",
-        "Games.ScrnshotFilename",
-        "Games.Comment",
-        "Games.Gemus",
-        "Games.Filename",
-        "Games.FileToRun",
-        "Games.MemoText"
-    ]
-
-    fromTerms = [
-        "Games"
-    ]
-
-    tableConnections = copy.deepcopy(connectionsFromGamesTable)
-    visibleDbNames = [(usableColumn["dbTableName"], usableColumn["dbFieldName"])
-                      for usableColumn in [usableColumn_getById(column["id"])  for column in tableColumn_getBySlice()]
-                      if "dbTableName" in usableColumn and "dbFieldName" in usableColumn]
-    for tableName, fieldName in visibleDbNames:
-        fromTerms += getJoinTermsToTable(tableName, tableConnections)
-
-        if tableName == "Games" and fieldName == "GA_Id":
-            pass
-        else:
-            selectTerms.append(tableName + "." + fieldName)
-
-    # SELECT
-    sql = "SELECT " + ", ".join(selectTerms)
-    sql += "\nFROM " + " ".join(fromTerms)
-
-    # WHERE
+def getSqlWhereExpression():
+    """
+    Returns:
+     Either (str)
+     or (None)
+    """
     andGroups = []
 
     for filterRowNo in range(0, len(headerBar.filterRows)):
@@ -1060,8 +1034,50 @@ def queryDb():
             andGroups.append(andTerms)
 
     if len(andGroups) > 0:
-        sql += "\nWHERE "
-        sql += " OR ".join(["(" + andGroupStr + ")"  for andGroupStr in [" AND ".join(andGroup)  for andGroup in andGroups]])
+        return " OR ".join(["(" + andGroupStr + ")"  for andGroupStr in [" AND ".join(andGroup)  for andGroup in andGroups]])
+    else:
+        return None
+
+def queryDb(i_whereExpression):
+    """
+    Params:
+     i_whereExpression:
+      Either (str)
+      or (None)
+    """
+    selectTerms = [
+        "Games.GA_Id",
+        "Games.ScrnshotFilename",
+        "Games.Comment",
+        "Games.Gemus",
+        "Games.Filename",
+        "Games.FileToRun",
+        "Games.MemoText"
+    ]
+
+    fromTerms = [
+        "Games"
+    ]
+
+    tableConnections = copy.deepcopy(connectionsFromGamesTable)
+    visibleDbNames = [(usableColumn["dbTableName"], usableColumn["dbFieldName"])
+                      for usableColumn in [usableColumn_getById(column["id"])  for column in tableColumn_getBySlice()]
+                      if "dbTableName" in usableColumn and "dbFieldName" in usableColumn]
+    for tableName, fieldName in visibleDbNames:
+        fromTerms += getJoinTermsToTable(tableName, tableConnections)
+
+        if tableName == "Games" and fieldName == "GA_Id":
+            pass
+        else:
+            selectTerms.append(tableName + "." + fieldName)
+
+    # SELECT
+    sql = "SELECT " + ", ".join(selectTerms)
+    sql += "\nFROM " + " ".join(fromTerms)
+
+    # WHERE
+    if i_whereExpression != None:
+        sql += "\nWHERE " + i_whereExpression
 
     # ORDER BY
     if len(headerBar.sort_operations) > 0:
@@ -1384,7 +1400,7 @@ class HeaderBar(QWidget):
                     headerBar.repositionTabOrder()
 
                     # Requery DB in case filter criteria have changed
-                    queryDb()
+                    queryDb(getSqlWhereExpression())
                     tableView.requery()
                     #
                     tableView.resizeAllColumns([column["width"]  for column in tableColumn_getBySlice()])
@@ -1827,7 +1843,7 @@ class HeaderBar(QWidget):
         self.sort_updateGui()
 
         # Requery DB in new order
-        queryDb()
+        queryDb(getSqlWhereExpression())
         tableView.requery()
 
     def sort_updateGui(self):
@@ -3037,7 +3053,7 @@ def headerBar_onFilterChange():
         selectedRowTopY = tableView.rowViewportPosition(selectedIndex.row())
 
     # Query database and update table widget data
-    queryDb()
+    queryDb(getSqlWhereExpression())
     tableView.requery()
 
     # If a game was previously selected,
@@ -3391,7 +3407,7 @@ mainWindow.show()
 openDb()
 
 headerBar.initFromColumns()
-queryDb()
+queryDb(getSqlWhereExpression())
 tableView.requery()
 tableView.resizeAllColumns([column["width"]  for column in tableColumn_getBySlice()])
 
