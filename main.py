@@ -2446,6 +2446,17 @@ class MyTableView(QTableView):
 
         #self.verticalScrollBar().setSingleStep(30)
 
+    def focusInEvent(self, i_event):  # override from QWidget
+        # If don't have a selection, its row and column both showing up as -1
+        # (which can happen eg. after a column is added or deleted),
+        # select the top-left cell
+        selectedIndex = self.selectionModel().currentIndex()
+        if selectedIndex.row() == -1 and selectedIndex.column() == -1:
+            selectedIndex = tableView.selectionModel().model().index(0, 0)
+            tableView.selectionModel().setCurrentIndex(selectedIndex, QItemSelectionModel.ClearAndSelect)
+        # Scroll to the selected cell
+        tableView.scrollTo(selectedIndex)
+
     def selectCellInColumnWithId(self, i_id):
         """
         Params:
