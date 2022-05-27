@@ -958,13 +958,13 @@ def getSqlWhereExpression():
     """
     andGroups = []
 
-    for filterRowNo in range(0, len(headerBar.filterRows)):
+    for filterRowNo in range(0, len(filterBar.filterRows)):
         andTerms = []
 
         for column in tableColumn_getBySlice():
             usableColumn = usableColumn_getById(column["id"])
             if column["filterable"]:
-                value = headerBar.columnWidgets[column["id"]]["filterEdits"][filterRowNo].text()
+                value = filterBar.columnWidgets[column["id"]]["filterEdits"][filterRowNo].text()
                 value = value.strip()
                 if value != "":
                     # If range operator
@@ -1315,8 +1315,7 @@ def dbRow_getPhotoRelativePath(i_row):
 
 class HeaderBar(QWidget):
     """
-    A top row of buttons to act as table headings and controls for column resizing and sorting,
-    and a second row of text box controls for entering filter criteria.
+    A row of buttons to act as table headings and controls for column resizing and sorting.
     """
     # Within this many pixels either side of a vertical boundary between header buttons, allow dragging to resize a column.
     resizeMargin = 10
@@ -1324,10 +1323,6 @@ class HeaderBar(QWidget):
     minimumColumnWidth = 30
 
     headingButtonHeight = 30
-    filterRowHeight = 30
-
-    # Emitted after the text in one of the filter text boxes is changed, or a row is deleted
-    filterChange = Signal()
 
     #print(tableView.geometry())
     #print(tableView.frameGeometry())
@@ -1396,8 +1391,10 @@ class HeaderBar(QWidget):
                 def on_continueTimer():
                     headerBar.recreateWidgets()
                     headerBar.repositionHeadingButtons()
-                    headerBar.repositionFilterEdits()
                     headerBar.repositionTabOrder()
+                    filterBar.recreateWidgets()
+                    filterBar.repositionFilterEdits()
+                    filterBar.repositionTabOrder()
 
                     # Requery DB in case filter criteria have changed
                     queryDb(getSqlWhereExpression())
@@ -1424,95 +1421,6 @@ class HeaderBar(QWidget):
 
         # + }}}
 
-
-    class FilterEdit(QFrame):
-        # Emitted after the text is changed
-        textChange = Signal()
-
-        def __init__(self, i_columnId, i_parent=None):
-            QFrame.__init__(self, i_parent)
-
-            self.columnId = i_columnId
-
-            self.setAttribute(Qt.WA_StyledBackground, True)
-            self.setProperty("class", "FilterEdit")
-            self.setAutoFillBackground(True)
-
-            self.layout = QHBoxLayout(self)
-            self.setLayout(self.layout)
-            self.layout.setSpacing(0)
-            self.layout.setContentsMargins(0, 0, 0, 0)
-
-            self.lineEdit = QLineEdit(self)
-            self.lineEdit.setFixedHeight(HeaderBar.filterRowHeight)
-            self.layout.addWidget(self.lineEdit)
-            self.layout.setStretch(0, 1)
-            self.lineEdit.editingFinished.connect(self.lineEdit_onEditingFinished)
-
-            self.clearButton = QPushButton("", self)
-            self.clearButton.setIcon(self.style().standardIcon(QStyle.SP_DialogCloseButton))
-            self.clearButton.setStyleSheet("QPushButton { margin: 4px; border-width: 1px; border-radius: 10px; }");
-            #self.clearButton.setFlat(True)
-            self.clearButton.setFixedHeight(HeaderBar.filterRowHeight)
-            self.clearButton.setFixedWidth(HeaderBar.filterRowHeight)
-            self.clearButton.setFocusPolicy(Qt.NoFocus)
-            self.clearButton.setVisible(False)
-            self.layout.addWidget(self.clearButton)
-            self.layout.setStretch(1, 0)
-            self.clearButton.clicked.connect(self.clearButton_onClicked)
-
-            self.lineEdit.textEdited.connect(self.lineEdit_onTextEdited)
-
-        # + Internal event handling {{{
-
-        def lineEdit_onTextEdited(self, i_text):
-            # Hide or show clear button depending on whether there's text
-            self.clearButton.setVisible(i_text != "")
-
-        def lineEdit_onEditingFinished(self):
-            # If text was modified, requery,
-            # else focus the tableview
-            textWasModified = self.lineEdit.isModified()
-            self.lineEdit.setModified(False)
-            if textWasModified:
-                self.textChange.emit()
-            else:
-                tableView.setFocus()
-                tableView.selectCellInColumnWithId(self.columnId)
-
-        def clearButton_onClicked(self):
-            self.lineEdit.setText("")
-            self.clearButton.setVisible(False)
-            self.textChange.emit()
-
-        # + }}}
-
-        # + Text {{{
-
-        def text(self):
-            """
-            Returns:
-             (str)
-            """
-            return self.lineEdit.text()
-
-        def setText(self, i_text):
-            """
-            Params:
-             i_text:
-              (str)
-            """
-            self.lineEdit.setText(i_text)
-            self.lineEdit_onTextEdited(i_text)
-
-        # + }}}
-
-        # + Focus {{{
-
-        def setFocus(self, i_reason):
-            self.lineEdit.setFocus(i_reason)
-
-        # + }}}
 
     def __init__(self, i_parent=None):
         QWidget.__init__(self, i_parent)
@@ -1546,18 +1454,6 @@ class HeaderBar(QWidget):
         #   Dictionary has specific key-value properties:
         #    headingButton:
         #     (HeadingButton)
-        #    filterEdits:
-        #     (list of FilterEdit)
-
-        self.filterRows = []
-        # (list)
-        # Per-filter row GUI widgets.
-        # The length of this list is currently used as the primary indication of how many filter rows there are.
-        # Each element is:
-        #  (dict)
-        #  Dictionary has specific key-value properties:
-        #   deleteRow_pushButton:
-        #    (QPushButton)
 
         # + Mouse drag to resize/reorder columns {{{
 
@@ -1608,14 +1504,6 @@ class HeaderBar(QWidget):
         # Create header buttons
         self.recreateWidgets()
 
-        #
-        self.insertRow_pushButton = QPushButton("+", self)
-        self.insertRow_pushButton.clicked.connect(self.insertRow_pushButton_onClicked)
-        #  Filter events to facilitate scroll to upon focus
-        self.insertRow_pushButton.installEventFilter(self)
-
-        self.insertFilterRow(0)
-
         self.initFromColumns()
 
     def initFromColumns(self):
@@ -1623,7 +1511,6 @@ class HeaderBar(QWidget):
         self.recreateWidgets()
         # Initially set all widget positions
         self.repositionHeadingButtons()
-        self.repositionFilterEdits()
         self.repositionTabOrder()
 
     def recreateWidgets(self):
@@ -1651,17 +1538,6 @@ class HeaderBar(QWidget):
                 headingButton.installEventFilter(self)
                 headingButton.setMouseTracking(True)
 
-                # Create filter edits
-                widgetDict["filterEdits"] = []
-                for filterRowNo in range(0, len(self.filterRows)):
-                    headerFilter = HeaderBar.FilterEdit(column["id"], self)
-                    widgetDict["filterEdits"].append(headerFilter)
-                    # Set its fixed properties (apart from position)
-                    headerFilter.setVisible(True)
-                    headerFilter.textChange.connect(self.lineEdit_onTextChange)
-                    #  Filter events to facilitate scroll to upon focus
-                    headerFilter.lineEdit.installEventFilter(self)
-
                 # Save the object of header widgets
                 self.columnWidgets[column["id"]] = widgetDict
 
@@ -1678,118 +1554,9 @@ class HeaderBar(QWidget):
                 # Remove all its widgets from the GUI
                 widgetDict = self.columnWidgets[columnId]
                 widgetDict["headingButton"].setParent(None)
-                #del(widgetDict["headingButton"])
-                for filterEdit in widgetDict["filterEdits"]:
-                    filterEdit.setParent(None)
 
                 # Remove object of header widgets
                 del(self.columnWidgets[columnId])
-
-    # + Filter rows {{{
-
-    def insertFilterRow(self, i_position):
-        """
-        Params:
-         i_position:
-          (int)
-        """
-
-        # Add per-filter row GUI widgets
-        newRow = {}
-        self.filterRows.insert(i_position, newRow)
-
-        # 'Delete row' button
-        deleteRow_pushButton = QPushButton("x", self)
-        # Set its fixed properties (apart from position)
-        deleteRow_pushButton.clicked.connect(functools.partial(self.deleteRow_pushButton_onClicked, newRow))
-        deleteRow_pushButton.setVisible(True)
-        #  Filter events to facilitate scroll to upon focus
-        deleteRow_pushButton.installEventFilter(self)
-        # Save in member object
-        newRow["deleteRow_pushButton"] = deleteRow_pushButton
-
-        # Add per-column GUI widgets
-        for columnNo, column in enumerate(tableColumn_getBySlice()):
-            if column["filterable"]:
-                # Create FilterEdit
-                headerFilter = HeaderBar.FilterEdit(column["id"], self)
-                # Set its fixed properties (apart from position)
-                headerFilter.setVisible(True)
-                headerFilter.textChange.connect(self.lineEdit_onTextChange)
-                #  Filter events to facilitate scroll to upon focus
-                headerFilter.lineEdit.installEventFilter(self)
-                # Save in member object
-                self.columnWidgets[column["id"]]["filterEdits"].insert(i_position, headerFilter)
-
-        # Resize header to accommodate the current number of filter rows
-        self.setFixedHeight(HeaderBar.headingButtonHeight + HeaderBar.filterRowHeight*len(self.filterRows))
-
-    def appendFilterRow(self):
-        self.insertFilterRow(len(self.filterRows))
-
-    def deleteFilterRow(self, i_position):
-        """
-        Params:
-         i_position:
-          (int)
-        """
-        # Remove per-column widgets
-        for columnNo, column in enumerate(tableColumn_getBySlice()):
-            if column["filterable"]:
-                # From the GUI
-                self.columnWidgets[column["id"]]["filterEdits"][i_position].setParent(None)
-                # From member object
-                del(self.columnWidgets[column["id"]]["filterEdits"][i_position])
-
-        # Remove per-filter row widgets
-        filterRow = self.filterRows[i_position]
-
-        # 'Delete row' button
-        #  From the GUI
-        filterRow["deleteRow_pushButton"].setParent(None)
-        #  From member object
-        del(self.filterRows[i_position])
-
-        # Resize header to accommodate the current number of filter rows
-        self.setFixedHeight(HeaderBar.headingButtonHeight + HeaderBar.filterRowHeight*len(self.filterRows))
-
-    def clearFilterRow(self, i_position):
-        """
-        Params:
-         i_position:
-          (int)
-        """
-        for columnNo, column in enumerate(tableColumn_getBySlice()):
-            if column["filterable"]:
-                self.columnWidgets[column["id"]]["filterEdits"][i_position].setText("")
-
-    def clearAllFilterRows(self):
-        while len(self.filterRows) > 1:
-            self.deleteFilterRow(len(self.filterRows) - 1)
-        self.clearFilterRow(0)
-
-        self.repositionFilterEdits()
-        #self.repositionTabOrder()
-        self.filterChange.emit()
-
-    def deleteRow_pushButton_onClicked(self, i_filterRow):
-        if len(self.filterRows) == 1:
-            self.clearFilterRow(0)
-        else:
-            for filterRowNo, filterRow in enumerate(self.filterRows):
-                if filterRow == i_filterRow:
-                    self.deleteFilterRow(filterRowNo)
-                    self.repositionFilterEdits()
-                    #self.repositionTabOrder()
-        self.filterChange.emit()
-
-    def insertRow_pushButton_onClicked(self):
-        self.appendFilterRow()
-        #self.repositionHeadingButtons()
-        self.repositionFilterEdits()
-        self.repositionTabOrder()
-
-    # + }}}
 
     #def sizeHint(self):
     #    return QSize(10000, 59)
@@ -1882,9 +1649,6 @@ class HeaderBar(QWidget):
 
     # + }}}
 
-    def lineEdit_onTextChange(self):
-        self.filterChange.emit()
-
     # + Mouse drag to resize/reorder columns {{{
 
     def _columnBoundaryNearPixelX(self, i_x, i_withinMargin=None):
@@ -1892,7 +1656,7 @@ class HeaderBar(QWidget):
         Params:
          i_x:
           (int)
-          Relative to the left of the window.
+          Relative to the left of the header bar.
          i_withinMargin:
           Either (int)
            Require the resulting edge to be within this many pixels of i_x
@@ -1949,7 +1713,7 @@ class HeaderBar(QWidget):
         Params:
          i_x:
           (int)
-          Relative to the left of the window.
+          Relative to the left of the header bar.
 
         Returns:
          Either (Column)
@@ -1976,6 +1740,7 @@ class HeaderBar(QWidget):
 
         Returns:
          Either (int)
+          Relative to the left of the header bar.
          or (None)
         """
         x = 0
@@ -2002,7 +1767,7 @@ class HeaderBar(QWidget):
                     self.reorder_dropBeforeColumn = self.reorder_column
 
                     # Show drop indicator
-                    self.reorderIndicator_widget.setGeometry(self._columnScreenX(self.reorder_column), 0, self.reorder_column["width"], HeaderBar.headingButtonHeight)
+                    self.reorderIndicator_widget.setGeometry(self._columnScreenX(self.reorder_column) + self.scrollX, 0, self.reorder_column["width"], HeaderBar.headingButtonHeight)
                     self.reorderIndicator_widget.show()
                     self.reorderIndicator_widget.raise_()
 
@@ -2041,7 +1806,7 @@ class HeaderBar(QWidget):
 
                 # Move/resize buttons and lineedits
                 self.repositionHeadingButtons()
-                self.repositionFilterEdits()
+                filterBar.repositionFilterEdits()
                 #
                 tableView.horizontalHeader().resizeSection(tableColumn_idToPos(self.resize_column["id"]), newWidth)
 
@@ -2058,7 +1823,7 @@ class HeaderBar(QWidget):
                 leftColumn, rightColumn, edgeX = self._columnBoundaryNearPixelX(mousePos.x())
                 self.reorder_dropBeforeColumn = rightColumn
                 if self.reorder_dropBeforeColumn == self.reorder_column:
-                    self.reorderIndicator_widget.setGeometry(self._columnScreenX(self.reorder_column), 0, self.reorder_column["width"], HeaderBar.headingButtonHeight)
+                    self.reorderIndicator_widget.setGeometry(self._columnScreenX(self.reorder_column) + self.scrollX, 0, self.reorder_column["width"], HeaderBar.headingButtonHeight)
                 else:
                     self.reorderIndicator_widget.setGeometry(edgeX - 3 + self.scrollX, 0, 6, self.height())
 
@@ -2098,8 +1863,9 @@ class HeaderBar(QWidget):
                 self.reorderIndicator_widget.hide()
                 # Move/resize buttons and lineedits
                 self.repositionHeadingButtons()
-                self.repositionFilterEdits()
                 self.repositionTabOrder()
+                filterBar.repositionFilterEdits()
+                filterBar.repositionTabOrder()
                 #
                 tableView.requery()
                 #
@@ -2114,16 +1880,18 @@ class HeaderBar(QWidget):
         elif i_event.type() == QEvent.FocusIn:
             # If this widget is off the side of the header bar / window,
             # scroll horizontally
-            positionOnHeaderBar = i_watched.mapTo(self, QPoint(0, 0))
-            if positionOnHeaderBar.x() < 0:
-                tableView.scrollBy(positionOnHeaderBar.x(), 0)
-            elif positionOnHeaderBar.x() + i_watched.geometry().width() > self.geometry().width():
-                tableView.scrollBy(positionOnHeaderBar.x() + i_watched.geometry().width() - self.geometry().width(), 0)
+            positionOnBar = i_watched.mapTo(self, QPoint(0, 0))
+            if positionOnBar.x() < 0:
+                tableView.scrollBy(positionOnBar.x(), 0)
+            elif positionOnBar.x() + i_watched.geometry().width() > self.geometry().width():
+                tableView.scrollBy(positionOnBar.x() + i_watched.geometry().width() - self.geometry().width(), 0)
 
         # Let event continue
         return False
 
     # + }}}
+
+    # + Layout {{{
 
     def repositionHeadingButtons(self):
         x = 0
@@ -2133,25 +1901,6 @@ class HeaderBar(QWidget):
             if column["filterable"]:
                 self.columnWidgets[column["id"]]["headingButton"].setGeometry(x, y, column["width"], HeaderBar.headingButtonHeight)
             x += column["width"]
-
-    def repositionFilterEdits(self):
-        y = HeaderBar.headingButtonHeight
-
-        for filterRowNo, filterRow in enumerate(self.filterRows):
-            x = 0
-            x += self.scrollX  # Adjust for horizontal scroll amount
-            for columnNo, column in enumerate(tableColumn_getBySlice()):
-                if column["filterable"]:
-                    self.columnWidgets[column["id"]]["filterEdits"][filterRowNo].setGeometry(x, y, column["width"], HeaderBar.filterRowHeight)
-                x += column["width"]
-
-            filterRow["deleteRow_pushButton"].setGeometry(x, y, HeaderBar.filterRowHeight, HeaderBar.filterRowHeight)
-            x += HeaderBar.filterRowHeight
-
-            y += HeaderBar.filterRowHeight
-
-        y -= HeaderBar.filterRowHeight
-        self.insertRow_pushButton.setGeometry(x, y, HeaderBar.filterRowHeight, HeaderBar.filterRowHeight)
 
     def repositionTabOrder(self):
         previousWidget = None
@@ -2163,6 +1912,361 @@ class HeaderBar(QWidget):
                 if previousWidget != None:
                     self.setTabOrder(previousWidget, nextWidget)
                 previousWidget = nextWidget
+
+    # + }}}
+
+class FilterBar(QWidget):
+    """
+    One or more rows of text box controls for entering filter criteria per column.
+    """
+    filterRowHeight = 30
+
+    # Emitted after the text in one of the filter text boxes is changed, or a row is deleted
+    filterChange = Signal()
+
+    class FilterEdit(QFrame):
+        # Emitted after the text is changed
+        textChange = Signal()
+
+        def __init__(self, i_columnId, i_parent=None):
+            QFrame.__init__(self, i_parent)
+
+            self.columnId = i_columnId
+
+            self.setAttribute(Qt.WA_StyledBackground, True)
+            self.setProperty("class", "FilterEdit")
+            self.setAutoFillBackground(True)
+
+            self.layout = QHBoxLayout(self)
+            self.setLayout(self.layout)
+            self.layout.setSpacing(0)
+            self.layout.setContentsMargins(0, 0, 0, 0)
+
+            self.lineEdit = QLineEdit(self)
+            self.lineEdit.setFixedHeight(FilterBar.filterRowHeight)
+            self.layout.addWidget(self.lineEdit)
+            self.layout.setStretch(0, 1)
+            self.lineEdit.editingFinished.connect(self.lineEdit_onEditingFinished)
+
+            self.clearButton = QPushButton("", self)
+            self.clearButton.setIcon(self.style().standardIcon(QStyle.SP_DialogCloseButton))
+            self.clearButton.setStyleSheet("QPushButton { margin: 4px; border-width: 1px; border-radius: 10px; }");
+            #self.clearButton.setFlat(True)
+            self.clearButton.setFixedHeight(FilterBar.filterRowHeight)
+            self.clearButton.setFixedWidth(FilterBar.filterRowHeight)
+            self.clearButton.setFocusPolicy(Qt.NoFocus)
+            self.clearButton.setVisible(False)
+            self.layout.addWidget(self.clearButton)
+            self.layout.setStretch(1, 0)
+            self.clearButton.clicked.connect(self.clearButton_onClicked)
+
+            self.lineEdit.textEdited.connect(self.lineEdit_onTextEdited)
+
+        # + Internal event handling {{{
+
+        def lineEdit_onTextEdited(self, i_text):
+            # Hide or show clear button depending on whether there's text
+            self.clearButton.setVisible(i_text != "")
+
+        def lineEdit_onEditingFinished(self):
+            # If text was modified, requery,
+            # else focus the tableview
+            textWasModified = self.lineEdit.isModified()
+            self.lineEdit.setModified(False)
+            if textWasModified:
+                self.textChange.emit()
+            else:
+                tableView.setFocus()
+                tableView.selectCellInColumnWithId(self.columnId)
+
+        def clearButton_onClicked(self):
+            self.lineEdit.setText("")
+            self.clearButton.setVisible(False)
+            self.textChange.emit()
+
+        # + }}}
+
+        # + Text {{{
+
+        def text(self):
+            """
+            Returns:
+             (str)
+            """
+            return self.lineEdit.text()
+
+        def setText(self, i_text):
+            """
+            Params:
+             i_text:
+              (str)
+            """
+            self.lineEdit.setText(i_text)
+            self.lineEdit_onTextEdited(i_text)
+
+        # + }}}
+
+        # + Focus {{{
+
+        def setFocus(self, i_reason):
+            self.lineEdit.setFocus(i_reason)
+
+        # + }}}
+
+
+    def __init__(self, i_parent=None):
+        QWidget.__init__(self, i_parent)
+
+        # Allow this custom widget derived from a QWidget to be fully styled by stylesheets
+        # https://stackoverflow.com/a/49179582
+        self.setAttribute(Qt.WA_StyledBackground, True)
+
+        self.scrollX = 0
+        self.scrollY = 0
+
+        self.columnWidgets = {}
+        # (dict)
+        # Per-column GUI widgets.
+        # Dictionary has arbitrary key-value properties:
+        #  Keys:
+        #   (str)
+        #   Column id
+        #  Values:
+        #   (dict)
+        #   Dictionary has specific key-value properties:
+        #    filterEdits:
+        #     (list of FilterEdit)
+
+        self.filterRows = []
+        # (list)
+        # Per-filter row GUI widgets.
+        # The length of this list is currently used as the primary indication of how many filter rows there are.
+        # Each element is:
+        #  (dict)
+        #  Dictionary has specific key-value properties:
+        #   deleteRow_pushButton:
+        #    (QPushButton)
+
+        # Create header buttons
+        self.recreateWidgets()
+
+        #
+        self.insertRow_pushButton = QPushButton("+", self)
+        self.insertRow_pushButton.clicked.connect(self.insertRow_pushButton_onClicked)
+        #  Filter events to facilitate scroll to upon focus
+        self.insertRow_pushButton.installEventFilter(self)
+
+        self.insertFilterRow(0)
+
+    def initFromColumns(self):
+        # Create filter edits
+        self.recreateWidgets()
+        # Initially set all widget positions
+        self.repositionFilterEdits()
+        self.repositionTabOrder()
+
+    def recreateWidgets(self):
+        """
+        Call this when a filterable column is added or removed in the master description in g_tableColumns
+        to create/delete GUI widgets as necessary, bringing self.columnWidgets into sync with it.
+        """
+        # For each new filterable, visible column
+        # that does not already have header widgets
+        for columnNo, column in enumerate(tableColumn_getBySlice()):
+            if column["filterable"] and \
+               (column["id"] not in self.columnWidgets):
+
+                # Create an object for its header widgets
+                widgetDict = {}
+
+                # Create filter edits
+                widgetDict["filterEdits"] = []
+                for filterRowNo in range(0, len(self.filterRows)):
+                    filterEdit = FilterBar.FilterEdit(column["id"], self)
+                    widgetDict["filterEdits"].append(filterEdit)
+                    # Set its fixed properties (apart from position)
+                    filterEdit.setVisible(True)
+                    filterEdit.textChange.connect(self.lineEdit_onTextChange)
+                    #  Filter events to facilitate scroll to upon focus
+                    filterEdit.lineEdit.installEventFilter(self)
+
+                # Save the object of header widgets
+                self.columnWidgets[column["id"]] = widgetDict
+
+        # For each object of header widgets
+        # which no longer corresponds to an existing, filterable, visible column
+        columnIds = list(self.columnWidgets.keys())
+        for columnId in columnIds:
+            column = tableColumn_getById(columnId)
+            if column != None:
+                if not column["filterable"]:
+                    column = None
+            if column == None:
+
+                # Remove all its widgets from the GUI
+                widgetDict = self.columnWidgets[columnId]
+                for filterEdit in widgetDict["filterEdits"]:
+                    filterEdit.setParent(None)
+
+                # Remove object of header widgets
+                del(self.columnWidgets[columnId])
+
+    # + Filter rows {{{
+
+    def insertFilterRow(self, i_position):
+        """
+        Params:
+         i_position:
+          (int)
+        """
+
+        # Add per-filter row GUI widgets
+        newRow = {}
+        self.filterRows.insert(i_position, newRow)
+
+        # 'Delete row' button
+        deleteRow_pushButton = QPushButton("x", self)
+        # Set its fixed properties (apart from position)
+        deleteRow_pushButton.clicked.connect(functools.partial(self.deleteRow_pushButton_onClicked, newRow))
+        deleteRow_pushButton.setVisible(True)
+        #  Filter events to facilitate scroll to upon focus
+        deleteRow_pushButton.installEventFilter(self)
+        # Save in member object
+        newRow["deleteRow_pushButton"] = deleteRow_pushButton
+
+        # Add per-column GUI widgets
+        for columnNo, column in enumerate(tableColumn_getBySlice()):
+            if column["filterable"]:
+                # Create FilterEdit
+                filterEdit = FilterBar.FilterEdit(column["id"], self)
+                # Set its fixed properties (apart from position)
+                filterEdit.setVisible(True)
+                filterEdit.textChange.connect(self.lineEdit_onTextChange)
+                #  Filter events to facilitate scroll to upon focus
+                filterEdit.lineEdit.installEventFilter(self)
+                # Save in member object
+                self.columnWidgets[column["id"]]["filterEdits"].insert(i_position, filterEdit)
+
+        # Resize bar to accommodate the current number of filter rows
+        self.setFixedHeight(FilterBar.filterRowHeight*len(self.filterRows))
+
+    def appendFilterRow(self):
+        self.insertFilterRow(len(self.filterRows))
+
+    def deleteFilterRow(self, i_position):
+        """
+        Params:
+         i_position:
+          (int)
+        """
+        # Remove per-column widgets
+        for columnNo, column in enumerate(tableColumn_getBySlice()):
+            if column["filterable"]:
+                # From the GUI
+                self.columnWidgets[column["id"]]["filterEdits"][i_position].setParent(None)
+                # From member object
+                del(self.columnWidgets[column["id"]]["filterEdits"][i_position])
+
+        # Remove per-filter row widgets
+        filterRow = self.filterRows[i_position]
+
+        # 'Delete row' button
+        #  From the GUI
+        filterRow["deleteRow_pushButton"].setParent(None)
+        #  From member object
+        del(self.filterRows[i_position])
+
+        # Resize bar to accommodate the current number of filter rows
+        self.setFixedHeight(FilterBar.filterRowHeight*len(self.filterRows))
+
+    def clearFilterRow(self, i_position):
+        """
+        Params:
+         i_position:
+          (int)
+        """
+        for columnNo, column in enumerate(tableColumn_getBySlice()):
+            if column["filterable"]:
+                self.columnWidgets[column["id"]]["filterEdits"][i_position].setText("")
+
+    def clearAllFilterRows(self):
+        while len(self.filterRows) > 1:
+            self.deleteFilterRow(len(self.filterRows) - 1)
+        self.clearFilterRow(0)
+
+        self.repositionFilterEdits()
+        #self.repositionTabOrder()
+        self.filterChange.emit()
+
+    def deleteRow_pushButton_onClicked(self, i_filterRow):
+        if len(self.filterRows) == 1:
+            self.clearFilterRow(0)
+        else:
+            for filterRowNo, filterRow in enumerate(self.filterRows):
+                if filterRow == i_filterRow:
+                    self.deleteFilterRow(filterRowNo)
+                    self.repositionFilterEdits()
+                    #self.repositionTabOrder()
+        self.filterChange.emit()
+
+    def insertRow_pushButton_onClicked(self):
+        self.appendFilterRow()
+        #self.repositionHeadingButtons()
+        self.repositionFilterEdits()
+        self.repositionTabOrder()
+
+    def lineEdit_onTextChange(self):
+        self.filterChange.emit()
+
+    # + }}}
+
+    # + Scrolling {{{
+
+    def scroll(self, i_dx, i_dy):  # override from QWidget
+        self.scrollX += i_dx
+        self.scrollY += i_dy
+        QWidget.scroll(self, i_dx, i_dy)
+
+    def eventFilter(self, i_watched, i_event):
+        #print(i_event.type())
+
+        if i_event.type() == QEvent.FocusIn:
+            # If this widget is off the side of the header bar / window,
+            # scroll horizontally
+            positionOnBar = i_watched.mapTo(self, QPoint(0, 0))
+            if positionOnBar.x() < 0:
+                tableView.scrollBy(positionOnBar.x(), 0)
+            elif positionOnBar.x() + i_watched.geometry().width() > self.geometry().width():
+                tableView.scrollBy(positionOnBar.x() + i_watched.geometry().width() - self.geometry().width(), 0)
+
+        # Let event continue
+        return False
+
+    # + }}}
+
+    # + Layout {{{
+
+    def repositionFilterEdits(self):
+        y = 0
+
+        for filterRowNo, filterRow in enumerate(self.filterRows):
+            x = 0
+            x += self.scrollX  # Adjust for horizontal scroll amount
+            for columnNo, column in enumerate(tableColumn_getBySlice()):
+                if column["filterable"]:
+                    self.columnWidgets[column["id"]]["filterEdits"][filterRowNo].setGeometry(x, y, column["width"], FilterBar.filterRowHeight)
+                x += column["width"]
+
+            filterRow["deleteRow_pushButton"].setGeometry(x, y, FilterBar.filterRowHeight, FilterBar.filterRowHeight)
+            x += FilterBar.filterRowHeight
+
+            y += FilterBar.filterRowHeight
+
+        y -= FilterBar.filterRowHeight
+        self.insertRow_pushButton.setGeometry(x, y, FilterBar.filterRowHeight, FilterBar.filterRowHeight)
+
+    def repositionTabOrder(self):
+        previousWidget = None
 
         # For each filter edit
         for filterRowNo, filterRow in enumerate(self.filterRows):
@@ -2184,6 +2288,7 @@ class HeaderBar(QWidget):
             self.setTabOrder(previousWidget, nextWidget)
         previousWidget = nextWidget
 
+    # + }}}
 
 class MyStyledItemDelegate(QStyledItemDelegate):
     def __init__(self, i_parent=None):
@@ -2559,7 +2664,7 @@ class MyTableView(QTableView):
         # and if not found then clear filter and look again
         rowNo = findGameWithId(i_gameId)
         if rowNo == None:
-            headerBar.clearAllFilterRows()
+            filterBar.clearAllFilterRows()
             rowNo = findGameWithId(i_gameId)
 
         # If found, select it
@@ -2612,12 +2717,13 @@ class MyTableView(QTableView):
 
         if i_combiner == "OR":
             headerBar.appendFilterRow()
-            headerBar.repositionFilterEdits()
             headerBar.repositionTabOrder()
+            filterBar.repositionFilterEdits()
+            filterBar.repositionTabOrder()
 
         columnId = tableColumn_getByPos(selectedIndex.column())["id"]
-        headerBar.columnWidgets[columnId]["filterEdits"][-1].setText(formattedCriteria)
-        headerBar.filterChange.emit()
+        filterBar.columnWidgets[columnId]["filterEdits"][-1].setText(formattedCriteria)
+        filterBar.filterChange.emit()
 
     # + }}}
 
@@ -2629,8 +2735,9 @@ class MyTableView(QTableView):
         """
         # Call base class to scroll the actual table view
         QTableView.scrollContentsBy(self, i_dx, i_dy)
-        # Scroll external header horizontally by the same amount
+        # Scroll external bars horizontally by the same amount
         headerBar.scroll(i_dx, 0)
+        filterBar.scroll(i_dx, 0)
 
     def scrollBy(self, i_dx, i_dy):
         self.horizontalScrollBar().setValue(self.horizontalScrollBar().value() + i_dx)
@@ -2651,7 +2758,7 @@ class MyTableView(QTableView):
 
         # Calculate and set new scrollbar maximum
         allColumnsWidth = sum([column["width"]  for column in tableColumn_getBySlice()])
-        newMaximum = allColumnsWidth - self.horizontalScrollBar().pageStep() + HeaderBar.filterRowHeight*2 + self.verticalScrollBar().width()
+        newMaximum = allColumnsWidth - self.horizontalScrollBar().pageStep() + FilterBar.filterRowHeight*2 + self.verticalScrollBar().width()
         if newMaximum < 0:
             newMaximum = 0
         self.horizontalScrollBar().setMaximum(newMaximum)
@@ -2886,7 +2993,7 @@ def ctrlFShortcut_onActivated():
 
     # Set focus to filter edit control
     if targetColumn != None:
-        headerBar.columnWidgets[targetColumn["id"]]["filterEdits"][0].setFocus(Qt.ShortcutFocusReason)
+        filterBar.columnWidgets[targetColumn["id"]]["filterEdits"][0].setFocus(Qt.ShortcutFocusReason)
 shortcut.activated.connect(ctrlFShortcut_onActivated)
 
 shortcut = QShortcut(QKeySequence("Escape"), mainWindow)
@@ -3038,12 +3145,18 @@ def splitter_onSplitterMoved(i_pos, i_index):
         detailPane_hide()
 splitter.splitterMoved.connect(splitter_onSplitterMoved)
 
-# Create header
+# Create header bar
 headerBar = HeaderBar()
 headerBar.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+headerBar.setFixedHeight(30)
 gameTable_layout.addWidget(headerBar)
 
-def headerBar_onFilterChange():
+# Create filter bar
+filterBar = FilterBar()
+filterBar.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+gameTable_layout.addWidget(filterBar)
+
+def filterBar_onFilterChange():
     # Remember what game is currently selected and where on the screen the row is
     selectedIndex = tableView.selectionModel().currentIndex()
     if selectedIndex.row() < 0 or selectedIndex.row() >= len(g_dbRows):
@@ -3072,7 +3185,7 @@ def headerBar_onFilterChange():
         else:
             tableView.verticalScrollBar().setValue(tableView.rowHeight() * newDbRowNo - selectedRowTopY)
             tableView.selectionModel().setCurrentIndex(tableView.selectionModel().model().index(newDbRowNo, selectedIndex.column()), QItemSelectionModel.ClearAndSelect)
-headerBar.filterChange.connect(headerBar_onFilterChange)
+filterBar.filterChange.connect(filterBar_onFilterChange)
 
 # Create table
 tableView = MyTableView()
@@ -3107,7 +3220,7 @@ detailPane_widget.setLayout(detailPane_layout)
 
 def detailPane_show():
     # Position splitter so that the table view shows exactly one row
-    topPaneHeight = headerBar.geometry().height() + tableView.rowHeight()
+    topPaneHeight = headerBar.geometry().height() + filterBar.geometry().height() + tableView.rowHeight()
     if tableView.horizontalScrollBar().isVisible():
         topPaneHeight += application.style().pixelMetric(QStyle.PM_ScrollBarExtent)  # Scrollbar height
     splitter.setSizes([topPaneHeight, splitter.geometry().height() - topPaneHeight])
@@ -3407,6 +3520,7 @@ mainWindow.show()
 openDb()
 
 headerBar.initFromColumns()
+filterBar.initFromColumns()
 queryDb(getSqlWhereExpression())
 tableView.requery()
 tableView.resizeAllColumns([column["width"]  for column in tableColumn_getBySlice()])

@@ -29,7 +29,7 @@
     background-color: black;
 }
 
-.HeaderBar
+.HeaderBar, .FilterBar
 {
 	background: #191919;
 	color: #DDDDDD;
