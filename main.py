@@ -2521,7 +2521,7 @@ class MyTableView(QTableView):
 
         else:
             usableColumn = usableColumn_getById(columnId)
-            if usableColumn["type"] == "gameId":
+            if "type" in usableColumn and usableColumn["type"] == "gameId":
                 # Get the target game ID
                 rowNo = i_modelIndex.row()
                 gameId = g_dbRows[rowNo][g_dbColumnNames.index(usableColumn["dbFieldName"])]
