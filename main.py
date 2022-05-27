@@ -949,6 +949,7 @@ connectionsFromGamesTable = {
     },
 }
 
+
 def queryDb():
     selectTerms = [
         "Games.GA_Id",
@@ -1402,6 +1403,7 @@ class HeaderBar(QWidget):
 
         # + }}}
 
+
     class FilterEdit(QFrame):
         # Emitted after the text is changed
         textChange = Signal()
@@ -1440,6 +1442,12 @@ class HeaderBar(QWidget):
 
             self.lineEdit.textEdited.connect(self.lineEdit_onTextEdited)
 
+        # + Internal event handling {{{
+
+        def lineEdit_onTextEdited(self, i_text):
+            # Hide or show clear button depending on whether there's text
+            self.clearButton.setVisible(i_text != "")
+
         def lineEdit_onEditingFinished(self):
             # If text was modified, requery,
             # else focus the tableview
@@ -1451,14 +1459,14 @@ class HeaderBar(QWidget):
                 tableView.setFocus()
                 tableView.selectCellInColumnWithId(self.columnId)
 
-        def lineEdit_onTextEdited(self, i_text):
-            # Hide or show clear button depending on whether there's text
-            self.clearButton.setVisible(i_text != "")
-
         def clearButton_onClicked(self):
             self.lineEdit.setText("")
             self.clearButton.setVisible(False)
             self.textChange.emit()
+
+        # + }}}
+
+        # + Text {{{
 
         def text(self):
             """
@@ -1466,9 +1474,6 @@ class HeaderBar(QWidget):
              (str)
             """
             return self.lineEdit.text()
-
-        def setFocus(self, i_reason):
-            self.lineEdit.setFocus(i_reason)
 
         def setText(self, i_text):
             """
@@ -1478,6 +1483,15 @@ class HeaderBar(QWidget):
             """
             self.lineEdit.setText(i_text)
             self.lineEdit_onTextEdited(i_text)
+
+        # + }}}
+
+        # + Focus {{{
+
+        def setFocus(self, i_reason):
+            self.lineEdit.setFocus(i_reason)
+
+        # + }}}
 
     def __init__(self, i_parent=None):
         QWidget.__init__(self, i_parent)
@@ -1749,7 +1763,7 @@ class HeaderBar(QWidget):
 
     # + Scrolling {{{
 
-    def scroll(self, i_dx, i_dy):
+    def scroll(self, i_dx, i_dy):  # override from QWidget
         self.scrollX += i_dx
         self.scrollY += i_dy
         QWidget.scroll(self, i_dx, i_dy)
@@ -2133,7 +2147,7 @@ class MyStyledItemDelegate(QStyledItemDelegate):
     def __init__(self, i_parent=None):
         QStyledItemDelegate.__init__(self, i_parent)
 
-    def initStyleOption(self, i_option, i_index):
+    def initStyleOption(self, i_option, i_index):  # override from QStyledItemDelegate
         QStyledItemDelegate.initStyleOption(self, i_option, i_index)
 
         # Default selection colours
@@ -2142,7 +2156,7 @@ class MyStyledItemDelegate(QStyledItemDelegate):
         i_option.palette.setColor(QPalette.Active, QPalette.HighlightedText, QColor.fromRgbF(1, 1, 1, 1))
         i_option.palette.setColor(QPalette.Inactive, QPalette.HighlightedText, QColor.fromRgbF(0, 0, 0, 1))
 
-    def paint(self, i_painter, i_option, i_index):
+    def paint(self, i_painter, i_option, i_index):  # override from QAbstractItemDelegate
         #print(i_painter, i_option, i_index)
 
         #if i_option.state & QStyle.State_Selected:
@@ -2172,17 +2186,17 @@ class MyTableModel(QAbstractTableModel):
     def __init__(self, i_parent, *args):
         QAbstractTableModel.__init__(self, i_parent, *args)
 
-    def rowCount(self, i_parent):
+    def rowCount(self, i_parent):  # override from QAbstractTableModel
         if g_dbRows == None:
             return 0
         return len(g_dbRows)
 
-    def columnCount(self, i_parent):
+    def columnCount(self, i_parent):  # override from QAbstractTableModel
         return tableColumn_count()
 
     #https://stackoverflow.com/questions/7988182/displaying-an-image-from-a-qabstracttablemodel
     #https://forum.qt.io/topic/5195/qtableview-extra-column-space-solved/8
-    def data(self, i_index, i_role):
+    def data(self, i_index, i_role):  # override from QAbstractTableModel
         if not i_index.isValid():
             return None
 
@@ -2497,7 +2511,7 @@ class MyTableView(QTableView):
                     selectedIndex = self.selectionModel().currentIndex()
                     tableView.selectionModel().setCurrentIndex(tableView.selectionModel().model().index(rowNo, selectedIndex.column()), QItemSelectionModel.ClearAndSelect)
 
-    def selectionChanged(self, i_selected, i_deselected):
+    def selectionChanged(self, i_selected, i_deselected):  # override from QAbstractItemView
         QTableView.selectionChanged(self, i_selected, i_deselected)
 
         # If detail pane is open,
@@ -2551,16 +2565,23 @@ class MyTableView(QTableView):
 
     # + }}}
 
-    def scrollContentsBy(self, i_dx, i_dy):
-        # If the table view is scrolled horizontally,
-        # scroll external header by the same amount
+    # + Scrolling {{{
+
+    def scrollContentsBy(self, i_dx, i_dy):  # override from QAbstractScrollArea
+        """
+        Called whenever the table view is scrolled.
+        """
+        # Call base class to scroll the actual table view
         QTableView.scrollContentsBy(self, i_dx, i_dy)
+        # Scroll external header horizontally by the same amount
         headerBar.scroll(i_dx, 0)
+
+    # + }}}
 
     def requery(self):
         self.tableModel.modelReset.emit()
 
-    def updateGeometries(self):
+    def updateGeometries(self):  # override from QAbstractItemView
         # Increase the horizontal scrollbar's maximum to enable scrolling to the insert/delete filter row buttons 
 
         # Save initial scrollbar position to prevent jitter
@@ -2606,7 +2627,7 @@ class MyTableView(QTableView):
             # Copy CSV text to clipboard
             QApplication.clipboard().setText(csv)
 
-    def keyPressEvent(self, i_event):
+    def keyPressEvent(self, i_event):  # override from QWidget
         # If pressed Ctrl+C
         if i_event.key() == Qt.Key_C and (i_event.modifiers() & Qt.ControlModifier):
             self.clipboardCopy()
@@ -3355,7 +3376,7 @@ class Log(QPlainTextEdit):
 
         self.updateText()
 
-    def setVisible(self, i_visible):
+    def setVisible(self, i_visible):  # override from QWidget
         QPlainTextEdit.setVisible(self, i_visible)
         if i_visible:
             self.refresh_timer.start()
