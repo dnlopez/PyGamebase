@@ -1319,11 +1319,6 @@ class HeaderBar(QWidget):
                 self.setFocusPolicy(Qt.NoFocus)
                 #self.setStyleSheet("QPushButton { background-color: red; color: black;}");
 
-            # Receive mouse move events even if button isn't held down
-            # and install event filter to let parent HeaderBar see all events first
-            self.setMouseTracking(True)
-            self.installEventFilter(self.parent())
-
             # + Context menu {{{
 
             self.setContextMenuPolicy(Qt.CustomContextMenu)
@@ -1590,6 +1585,8 @@ class HeaderBar(QWidget):
         #
         self.insertRow_pushButton = QPushButton("+", self)
         self.insertRow_pushButton.clicked.connect(self.insertRow_pushButton_onClicked)
+        #  Filter events to facilitate scroll to upon focus
+        self.insertRow_pushButton.installEventFilter(self)
 
         self.insertFilterRow(0)
 
@@ -1623,6 +1620,10 @@ class HeaderBar(QWidget):
                 # Set its fixed properties (apart from position)
                 headingButton.setVisible(True)
                 headingButton.clicked.connect(functools.partial(self.headingButton_onClicked, column["id"]))
+                #  Filter events to facilitate drag resizing and scroll to upon focus,
+                #  and for the former, receive mouse move events even if button isn't held down
+                headingButton.installEventFilter(self)
+                headingButton.setMouseTracking(True)
 
                 # Create filter edits
                 widgetDict["filterEdits"] = []
@@ -1632,6 +1633,8 @@ class HeaderBar(QWidget):
                     # Set its fixed properties (apart from position)
                     headerFilter.setVisible(True)
                     headerFilter.textChange.connect(self.lineEdit_onTextChange)
+                    #  Filter events to facilitate scroll to upon focus
+                    headerFilter.lineEdit.installEventFilter(self)
 
                 # Save the object of header widgets
                 self.columnWidgets[column["id"]] = widgetDict
@@ -1674,6 +1677,8 @@ class HeaderBar(QWidget):
         # Set its fixed properties (apart from position)
         deleteRow_pushButton.clicked.connect(functools.partial(self.deleteRow_pushButton_onClicked, newRow))
         deleteRow_pushButton.setVisible(True)
+        #  Filter events to facilitate scroll to upon focus
+        deleteRow_pushButton.installEventFilter(self)
         # Save in member object
         newRow["deleteRow_pushButton"] = deleteRow_pushButton
 
@@ -1685,6 +1690,8 @@ class HeaderBar(QWidget):
                 # Set its fixed properties (apart from position)
                 headerFilter.setVisible(True)
                 headerFilter.textChange.connect(self.lineEdit_onTextChange)
+                #  Filter events to facilitate scroll to upon focus
+                headerFilter.lineEdit.installEventFilter(self)
                 # Save in member object
                 self.columnWidgets[column["id"]]["filterEdits"].insert(i_position, headerFilter)
 
@@ -2077,6 +2084,15 @@ class HeaderBar(QWidget):
 
                 #
                 return True
+
+        elif i_event.type() == QEvent.FocusIn:
+            # If this widget is off the side of the header bar / window,
+            # scroll horizontally
+            positionOnHeaderBar = i_watched.mapTo(self, QPoint(0, 0))
+            if positionOnHeaderBar.x() < 0:
+                tableView.scrollBy(positionOnHeaderBar.x(), 0)
+            elif positionOnHeaderBar.x() + i_watched.geometry().width() > self.geometry().width():
+                tableView.scrollBy(positionOnHeaderBar.x() + i_watched.geometry().width() - self.geometry().width(), 0)
 
         # Let event continue
         return False
@@ -2575,6 +2591,9 @@ class MyTableView(QTableView):
         QTableView.scrollContentsBy(self, i_dx, i_dy)
         # Scroll external header horizontally by the same amount
         headerBar.scroll(i_dx, 0)
+
+    def scrollBy(self, i_dx, i_dy):
+        self.horizontalScrollBar().setValue(self.horizontalScrollBar().value() + i_dx)
 
     # + }}}
 
