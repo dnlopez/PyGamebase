@@ -2452,10 +2452,10 @@ class MyTableView(QTableView):
         # select the top-left cell
         selectedIndex = self.selectionModel().currentIndex()
         if selectedIndex.row() == -1 and selectedIndex.column() == -1:
-            selectedIndex = tableView.selectionModel().model().index(0, 0)
-            tableView.selectionModel().setCurrentIndex(selectedIndex, QItemSelectionModel.ClearAndSelect)
+            selectedIndex = self.selectionModel().model().index(0, 0)
+            self.selectionModel().setCurrentIndex(selectedIndex, QItemSelectionModel.ClearAndSelect)
         # Scroll to the selected cell
-        tableView.scrollTo(selectedIndex)
+        self.scrollTo(selectedIndex)
 
     def selectCellInColumnWithId(self, i_id):
         """
@@ -2465,7 +2465,7 @@ class MyTableView(QTableView):
         """
         columnNo = tableColumn_idToPos(i_id)
         selectedIndex = self.selectionModel().currentIndex()
-        tableView.selectionModel().setCurrentIndex(tableView.selectionModel().model().index(selectedIndex.row(), columnNo), QItemSelectionModel.ClearAndSelect)
+        self.selectionModel().setCurrentIndex(self.selectionModel().model().index(selectedIndex.row(), columnNo), QItemSelectionModel.ClearAndSelect)
 
     def onActivatedOrClicked(self, i_keyboardOriented, i_modelIndex):
         """
@@ -2536,7 +2536,7 @@ class MyTableView(QTableView):
                 # If found, select it
                 if rowNo != None:
                     selectedIndex = self.selectionModel().currentIndex()
-                    tableView.selectionModel().setCurrentIndex(tableView.selectionModel().model().index(rowNo, selectedIndex.column()), QItemSelectionModel.ClearAndSelect)
+                    self.selectionModel().setCurrentIndex(self.selectionModel().model().index(rowNo, selectedIndex.column()), QItemSelectionModel.ClearAndSelect)
 
     def selectionChanged(self, i_selected, i_deselected):  # override from QAbstractItemView
         QTableView.selectionChanged(self, i_selected, i_deselected)
@@ -2709,12 +2709,12 @@ class MyTableView(QTableView):
         #  If scrolling is per item,
         #  temporarily turn that off
         #  so that the scrollbar returns positions in pixels instead of items
-        if tableView.verticalScrollMode() == QAbstractItemView.ScrollPerPixel:
+        if self.verticalScrollMode() == QAbstractItemView.ScrollPerPixel:
             scrollY = self.verticalScrollBar().value()
-        else: # if tableView.verticalScrollMode() == QAbstractItemView.ScrollPerItem:
-            tableView.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel)
+        else: # if self.verticalScrollMode() == QAbstractItemView.ScrollPerItem:
+            self.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel)
             scrollY = self.verticalScrollBar().value()
-            tableView.setVerticalScrollMode(QAbstractItemView.ScrollPerItem)
+            self.setVerticalScrollMode(QAbstractItemView.ScrollPerItem)
 
         # Add current scroll position to i_y to make it relative to the top of the content
         i_y += scrollY
@@ -2749,12 +2749,12 @@ class MyTableView(QTableView):
                 if rowNo != None:
                     self.resize_rowNo = rowNo
                     self.resize_lastMouseY = mousePos.y()
-                    self.resize_scrollModeIsPerItem = tableView.verticalScrollMode() == QAbstractItemView.ScrollPerItem
+                    self.resize_scrollModeIsPerItem = self.verticalScrollMode() == QAbstractItemView.ScrollPerItem
 
                     # Remember where on the screen the row being resized is
-                    #selectedIndex = tableView.selectionModel().currentIndex()
+                    #selectedIndex = self.selectionModel().currentIndex()
                     #self.resize_selectedRowId = g_dbRows[selectedIndex.row()][g_dbColumnNames.index("GA_Id")]
-                    self.resize_selectedRowTopY = tableView.rowViewportPosition(rowNo)
+                    self.resize_selectedRowTopY = self.rowViewportPosition(rowNo)
 
                     # If scrolling is per item,
                     # temporarily turn that off for the duration of the resize
