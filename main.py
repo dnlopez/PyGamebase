@@ -3445,6 +3445,9 @@ class Log(QPlainTextEdit):
 
     def updateText(self):
         if len(utils.tasks) > 0:
+            selectionStartPos = self.textCursor().selectionStart()
+            selectionEndPos = self.textCursor().selectionEnd()
+
             # For AsyncSubprocess
             #print(utils.tasks[-1].getState())
             #mergedOutput = utils.tasks[-1].getMergedOutput()
@@ -3461,6 +3464,11 @@ class Log(QPlainTextEdit):
                 text += "\n---\nProcess exited with code " + str(task.returncode)
 
             self.setPlainText(text)
+
+            textCursor = self.textCursor()
+            textCursor.setPosition(selectionStartPos)
+            textCursor.setPosition(selectionEndPos, QTextCursor.KeepAnchor)
+            self.setTextCursor(textCursor)
         else:
             self.setPlainText("")
 
