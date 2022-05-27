@@ -600,13 +600,13 @@ def tableColumn_remove(i_id):
 
     #
     foundSortOperationNo = None
-    for sortOperationNo, sortOperation in enumerate(headerBar.sort_operations):
+    for sortOperationNo, sortOperation in enumerate(columnNameBar.sort_operations):
         if sortOperation[0] == i_id:
             foundSortOperationNo = sortOperationNo
             break
     if foundSortOperationNo != None:
-        del(headerBar.sort_operations[foundSortOperationNo])
-        headerBar.sort_updateGui()
+        del(columnNameBar.sort_operations[foundSortOperationNo])
+        columnNameBar.sort_updateGui()
 
 def tableColumn_toggle(i_id, i_addBeforeColumnId=None):
     present = tableColumn_getById(i_id)
@@ -958,13 +958,13 @@ def getSqlWhereExpression():
     """
     andGroups = []
 
-    for filterRowNo in range(0, len(filterBar.filterRows)):
+    for filterRowNo in range(0, len(columnFilterBar.filterRows)):
         andTerms = []
 
         for column in tableColumn_getBySlice():
             usableColumn = usableColumn_getById(column["id"])
             if column["filterable"]:
-                value = filterBar.columnWidgets[column["id"]]["filterEdits"][filterRowNo].text()
+                value = columnFilterBar.columnWidgets[column["id"]]["filterEdits"][filterRowNo].text()
                 value = value.strip()
                 if value != "":
                     # If range operator
@@ -1080,11 +1080,11 @@ def queryDb(i_whereExpression):
         sql += "\nWHERE " + i_whereExpression
 
     # ORDER BY
-    if len(headerBar.sort_operations) > 0:
+    if len(columnNameBar.sort_operations) > 0:
         sql += "\nORDER BY "
 
         orderByTerms = []
-        for columnId, direction in headerBar.sort_operations:
+        for columnId, direction in columnNameBar.sort_operations:
             usableColumn = usableColumn_getById(columnId)
             term = usableColumn["dbTableName"] + "." + usableColumn["dbFieldName"]
             if direction == -1:
@@ -1313,7 +1313,7 @@ def dbRow_getPhotoRelativePath(i_row):
 # + }}}
 
 
-class HeaderBar(QWidget):
+class ColumnNameBar(QWidget):
     """
     A row of buttons to act as table headings and controls for column resizing and sorting.
     """
@@ -1350,7 +1350,7 @@ class HeaderBar(QWidget):
         # + Context menu {{{
 
         def onCustomContextMenuRequested(self, i_pos):
-            # Get context menu invocation position (normally mouse position, but could also be centre of header button if pressed keyboard menu button) relative to the HeaderBar
+            # Get context menu invocation position (normally mouse position, but could also be centre of header button if pressed keyboard menu button) relative to the ColumnNameBar
             # and adjust for horizontal scroll amount
             invocationPos = self.mapTo(self.parent(), i_pos)
             invocationPos.setX(invocationPos.x() - self.parent().scrollX)
@@ -1389,12 +1389,12 @@ class HeaderBar(QWidget):
                 continueTimer = QTimer(self)
                 continueTimer.setSingleShot(True)
                 def on_continueTimer():
-                    headerBar.recreateWidgets()
-                    headerBar.repositionHeadingButtons()
-                    headerBar.repositionTabOrder()
-                    filterBar.recreateWidgets()
-                    filterBar.repositionFilterEdits()
-                    filterBar.repositionTabOrder()
+                    columnNameBar.recreateWidgets()
+                    columnNameBar.repositionHeadingButtons()
+                    columnNameBar.repositionTabOrder()
+                    columnFilterBar.recreateWidgets()
+                    columnFilterBar.repositionFilterEdits()
+                    columnFilterBar.repositionTabOrder()
 
                     # Requery DB in case filter criteria have changed
                     queryDb(getSqlWhereExpression())
@@ -1528,7 +1528,7 @@ class HeaderBar(QWidget):
                 widgetDict = {}
 
                 # Create header button
-                headingButton = HeaderBar.HeadingButton(column["screenName"], column["filterable"], self)
+                headingButton = ColumnNameBar.HeadingButton(column["screenName"], column["filterable"], self)
                 widgetDict["headingButton"] = headingButton
                 # Set its fixed properties (apart from position)
                 headingButton.setVisible(True)
@@ -1757,7 +1757,7 @@ class HeaderBar(QWidget):
         if i_event.type() == QEvent.MouseButtonPress:
             # If pressed the left button
             if i_event.button() == Qt.MouseButton.LeftButton:
-                # Get mouse pos relative to the HeaderBar
+                # Get mouse pos relative to the ColumnNameBar
                 # and adjust for horizontal scroll amount
                 mousePos = i_watched.mapTo(self, i_event.pos())
                 mousePos.setX(mousePos.x() - self.scrollX)
@@ -1767,14 +1767,14 @@ class HeaderBar(QWidget):
                     self.reorder_dropBeforeColumn = self.reorder_column
 
                     # Show drop indicator
-                    self.reorderIndicator_widget.setGeometry(self._columnScreenX(self.reorder_column) + self.scrollX, 0, self.reorder_column["width"], HeaderBar.headingButtonHeight)
+                    self.reorderIndicator_widget.setGeometry(self._columnScreenX(self.reorder_column) + self.scrollX, 0, self.reorder_column["width"], ColumnNameBar.headingButtonHeight)
                     self.reorderIndicator_widget.show()
                     self.reorderIndicator_widget.raise_()
 
                     return True
                 # Else if cursor is near a draggable vertical edge
                 else:
-                    leftColumn, rightColumn, edgeX = self._columnBoundaryNearPixelX(mousePos.x(), HeaderBar.resizeMargin)
+                    leftColumn, rightColumn, edgeX = self._columnBoundaryNearPixelX(mousePos.x(), ColumnNameBar.resizeMargin)
                     if leftColumn != None:
                         #
                         self.resize_column = leftColumn
@@ -1792,21 +1792,21 @@ class HeaderBar(QWidget):
             # If currently resizing,
             # do the resize
             if self.resize_column != None:
-                # Get mouse pos relative to the HeaderBar
+                # Get mouse pos relative to the ColumnNameBar
                 # and adjust for horizontal scroll amount
                 mousePos = i_watched.mapTo(self, i_event.pos())
                 mousePos.setX(mousePos.x() - self.scrollX)
                 # Get new width
                 newRightEdge = mousePos.x() + self.resize_mouseToEdgeOffset
                 newWidth = newRightEdge - self.resize_columnLeftX
-                if newWidth < HeaderBar.minimumColumnWidth:
-                    newWidth = HeaderBar.minimumColumnWidth
+                if newWidth < ColumnNameBar.minimumColumnWidth:
+                    newWidth = ColumnNameBar.minimumColumnWidth
                 # Resize column
                 self.resize_column["width"] = newWidth
 
                 # Move/resize buttons and lineedits
                 self.repositionHeadingButtons()
-                filterBar.repositionFilterEdits()
+                columnFilterBar.repositionFilterEdits()
                 #
                 tableView.horizontalHeader().resizeSection(tableColumn_idToPos(self.resize_column["id"]), newWidth)
 
@@ -1815,7 +1815,7 @@ class HeaderBar(QWidget):
             # Else if currently reordering,
             # draw line at nearest vertical edge
             elif self.reorder_column != None:
-                # Get mouse pos relative to the HeaderBar
+                # Get mouse pos relative to the ColumnNameBar
                 # and adjust for horizontal scroll amount
                 mousePos = i_watched.mapTo(self, i_event.pos())
                 mousePos.setX(mousePos.x() - self.scrollX)
@@ -1823,7 +1823,7 @@ class HeaderBar(QWidget):
                 leftColumn, rightColumn, edgeX = self._columnBoundaryNearPixelX(mousePos.x())
                 self.reorder_dropBeforeColumn = rightColumn
                 if self.reorder_dropBeforeColumn == self.reorder_column:
-                    self.reorderIndicator_widget.setGeometry(self._columnScreenX(self.reorder_column) + self.scrollX, 0, self.reorder_column["width"], HeaderBar.headingButtonHeight)
+                    self.reorderIndicator_widget.setGeometry(self._columnScreenX(self.reorder_column) + self.scrollX, 0, self.reorder_column["width"], ColumnNameBar.headingButtonHeight)
                 else:
                     self.reorderIndicator_widget.setGeometry(edgeX - 3 + self.scrollX, 0, 6, self.height())
 
@@ -1831,12 +1831,12 @@ class HeaderBar(QWidget):
             # then depending on whether cursor is near a draggable vertical edge,
             # set cursor shape
             else:
-                # Get mouse pos relative to the HeaderBar
+                # Get mouse pos relative to the ColumnNameBar
                 # and adjust for horizontal scroll amount
                 mousePos = i_watched.mapTo(self, i_event.pos())
                 mousePos.setX(mousePos.x() - self.scrollX)
                 #
-                leftColumn, _, _ = self._columnBoundaryNearPixelX(mousePos.x(), HeaderBar.resizeMargin)
+                leftColumn, _, _ = self._columnBoundaryNearPixelX(mousePos.x(), ColumnNameBar.resizeMargin)
                 if leftColumn != None:
                     self.setCursor(Qt.SizeHorCursor)
                 else:
@@ -1864,8 +1864,8 @@ class HeaderBar(QWidget):
                 # Move/resize buttons and lineedits
                 self.repositionHeadingButtons()
                 self.repositionTabOrder()
-                filterBar.repositionFilterEdits()
-                filterBar.repositionTabOrder()
+                columnFilterBar.repositionFilterEdits()
+                columnFilterBar.repositionTabOrder()
                 #
                 tableView.requery()
                 #
@@ -1899,7 +1899,7 @@ class HeaderBar(QWidget):
         y = 0
         for column in tableColumn_getBySlice():
             if column["filterable"]:
-                self.columnWidgets[column["id"]]["headingButton"].setGeometry(x, y, column["width"], HeaderBar.headingButtonHeight)
+                self.columnWidgets[column["id"]]["headingButton"].setGeometry(x, y, column["width"], ColumnNameBar.headingButtonHeight)
             x += column["width"]
 
     def repositionTabOrder(self):
@@ -1915,7 +1915,7 @@ class HeaderBar(QWidget):
 
     # + }}}
 
-class FilterBar(QWidget):
+class ColumnFilterBar(QWidget):
     """
     One or more rows of text box controls for entering filter criteria per column.
     """
@@ -1943,7 +1943,7 @@ class FilterBar(QWidget):
             self.layout.setContentsMargins(0, 0, 0, 0)
 
             self.lineEdit = QLineEdit(self)
-            self.lineEdit.setFixedHeight(FilterBar.filterRowHeight)
+            self.lineEdit.setFixedHeight(ColumnFilterBar.filterRowHeight)
             self.layout.addWidget(self.lineEdit)
             self.layout.setStretch(0, 1)
             self.lineEdit.editingFinished.connect(self.lineEdit_onEditingFinished)
@@ -1952,8 +1952,8 @@ class FilterBar(QWidget):
             self.clearButton.setIcon(self.style().standardIcon(QStyle.SP_DialogCloseButton))
             self.clearButton.setStyleSheet("QPushButton { margin: 4px; border-width: 1px; border-radius: 10px; }");
             #self.clearButton.setFlat(True)
-            self.clearButton.setFixedHeight(FilterBar.filterRowHeight)
-            self.clearButton.setFixedWidth(FilterBar.filterRowHeight)
+            self.clearButton.setFixedHeight(ColumnFilterBar.filterRowHeight)
+            self.clearButton.setFixedWidth(ColumnFilterBar.filterRowHeight)
             self.clearButton.setFocusPolicy(Qt.NoFocus)
             self.clearButton.setVisible(False)
             self.layout.addWidget(self.clearButton)
@@ -2082,7 +2082,7 @@ class FilterBar(QWidget):
                 # Create filter edits
                 widgetDict["filterEdits"] = []
                 for filterRowNo in range(0, len(self.filterRows)):
-                    filterEdit = FilterBar.FilterEdit(column["id"], self)
+                    filterEdit = ColumnFilterBar.FilterEdit(column["id"], self)
                     widgetDict["filterEdits"].append(filterEdit)
                     # Set its fixed properties (apart from position)
                     filterEdit.setVisible(True)
@@ -2138,7 +2138,7 @@ class FilterBar(QWidget):
         for columnNo, column in enumerate(tableColumn_getBySlice()):
             if column["filterable"]:
                 # Create FilterEdit
-                filterEdit = FilterBar.FilterEdit(column["id"], self)
+                filterEdit = ColumnFilterBar.FilterEdit(column["id"], self)
                 # Set its fixed properties (apart from position)
                 filterEdit.setVisible(True)
                 filterEdit.textChange.connect(self.lineEdit_onTextChange)
@@ -2148,7 +2148,7 @@ class FilterBar(QWidget):
                 self.columnWidgets[column["id"]]["filterEdits"].insert(i_position, filterEdit)
 
         # Resize bar to accommodate the current number of filter rows
-        self.setFixedHeight(FilterBar.filterRowHeight*len(self.filterRows))
+        self.setFixedHeight(ColumnFilterBar.filterRowHeight*len(self.filterRows))
 
     def appendFilterRow(self):
         self.insertFilterRow(len(self.filterRows))
@@ -2177,7 +2177,7 @@ class FilterBar(QWidget):
         del(self.filterRows[i_position])
 
         # Resize bar to accommodate the current number of filter rows
-        self.setFixedHeight(FilterBar.filterRowHeight*len(self.filterRows))
+        self.setFixedHeight(ColumnFilterBar.filterRowHeight*len(self.filterRows))
 
     def clearFilterRow(self, i_position):
         """
@@ -2254,16 +2254,16 @@ class FilterBar(QWidget):
             x += self.scrollX  # Adjust for horizontal scroll amount
             for columnNo, column in enumerate(tableColumn_getBySlice()):
                 if column["filterable"]:
-                    self.columnWidgets[column["id"]]["filterEdits"][filterRowNo].setGeometry(x, y, column["width"], FilterBar.filterRowHeight)
+                    self.columnWidgets[column["id"]]["filterEdits"][filterRowNo].setGeometry(x, y, column["width"], ColumnFilterBar.filterRowHeight)
                 x += column["width"]
 
-            filterRow["deleteRow_pushButton"].setGeometry(x, y, FilterBar.filterRowHeight, FilterBar.filterRowHeight)
-            x += FilterBar.filterRowHeight
+            filterRow["deleteRow_pushButton"].setGeometry(x, y, ColumnFilterBar.filterRowHeight, ColumnFilterBar.filterRowHeight)
+            x += ColumnFilterBar.filterRowHeight
 
-            y += FilterBar.filterRowHeight
+            y += ColumnFilterBar.filterRowHeight
 
-        y -= FilterBar.filterRowHeight
-        self.insertRow_pushButton.setGeometry(x, y, FilterBar.filterRowHeight, FilterBar.filterRowHeight)
+        y -= ColumnFilterBar.filterRowHeight
+        self.insertRow_pushButton.setGeometry(x, y, ColumnFilterBar.filterRowHeight, ColumnFilterBar.filterRowHeight)
 
     def repositionTabOrder(self):
         previousWidget = None
@@ -2664,7 +2664,7 @@ class MyTableView(QTableView):
         # and if not found then clear filter and look again
         rowNo = findGameWithId(i_gameId)
         if rowNo == None:
-            filterBar.clearAllFilterRows()
+            columnFilterBar.clearAllFilterRows()
             rowNo = findGameWithId(i_gameId)
 
         # If found, select it
@@ -2716,14 +2716,14 @@ class MyTableView(QTableView):
             formattedCriteria = i_comparisonOperation + str(selectedValue)
 
         if i_combiner == "OR":
-            headerBar.appendFilterRow()
-            headerBar.repositionTabOrder()
-            filterBar.repositionFilterEdits()
-            filterBar.repositionTabOrder()
+            columnNameBar.appendFilterRow()
+            columnNameBar.repositionTabOrder()
+            columnFilterBar.repositionFilterEdits()
+            columnFilterBar.repositionTabOrder()
 
         columnId = tableColumn_getByPos(selectedIndex.column())["id"]
-        filterBar.columnWidgets[columnId]["filterEdits"][-1].setText(formattedCriteria)
-        filterBar.filterChange.emit()
+        columnFilterBar.columnWidgets[columnId]["filterEdits"][-1].setText(formattedCriteria)
+        columnFilterBar.filterChange.emit()
 
     # + }}}
 
@@ -2736,8 +2736,8 @@ class MyTableView(QTableView):
         # Call base class to scroll the actual table view
         QTableView.scrollContentsBy(self, i_dx, i_dy)
         # Scroll external bars horizontally by the same amount
-        headerBar.scroll(i_dx, 0)
-        filterBar.scroll(i_dx, 0)
+        columnNameBar.scroll(i_dx, 0)
+        columnFilterBar.scroll(i_dx, 0)
 
     def scrollBy(self, i_dx, i_dy):
         self.horizontalScrollBar().setValue(self.horizontalScrollBar().value() + i_dx)
@@ -2758,7 +2758,7 @@ class MyTableView(QTableView):
 
         # Calculate and set new scrollbar maximum
         allColumnsWidth = sum([column["width"]  for column in tableColumn_getBySlice()])
-        newMaximum = allColumnsWidth - self.horizontalScrollBar().pageStep() + FilterBar.filterRowHeight*2 + self.verticalScrollBar().width()
+        newMaximum = allColumnsWidth - self.horizontalScrollBar().pageStep() + ColumnFilterBar.filterRowHeight*2 + self.verticalScrollBar().width()
         if newMaximum < 0:
             newMaximum = 0
         self.horizontalScrollBar().setMaximum(newMaximum)
@@ -2993,7 +2993,7 @@ def ctrlFShortcut_onActivated():
 
     # Set focus to filter edit control
     if targetColumn != None:
-        filterBar.columnWidgets[targetColumn["id"]]["filterEdits"][0].setFocus(Qt.ShortcutFocusReason)
+        columnFilterBar.columnWidgets[targetColumn["id"]]["filterEdits"][0].setFocus(Qt.ShortcutFocusReason)
 shortcut.activated.connect(ctrlFShortcut_onActivated)
 
 shortcut = QShortcut(QKeySequence("Escape"), mainWindow)
@@ -3042,7 +3042,8 @@ mainWindow.setLayout(mainWindow_layout)
 #   menuBar
 #   splitter
 #    gameTable
-#     headerBar
+#     columnNameBar
+#     columnFilterBar
 #     tableView
 #    detailPane
 #   statusbar
@@ -3146,17 +3147,17 @@ def splitter_onSplitterMoved(i_pos, i_index):
 splitter.splitterMoved.connect(splitter_onSplitterMoved)
 
 # Create header bar
-headerBar = HeaderBar()
-headerBar.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-headerBar.setFixedHeight(30)
-gameTable_layout.addWidget(headerBar)
+columnNameBar = ColumnNameBar()
+columnNameBar.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+columnNameBar.setFixedHeight(30)
+gameTable_layout.addWidget(columnNameBar)
 
 # Create filter bar
-filterBar = FilterBar()
-filterBar.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-gameTable_layout.addWidget(filterBar)
+columnFilterBar = ColumnFilterBar()
+columnFilterBar.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+gameTable_layout.addWidget(columnFilterBar)
 
-def filterBar_onFilterChange():
+def columnFilterBar_onFilterChange():
     # Remember what game is currently selected and where on the screen the row is
     selectedIndex = tableView.selectionModel().currentIndex()
     if selectedIndex.row() < 0 or selectedIndex.row() >= len(g_dbRows):
@@ -3185,7 +3186,7 @@ def filterBar_onFilterChange():
         else:
             tableView.verticalScrollBar().setValue(tableView.rowHeight() * newDbRowNo - selectedRowTopY)
             tableView.selectionModel().setCurrentIndex(tableView.selectionModel().model().index(newDbRowNo, selectedIndex.column()), QItemSelectionModel.ClearAndSelect)
-filterBar.filterChange.connect(filterBar_onFilterChange)
+columnFilterBar.filterChange.connect(columnFilterBar_onFilterChange)
 
 # Create table
 tableView = MyTableView()
@@ -3220,7 +3221,7 @@ detailPane_widget.setLayout(detailPane_layout)
 
 def detailPane_show():
     # Position splitter so that the table view shows exactly one row
-    topPaneHeight = headerBar.geometry().height() + filterBar.geometry().height() + tableView.rowHeight()
+    topPaneHeight = columnNameBar.geometry().height() + columnFilterBar.geometry().height() + tableView.rowHeight()
     if tableView.horizontalScrollBar().isVisible():
         topPaneHeight += application.style().pixelMetric(QStyle.PM_ScrollBarExtent)  # Scrollbar height
     splitter.setSizes([topPaneHeight, splitter.geometry().height() - topPaneHeight])
@@ -3519,13 +3520,13 @@ mainWindow.show()
 
 openDb()
 
-headerBar.initFromColumns()
-filterBar.initFromColumns()
+columnNameBar.initFromColumns()
+columnFilterBar.initFromColumns()
 queryDb(getSqlWhereExpression())
 tableView.requery()
 tableView.resizeAllColumns([column["width"]  for column in tableColumn_getBySlice()])
 
-headerBar.sort("name", False)  # TODO what if name column is initially not visible
+columnNameBar.sort("name", False)  # TODO what if name column is initially not visible
 
 tableView.selectionModel().setCurrentIndex(tableView.selectionModel().model().index(0, 0), QItemSelectionModel.ClearAndSelect)
 

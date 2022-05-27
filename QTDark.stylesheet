@@ -29,7 +29,7 @@
     background-color: black;
 }
 
-.HeaderBar, .FilterBar
+.ColumnNameBar, .ColumnFilterBar, .SqlFilterBar
 {
 	background: #191919;
 	color: #DDDDDD;
