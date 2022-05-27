@@ -3201,7 +3201,7 @@ def detailPane_populate(i_rowNo):
 
         html += gameRow["WebLink_Name"] + ": "
         url = gameRow["WebLink_URL"]
-        html += '<a target="_blank" href="' + url + '">'
+        html += '<a href="' + url + '">'
         html += url
         html += '</a>'
         #link.addEventListener("click", function (i_event) {
@@ -3217,7 +3217,7 @@ def detailPane_populate(i_rowNo):
             html += 'Spectrum Computing: '
             # Link
             url = url.replace("http://www.worldofspectrum.org/infoseekid.cgi?id=", "https://spectrumcomputing.co.uk/entry/")
-            html += '<a target="_blank" href="' + url + '">'
+            html += '<a href="' + url + '">'
             html += url
             html += '</a>'
             html += '</span>'
