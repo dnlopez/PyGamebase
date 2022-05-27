@@ -1147,6 +1147,8 @@ def getGameRecord(i_gameId, i_includeRelatedGameNames=False):
         if fullyQualifiedFieldNames:
             for field in g_dbSchema[tableName]:
                 selectTerms.append(tableName + "." + field["name"] + " AS [" + tableName + "." + field["name"] + "]")
+        else:
+            selectTerms.append(tableName + ".*")
 
     # Build SQL string
     #  SELECT
