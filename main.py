@@ -9,6 +9,7 @@ import functools
 import os.path
 import re
 import copy
+import urllib.parse
 import pprint
 
 # Qt
@@ -3440,6 +3441,7 @@ def detailPane_populate(i_rowNo):
                 url = i_qUrl.toString()
                 if url.startswith("extra:///"):
                     extraPath = url[9:]
+                    extraPath = urllib.parse.unquote(extraPath)
                     extraInfo = [row  for row in self.extrasRows  if row["Path"] == extraPath][0]
                     gameInfo = self.gameRow
                     try:
@@ -3455,7 +3457,9 @@ def detailPane_populate(i_rowNo):
                 # If it's a link to a game,
                 # select it in the table view
                 elif url.startswith("game:///"):
-                    gameId = int(url[8:])
+                    gameId = url[8:]
+                    gameId = urllib.parse.unquote(gameId)
+                    gameId = int(gameId)
                     tableView.selectGameWithId(gameId)
                 # Else if it's a normal link,
                 # open it with the default browser
