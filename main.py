@@ -438,13 +438,38 @@ def usableColumn_getById(i_id):
       (str)
 
     Returns:
-     Either (Column)
+     Either (UsableColumn)
      or (None)
     """
     columns = [column  for column in g_usableColumns  if column["id"] == i_id]
     if len(columns) == 0:
         return None
     return columns[0]
+
+def usableColumn_getByDbIdentifier(i_identifier):
+    """
+    Params:
+     i_identifier:
+      (str)
+      A column name, with optional table name prefix.
+      eg.
+       "Name"
+       "Games.Name"
+
+    Returns:
+     Either (UsableColumn)
+     or (None)
+    """
+    parts = i_identifier.split(".", 1)
+    if len(parts) == 1:
+        for column in g_usableColumns:
+            if column["filterable"] and column["dbFieldName"] == parts[0]:
+                return column
+    else:
+        for column in g_usableColumns:
+            if column["filterable"] and column["dbTableName"] == parts[0] and column["dbFieldName"] == parts[1]:
+                return column
+    return None
 
 
 # + + }}}
@@ -542,9 +567,9 @@ g_tableColumns = [
       "textAlignment": "left"
     }
 ]
-# (list of Column)
+# (list of TableColumn)
 
-# Type: Column
+# Type: TableColumn
 #  (dict)
 #  Has keys:
 #   screenName:
@@ -572,6 +597,9 @@ def tableColumn_add(i_id, i_beforeColumnId=None):
        ID of column already present in the table view to insert this column before.
       or (None)
        Add the new column as the last one.
+
+    Returns:
+     (TableColumn)
     """
     usableColumn = usableColumn_getById(i_id)
     newTableColumn = {
@@ -589,6 +617,9 @@ def tableColumn_add(i_id, i_beforeColumnId=None):
         g_tableColumns.append(newTableColumn)
     else:
         g_tableColumns.insert(tableColumn_idToPos(i_beforeColumnId), newTableColumn)
+
+    # Return the new table column
+    return newTableColumn
 
 def tableColumn_remove(i_id):
     foundColumnNo = None
@@ -622,10 +653,10 @@ def tableColumn_move(i_moveColumn, i_beforeColumn):
 
     Params:
      i_moveColumn:
-      (Column)
+      (TableColumn)
       Column to move.
      i_beforeColumn:
-      Either (Column)
+      Either (TableColumn)
        Move to before of this column.
       or (None)
        Move to the end.
@@ -658,7 +689,7 @@ def tableColumn_getBySlice(i_startPos=None, i_endPos=None):
       or (None)
 
     Returns:
-     (list of Column)
+     (list of TableColumn)
     """
     return g_tableColumns[i_startPos:i_endPos]
 
@@ -671,7 +702,7 @@ def tableColumn_getByPos(i_pos):
       (int)
 
     Returns:
-     Either (Column)
+     Either (TableColumn)
      or (None)
     """
     if i_pos < 0 or i_pos >= len(g_tableColumns):
@@ -687,7 +718,7 @@ def tableColumn_getById(i_id):
       (str)
 
     Returns:
-     Either (Column)
+     Either (TableColumn)
      or (None)
     """
     # [could shorten with next()]
@@ -778,6 +809,19 @@ def getScreenshotUrl(i_relativePath):
 
 # + DB {{{
 
+def sqliteRowToDict(i_row):
+    """
+    Convert a sqlite3.Row object to a plain dict for easier viewing.
+
+    Params:
+     i_row:
+      (sqlite3.Row)
+
+    Returns:
+     (dict)
+    """
+    return { keyName: i_row[keyName]  for keyName in i_row.keys() }
+
 g_db = None
 g_db_gamesColumnNames = None
 #  (list of str)
@@ -838,7 +882,7 @@ def openDb():
         if tableName in dbTableNames:
             cursor = g_db.execute("PRAGMA table_info(" + tableName + ")")
             rows = cursor.fetchall()
-            rows = [{keyName: row[keyName] for keyName in row.keys()}  for row in rows]  # Convert sqlite3.Row objects to plain dicts for easier viewing
+            rows = [sqliteRowToDict(row)  for row in rows]
             g_dbSchema[tableName] = rows
 
     # Get columns in Games table
@@ -1011,14 +1055,17 @@ def getSqlWhereExpression():
                         #
                         andTerms.append(usableColumn["dbTableName"] + "." + usableColumn["dbFieldName"] + " " + operator + " " + value)
 
-                    # Else if LIKE expression (contains an unescaped %)
+                    # Else if a LIKE expression (contains an unescaped %)
                     elif value.replace("\\%", "").find("%") != -1:
                         # Format value as a string
                         value = value.replace("'", "''")
                         value = "'" + value + "'"
 
                         #
-                        andTerms.append(usableColumn["dbTableName"] + "." + usableColumn["dbFieldName"] + " LIKE " + value + " ESCAPE '\\'")
+                        andTerm = usableColumn["dbTableName"] + "." + usableColumn["dbFieldName"] + " LIKE " + value
+                        if value.find("\\%") != -1:
+                            andTerm += " ESCAPE '\\'"
+                        andTerms.append(andTerm)
 
                     # Else if a plain string
                     else:
@@ -1029,7 +1076,7 @@ def getSqlWhereExpression():
                         value = "'" + value + "'"
 
                         #
-                        andTerms.append(usableColumn["dbTableName"] + "." + usableColumn["dbFieldName"] + " LIKE " + value + " ESCAPE '\\'")
+                        andTerms.append(usableColumn["dbTableName"] + "." + usableColumn["dbFieldName"] + " LIKE " + value)
 
         if len(andTerms) > 0:
             andGroups.append(andTerms)
@@ -1078,7 +1125,9 @@ def queryDb(i_whereExpression):
 
     # WHERE
     if i_whereExpression != None:
-        sql += "\nWHERE " + i_whereExpression
+        i_whereExpression = i_whereExpression.strip()
+        if i_whereExpression != "":
+            sql += "\nWHERE " + i_whereExpression
 
     # ORDER BY
     if len(columnNameBar.sort_operations) > 0:
@@ -1169,7 +1218,7 @@ def getGameRecord(i_gameId, i_includeRelatedGameNames=False):
     cursor = g_db.execute(sql)
 
     row = cursor.fetchone()
-    row = {keyName: row[keyName] for keyName in row.keys()}  # Convert sqlite3.Row objects to plain dicts for easier viewing
+    row = sqliteRowToDict(row)
     return row
 
 def getExtrasRecords(i_gameId):
@@ -1183,7 +1232,7 @@ def getExtrasRecords(i_gameId):
     cursor = g_db.execute(sql)
 
     rows = cursor.fetchall()
-    rows = [{keyName: row[keyName] for keyName in row.keys()}  for row in rows]  # Convert sqlite3.Row objects to plain dicts for easier viewing
+    rows = [sqliteRowToDict(row)  for row in rows]
     return rows
 
 def dbRow_getScreenshotRelativePath(i_row):
@@ -1477,7 +1526,7 @@ class ColumnNameBar(QWidget):
 
         # State used while reordering
         self.reorder_column = None
-        #  Either (Column)
+        #  Either (TableColumn)
         #  or (None)
 
         self.reorderIndicator_widget = QFrame(self)
@@ -1675,12 +1724,12 @@ class ColumnNameBar(QWidget):
          Either (tuple)
           Tuple has elements:
            0:
-            Either (Column)
+            Either (TableColumn)
              The object of the visible column before the edge that i_x is nearest to
             or (None)
              There is no before the edge that i_x is nearest to (ie. it is the first edge).
            1:
-            Either (Column)
+            Either (TableColumn)
              The object of the visible column after the edge that i_x is nearest to
             or (None)
              There is no after the edge that i_x is nearest to (ie. it is the last edge).
@@ -1724,7 +1773,7 @@ class ColumnNameBar(QWidget):
           Relative to the left of the header bar.
 
         Returns:
-         Either (Column)
+         Either (TableColumn)
           The object of the visible column that i_x is under
          or (None)
           There is not a visible column at i_x.
@@ -1744,7 +1793,7 @@ class ColumnNameBar(QWidget):
         """
         Params:
          i_column:
-          (Column)
+          (TableColumn)
 
         Returns:
          Either (int)
@@ -2127,7 +2176,6 @@ class ColumnFilterBar(QWidget):
          i_position:
           (int)
         """
-
         # Add per-filter row GUI widgets
         newRow = {}
         self.filterRows.insert(i_position, newRow)
@@ -2156,7 +2204,7 @@ class ColumnFilterBar(QWidget):
                 self.columnWidgets[column["id"]]["filterEdits"].insert(i_position, filterEdit)
 
         # Resize bar to accommodate the current number of filter rows
-        self.setFixedHeight(ColumnFilterBar.filterRowHeight*len(self.filterRows))
+        self.setFixedHeight(ColumnFilterBar.filterRowHeight * len(self.filterRows))
 
     def appendFilterRow(self):
         self.insertFilterRow(len(self.filterRows))
@@ -2185,7 +2233,7 @@ class ColumnFilterBar(QWidget):
         del(self.filterRows[i_position])
 
         # Resize bar to accommodate the current number of filter rows
-        self.setFixedHeight(ColumnFilterBar.filterRowHeight*len(self.filterRows))
+        self.setFixedHeight(ColumnFilterBar.filterRowHeight * len(self.filterRows))
 
     def clearFilterRow(self, i_position):
         """
@@ -2198,13 +2246,53 @@ class ColumnFilterBar(QWidget):
                 self.columnWidgets[column["id"]]["filterEdits"][i_position].setText("")
 
     def clearAllFilterRows(self):
-        while len(self.filterRows) > 1:
-            self.deleteFilterRow(len(self.filterRows) - 1)
-        self.clearFilterRow(0)
+        for filterRowNo in range(0, len(self.filterRows)):
+            self.clearFilterRow(filterRowNo)
 
-        self.repositionFilterEdits()
-        #self.repositionTabOrder()
         self.filterChange.emit()
+
+    def resetFilterRowCount(self, i_rowCount, i_updateGui=True, i_requery=True):
+        """
+        Set count of filter rows and clear all their contents.
+        """
+        # If need to add filter rows
+        if i_rowCount > len(self.filterRows):
+            # Clear existing filter rows
+            for filterRowNo in range(0, len(self.filterRows)):
+                self.clearFilterRow(filterRowNo)
+
+            # Add new rows
+            while len(self.filterRows) < i_rowCount:
+                self.appendFilterRow()
+
+            #
+            if i_updateGui:
+                self.repositionFilterEdits()
+                self.repositionTabOrder()
+
+        # Else if need to remove filter rows
+        elif i_rowCount < len(self.filterRows):
+            # Remove them
+            while len(self.filterRows) > i_rowCount:
+                self.deleteFilterRow(len(self.filterRows) - 1)
+
+            #
+            if i_updateGui:
+                self.repositionFilterEdits()  # for the insert row button
+
+            # Clear remaining filter rows
+            for filterRowNo in range(0, len(self.filterRows)):
+                self.clearFilterRow(filterRowNo)
+
+        # Else if already have the right number of filter rows
+        else:
+            # Clear them
+            for filterRowNo in range(0, len(self.filterRows)):
+                self.clearFilterRow(filterRowNo)
+
+        #
+        if i_requery:
+            self.filterChange.emit()
 
     def deleteRow_pushButton_onClicked(self, i_filterRow):
         if len(self.filterRows) == 1:
@@ -2297,6 +2385,33 @@ class ColumnFilterBar(QWidget):
         previousWidget = nextWidget
 
     # + }}}
+
+class SqlFilterBar(QWidget):
+    # Emitted after the text in the filter text box is changed
+    filterChange = Signal()
+
+    def __init__(self, i_parent=None):
+        QWidget.__init__(self, i_parent)
+
+        # Allow this custom widget derived from a QWidget to be fully styled by stylesheets
+        # https://stackoverflow.com/a/49179582
+        self.setAttribute(Qt.WA_StyledBackground, True)
+
+        #
+        self.lineEdit = QLineEdit(self)
+
+        self.lineEdit.textChange.connect(self.lineEdit_onTextChange)
+
+    def lineEdit_onTextChange(self):
+        self.filterChange.emit()
+
+    # + Focus {{{
+
+    def setFocus(self, i_reason):
+        self.lineEdit.setFocus(i_reason)
+
+    # + }}}
+
 
 class MyStyledItemDelegate(QStyledItemDelegate):
     def __init__(self, i_parent=None):
@@ -2664,15 +2779,15 @@ class MyTableView(QTableView):
                 # Get the target game ID
                 rowNo = i_modelIndex.row()
                 gameId = g_dbRows[rowNo][g_dbColumnNames.index(usableColumn["dbFieldName"])]
-                #
-                self.selectGameWithId(gameId)
+                if gameId != 0:
+                    self.selectGameWithId(gameId)
 
     def selectGameWithId(self, i_gameId):
         # Look for row in table,
         # and if not found then clear filter and look again
         rowNo = findGameWithId(i_gameId)
         if rowNo == None:
-            columnFilterBar.clearAllFilterRows()
+            columnFilterBar.resetFilterRowCount(1)
             rowNo = findGameWithId(i_gameId)
 
         # If found, select it
@@ -2986,22 +3101,25 @@ frontend.mainWindow = mainWindow
 shortcut = QShortcut(QKeySequence("Ctrl+F"), mainWindow)
 shortcut.setContext(Qt.ApplicationShortcut)
 def ctrlFShortcut_onActivated():
-    # If table view has the focus and the selected column is filterable,
-    # target that
-    selectedIndex = tableView.selectionModel().currentIndex()
-    selectedColumn = tableColumn_getByPos(selectedIndex.column())
-    if tableView.hasFocus() and selectedColumn["filterable"]:
-        targetColumn = selectedColumn
-    # Else target the first visible and filterable column
+    if sqlFilterBar.isVisible():
+        sqlFilterBar.setFocus(Qt.ShortcutFocusReason)
     else:
-        for column in tableColumn_getBySlice():
-            if column["filterable"]:
-                targetColumn = column
-                break
+        # If table view has the focus and the selected column is filterable,
+        # target that
+        selectedIndex = tableView.selectionModel().currentIndex()
+        selectedColumn = tableColumn_getByPos(selectedIndex.column())
+        if tableView.hasFocus() and selectedColumn != None and selectedColumn["filterable"]:
+            targetColumn = selectedColumn
+        # Else target the first visible and filterable column
+        else:
+            for column in tableColumn_getBySlice():
+                if column["filterable"]:
+                    targetColumn = column
+                    break
 
-    # Set focus to filter edit control
-    if targetColumn != None:
-        columnFilterBar.columnWidgets[targetColumn["id"]]["filterEdits"][0].setFocus(Qt.ShortcutFocusReason)
+        # Set focus to filter edit control
+        if targetColumn != None:
+            columnFilterBar.columnWidgets[targetColumn["id"]]["filterEdits"][0].setFocus(Qt.ShortcutFocusReason)
 shortcut.activated.connect(ctrlFShortcut_onActivated)
 
 shortcut = QShortcut(QKeySequence("Escape"), mainWindow)
@@ -3052,11 +3170,13 @@ mainWindow.setLayout(mainWindow_layout)
 #    gameTable
 #     columnNameBar
 #     columnFilterBar
+#     sqlFilterBar
 #     tableView
 #    detailPane
 #   statusbar
 
-#
+# + Menu bar {{{
+
 menuBar = QMenuBar()
 mainWindow_layout.addWidget(menuBar)
 
@@ -3108,25 +3228,208 @@ def openInDefaultApplication(i_filePaths):
 menu = QMenu(mainWindow)
 #menu.addAction("File")
 #menuBar.addMenu(menu)
-fileMenu_action = menuBar.addMenu("&File")
-action = fileMenu_action.addAction("Open &database in external program")
+
+fileMenu = menuBar.addMenu("&File")
+action = fileMenu.addAction("Open &database in external program")
 action.triggered.connect(menu_file_openDatabaseInExternalProgram_onTriggered)
-fileMenu_action.addAction("New")
-fileMenu_action.addAction("Open")
-fileMenu_action.addAction("Save")
-fileMenu_action.addSeparator()
-fileMenu_action.addAction("Quit")
-editMenu_action = menuBar.addMenu("&Edit")
-editMenu_action.addAction("Copy")
+fileMenu.addAction("New")
+fileMenu.addAction("Open")
+fileMenu.addAction("Save")
+fileMenu.addSeparator()
+fileMenu.addAction("Quit")
+
+editMenu = menuBar.addMenu("&Edit")
+editMenu.addAction("Copy")
+
+import sql
+
+def filterFormat_perColumn():
+    columnFilterBar.show()
+    sqlFilterBar.hide()
+
+    # Convert SQL text to per-column filters
+    # and set it in the per-column widget
+
+    # Get the expression text
+    whereExpression = sqlFilterBar.text().strip()
+
+    # Tokenize, parse and postprocess it
+    tokenized = sql.tokenizeWhereExpr(whereExpression)
+    if len(tokenized) == 0:
+        return
+    sql.initializeOperatorTable()
+    parsed = sql.parseExpression(tokenized)
+    #print(parsed)
+    if parsed == None:
+        statusbar.setText("failed to parse")
+        return
+    parsed = sql.flattenOperator(parsed, "AND")
+    parsed = sql.flattenOperator(parsed, "OR")
+    pprint.pprint(parsed)
+
+    # Get or construct a top-level OR array
+    if parsed["op"] == ("operator", "OR"):
+        orExpressions = parsed["children"]
+    else:
+        orExpressions = [parsed]
+
+    columnFilterBar.resetFilterRowCount(len(orExpressions), False, False)
+
+    for orExpressionNo, orExpression in enumerate(orExpressions):
+        # Get or construct a second-level AND array
+        if orExpression["op"] == ("operator", "AND"):
+            andExpressions = orExpression["children"]
+        else:
+            andExpressions = [orExpression]
+
+        #
+        for andExpression in andExpressions:
+            pprint.pprint(andExpression)
+            operator, columnName, value = interpretColumnOperation(andExpression)
+            #print("operator, columnName, value: " + str((operator, columnName, value)))
+            #if columnName != None:
+            usableColumn = usableColumn_getByDbIdentifier(columnName)
+            if usableColumn != None:
+                # Get table column,
+                # which if it doesn't exist then add it (ie. unhide it)
+                tableColumn = tableColumn_getById(usableColumn["id"])
+                if tableColumn == None:
+                    tableColumn = tableColumn_add(usableColumn["id"])
+
+                #
+                widgetText = None
+                if operator == "LIKE":
+                    # If have percent sign at beginning and end and nowhere else
+                    if len(value) >= 2 and value[0] == "%" and value[-1] == "%" and value[1:-1].find("%") == -1:
+                        widgetText = value[1:-1]
+                    else:
+                        widgetText = value
+                elif operator == "REGEXP":
+                    widgetText = "/" + value + "/"
+                elif operator == "BETWEEN":
+                    widgetText = value
+                elif operator == "IS":
+                    widgetText = "=" + value
+                elif operator == "IS NOT":
+                    widgetText = "<>" + value
+                elif operator == "=" or operator == "==":
+                    widgetText = "=" + value
+                elif operator == "<":
+                    widgetText = "<" + value
+                elif operator == "<=":
+                    widgetText = "<=" + value
+                elif operator == ">":
+                    widgetText = ">" + value
+                elif operator == ">=":
+                    widgetText = ">=" + value
+                elif operator == "<>" or operator == "!=":
+                    widgetText = "<>" + value
+
+                # Set text in widget
+                if widgetText != None:
+                    columnFilterBar.columnWidgets[usableColumn["id"]]["filterEdits"][orExpressionNo].setText(widgetText)
+
+    columnFilterBar.repositionFilterEdits()
+    columnFilterBar.repositionTabOrder()
+    columnFilterBar.filterChange.emit()
+    """
+(Games.Name LIKE '%zz%' ESCAPE '\') OR (Publishers.Publisher LIKE '%oo%' ESCAPE '\')
+    """
+
+def interpretColumnOperation(i_node):
+    """
+    Params:
+     i_node:
+      (dict)
+
+    Returns:
+     (tuple)
+     Tuple has elements:
+      0:
+       (str)
+       Operator name
+       eg.
+        "="
+        "LIKE"
+      1:
+       (str)
+       DB column identifier
+       eg.
+        "Games.Name"
+        "Name"
+      2:
+       (str)
+       Value
+       eg.
+        "Uridium"
+        "Uri%"
+    """
+    if type(i_node) != dict or "op" not in i_node:
+        return None, None, None
+    operator = i_node["op"][1]
+
+    columnName = None
+    value = None
+    for child in i_node["children"]:
+        if type(child) == dict:
+            if "op" in child and child["op"] == ("operator", "ESCAPE"):
+                value = child["children"][0][1]  # TODO unescape?
+            elif operator == "BETWEEN" and child["op"] == ("operator", "AND"):
+                value = child["children"][0][1] + "~" + child["children"][1][1]
+            else:
+                return None, None, None
+        elif type(child) == tuple:
+            if child[0] == "identifier":
+                if columnName != None:
+                    return None, None, None
+                columnName = child[1]
+            else:
+                if value != None:
+                    return None, None, None
+                value = child[1]
+
+    if operator == None or columnName == None or value == None:
+        return None, None, None
+    return operator, columnName, value
+
+def filterFormat_sql():
+    columnFilterBar.hide()
+    sqlFilterBar.show()
+
+    # Convert per-column filters to SQL text
+    # and set it in the SQL widget
+    sqlWhereExpression = getSqlWhereExpression()
+    if sqlWhereExpression == None:
+        sqlWhereExpression = ""
+    sqlFilterBar.setText(sqlWhereExpression)
+
+filterMenu = menuBar.addMenu("F&ilter")
+actionGroup = QActionGroup(filterMenu)
+actionGroup.setExclusive(True)
+filterMenu_filterFormat_perColumn_action = filterMenu.addAction("Per-&column")
+filterMenu_filterFormat_perColumn_action.setCheckable(True)
+filterMenu_filterFormat_perColumn_action.setChecked(True)
+filterMenu_filterFormat_perColumn_action.triggered.connect(filterFormat_perColumn)
+actionGroup.addAction(filterMenu_filterFormat_perColumn_action)
+#filterMenu_separator = filterMenu.addAction("sep")
+#filterMenu_separator.setSeparator(True)
+filterMenu_filterFormat_sql_action = filterMenu.addAction("&SQL")
+filterMenu_filterFormat_sql_action.setCheckable(True)
+filterMenu_filterFormat_sql_action.triggered.connect(filterFormat_sql)
+actionGroup.addAction(filterMenu_filterFormat_sql_action)
+#filterMenu.addAction(actionGroup)
 #menuBar.addMenu("View")
 #menuBar.addMenu("Help")
+
+# + }}}
 
 # Create splitter
 splitter = QSplitter(Qt.Vertical)
 mainWindow_layout.addWidget(splitter)
 splitter.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
-#
+# + Game table {{{
+
 gameTable = QWidget()
 gameTable.setProperty("class", "gameTable")
 splitter.addWidget(gameTable)
@@ -3147,6 +3450,8 @@ gameTable_layout.setSpacing(0)
 gameTable_layout.setContentsMargins(0, 0, 0, 0)
 gameTable.setLayout(gameTable_layout)
 
+# + }}}
+
 def splitter_onSplitterMoved(i_pos, i_index):
     # If detail pane has been dragged closed,
     # call detailPane_hide() to keep track
@@ -3154,13 +3459,17 @@ def splitter_onSplitterMoved(i_pos, i_index):
         detailPane_hide()
 splitter.splitterMoved.connect(splitter_onSplitterMoved)
 
-# Create header bar
+# + Column name bar {{{
+
 columnNameBar = ColumnNameBar()
 columnNameBar.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 columnNameBar.setFixedHeight(30)
 gameTable_layout.addWidget(columnNameBar)
 
-# Create filter bar
+# + }}}
+
+# + Column filter bar {{{
+
 columnFilterBar = ColumnFilterBar()
 columnFilterBar.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 gameTable_layout.addWidget(columnFilterBar)
@@ -3175,7 +3484,8 @@ def columnFilterBar_onFilterChange():
         selectedRowTopY = tableView.rowViewportPosition(selectedIndex.row())
 
     # Query database and update table widget data
-    queryDb(getSqlWhereExpression())
+    sqlWhereExpression = getSqlWhereExpression()
+    queryDb(sqlWhereExpression)
     tableView.requery()
 
     # If a game was previously selected,
@@ -3196,6 +3506,181 @@ def columnFilterBar_onFilterChange():
             tableView.selectionModel().setCurrentIndex(tableView.selectionModel().model().index(newDbRowNo, selectedIndex.column()), QItemSelectionModel.ClearAndSelect)
 columnFilterBar.filterChange.connect(columnFilterBar_onFilterChange)
 
+# + }}}
+
+# + SQL filter bar {{{
+
+#sqlFilterBar = SqlFilterBar()
+sqlFilterBar = ColumnFilterBar.FilterEdit("")
+sqlFilterBar.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+sqlFilterBar.setFixedHeight(30)
+sqlFilterBar.hide()
+gameTable_layout.addWidget(sqlFilterBar)
+
+class MyMessageBox(QDialog):
+    def __init__(self, i_icon, i_title, i_text, i_buttons=QDialogButtonBox.Ok, i_parent=None, i_windowFlags=Qt.Dialog):
+        """
+        Params:
+         i_icon:
+          Either (QMessageBox.Icon)
+           eg.
+            self.style().standardIcon(QStyle.SP_MessageBoxCritical)
+          or (None)
+         i_title:
+          (str)
+         i_text:
+          (str)
+         i_buttons:
+          (QMessageBox.StandardButtons)
+         i_parent:
+          (QWidget)
+         i_windowFlags:
+          (Qt.WindowFlags)
+        """
+        QDialog.__init__(self, i_parent, i_windowFlags)
+
+        self.layout = QGridLayout(self)
+
+        self.iconLabel = QLabel(self)
+        self.layout.addWidget(self.iconLabel, 0, 0, 2, 1, Qt.AlignTop)
+        if i_icon != None:
+           self.iconLabel.setPixmap(i_icon.pixmap(128, 128))
+
+        self.label = QLabel(self)
+        self.label.setWordWrap(True)
+        self.layout.addWidget(self.label, 0, 2, Qt.AlignTop)
+        #2, 0: <PySide2.QtWidgets.QLabel(0x55f631f52a30, name="qt_msgbox_label") at 0x7fc7814ecf40>
+        self.label.setTextInteractionFlags(Qt.TextSelectableByMouse|Qt.LinksAccessibleByMouse|Qt.LinksAccessibleByKeyboard|Qt.TextSelectableByKeyboard)
+
+        self.informativeLabel = QLabel(self)
+        self.informativeLabel.setWordWrap(True)
+        self.layout.addWidget(self.informativeLabel, 1, 2, Qt.AlignTop)
+        #2, 1: <PySide2.QtWidgets.QLabel(0x55f632830ea0, name="qt_msgbox_informativelabel") at 0x7fc7814ecfc0>
+        self.informativeLabel.setTextInteractionFlags(Qt.TextSelectableByMouse|Qt.LinksAccessibleByMouse|Qt.LinksAccessibleByKeyboard|Qt.TextSelectableByKeyboard)
+
+        self.buttons = QDialogButtonBox(i_buttons, self)
+        self.layout.addWidget(self.buttons, 2, 0, 1, 3)
+        self.buttons.accepted.connect(self.accept)
+        self.buttons.rejected.connect(self.reject)
+
+        self.layout.setColumnStretch(0, 0)
+        self.layout.setColumnStretch(1, 0)
+        self.layout.setColumnStretch(2, 1)
+        self.layout.setRowStretch(0, 0)
+        self.layout.setRowStretch(1, 1)
+        self.layout.setRowStretch(2, 0)
+
+        self.setWindowTitle(i_title)
+        self.setText(i_text)
+
+    def resizeToContent(self):
+        # Get dimensions of screen
+        # and choose the margin we want to keep from the edge
+        screen = QGuiApplication.primaryScreen()
+        screenGeometry = screen.geometry()
+        screenEdgeMargin = 100
+
+        # Get dimensions of text when unwrapped
+        labelFontMetrics = QFontMetrics(self.label.property("font"))
+        labelWidth = labelFontMetrics.horizontalAdvance(self.label.text())
+        informativeLabelFontMetrics = QFontMetrics(self.informativeLabel.property("font"))
+        informativeLabelWidth = informativeLabelFontMetrics.horizontalAdvance(self.informativeLabel.text())
+
+        #
+        layoutContentsMargins = self.layout.contentsMargins()
+        layoutSpacing = self.layout.spacing()
+
+        #
+        contentWidth = layoutContentsMargins.left() + self.layout.itemAtPosition(0, 0).geometry().width() + layoutSpacing + max(labelWidth, informativeLabelWidth) + layoutContentsMargins.right()
+        if contentWidth > screenGeometry.width() - screenEdgeMargin:
+            contentWidth = screenGeometry.width() - screenEdgeMargin
+
+        #
+        labelBoundingRect = labelFontMetrics.boundingRect(0, 0, contentWidth, screenGeometry.height() - screenEdgeMargin, Qt.TextWordWrap | Qt.TextExpandTabs, self.label.text(), 4);
+        informativeLabelBoundingRect = informativeLabelFontMetrics.boundingRect(0, 0, contentWidth, screenGeometry.height() - screenEdgeMargin, Qt.TextWordWrap | Qt.TextExpandTabs, self.informativeLabel.text(), 4);
+        contentHeight = layoutContentsMargins.top() + labelBoundingRect.height() + layoutSpacing + informativeLabelBoundingRect.height() + layoutSpacing + self.buttons.height() + layoutContentsMargins.bottom()
+        if contentHeight > screenGeometry.height() - screenEdgeMargin:
+            contentHeight = screenGeometry.height() - screenEdgeMargin
+
+        #
+        self.resize(contentWidth, contentHeight)
+
+    """
+    def resizeEvent(self, event):
+        _result = super().resizeEvent(event)
+        print("---")
+        print(str(self.label.width()) + ", " + str(self.label.height()))
+        print(str(self.iconLabel.width()) + ", " + str(self.label.height()))
+        print(str(self.buttons.width()) + ", " + str(self.label.height()))
+
+        self.setFixedWidth(self._width)
+
+        _text_box = self.findChild(QTextEdit)
+        if _text_box is not None:
+            # get width
+            _width = int(self._width - 50)  # - 50 for border area
+            # get box height depending on content
+            _font = _text_box.document().defaultFont()
+            _fontMetrics = QFontMetrics(_font)
+            _textSize = _fontMetrics.size(0, details_box.toPlainText(), 0)
+            _height = int(_textSize.height()) + 30  # Need to tweak
+            # set size
+            _text_box.setFixedSize(_width, _height)
+    """
+
+    def setText(self, i_text):
+        self.label.setText(i_text)
+
+    def setInformativeText(self, i_text):
+        self.informativeLabel.setText(i_text)
+
+def sqlFilterBar_onTextChange():
+    # Remember what game is currently selected and where on the screen the row is
+    selectedIndex = tableView.selectionModel().currentIndex()
+    if selectedIndex.row() < 0 or selectedIndex.row() >= len(g_dbRows):
+        selectedGameId = None
+    else:
+        selectedGameId = g_dbRows[selectedIndex.row()][g_dbColumnNames.index("GA_Id")]
+        selectedRowTopY = tableView.rowViewportPosition(selectedIndex.row())
+
+    # Query database and update table widget data
+    sqlWhereExpression = sqlFilterBar.text()
+    try:
+        queryDb(sqlWhereExpression)
+    except sqlite3.OperationalError as e:
+        import traceback
+        print(traceback.format_exc())
+
+        #messageBox = QMessageBox(QMessageBox.Critical, "Error", "")
+        messageBox = MyMessageBox(application.style().standardIcon(QStyle.SP_MessageBoxCritical), "Error", "")
+        messageBox.setText("<big><b>In SQL WHERE expression:</b></big>")
+        messageBox.setInformativeText("\n".join(traceback.format_exception_only(e)))# + "\nhad just plonked the code across - and suddenly it now looked like a lot of WTF, even though it's not all that big. I have the halfway progress of tidying here on my PC uncommitted, so I'd like to recheck and had just plonked the code across - and suddenly it now looked like a lot of WTF, even though it's not all that big. I have the halfway progress of tidying here on my PC uncommitted, so I'd like to recheck and had just plonked the code across - and suddenly it now looked like a lot of WTF, even though it's not all that big. I have the halfway progress of tidying here on my PC uncommitted, so I'd like to recheck and had just plonked the code across - and suddenly it now looked like a lot of WTF, even though it's not all that big. I have the halfway progress of tidying here on my PC uncommitted, so I'd like to recheck and had just plonked the code across - and suddenly it now looked like a lot of WTF, even though it's not all that big. I have the halfway progress of tidying here on my PC uncommitted, so I'd like to recheck and had just plonked the code across - and suddenly it now looked like a lot of WTF, even though it's not all that big. I have the halfway progress of tidying here on my PC uncommitted, so I'd like to recheck and had just plonked the code across - and suddenly it now looked like a lot of WTF, even though it's not all that big. I have the halfway progress of tidying here on my PC uncommitted, so I'd like to recheck and had just plonked the code across - and suddenly it now looked like a lot of WTF, even though it's not all that big. I have the halfway progress of tidying here on my PC uncommitted, so I'd like to recheck and again END")
+        messageBox.resizeToContent()
+        messageBox.exec()
+    tableView.requery()
+
+    # If a game was previously selected,
+    # search for new row number of that game
+    # and if found, scroll to put that game in the same screen position it previously was
+    if selectedGameId != None:
+        idColumnNo = g_dbColumnNames.index("GA_Id")
+        newDbRowNo = None
+        for dbRowNo, dbRow in enumerate(g_dbRows):
+            if dbRow[idColumnNo] == selectedGameId:
+                newDbRowNo = dbRowNo
+                break
+
+        if newDbRowNo == None:
+            tableView.scrollToTop()
+        else:
+            tableView.verticalScrollBar().setValue(tableView.rowHeight() * newDbRowNo - selectedRowTopY)
+            tableView.selectionModel().setCurrentIndex(tableView.selectionModel().model().index(newDbRowNo, selectedIndex.column()), QItemSelectionModel.ClearAndSelect)
+sqlFilterBar.textChange.connect(sqlFilterBar_onTextChange)
+
+# + }}}
+
+# + Table view {{{
+
 # Create table
 tableView = MyTableView()
 gameTable_layout.addWidget(tableView)
@@ -3207,7 +3692,10 @@ tableView.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Ignored)
 #  Set initial column widths
 tableView.resizeAllColumns([column["width"]  for column in tableColumn_getBySlice()])
 
-# Create detail pane
+# + }}}
+
+# + Detail pane {{{
+
 #class DetailPane(QWidget):
 #    def __init__(self):
 #        QWidget.__init__(self)
@@ -3421,7 +3909,7 @@ def detailPane_populate(i_rowNo):
 
         html += "</div>"
 
-    print(html)
+    #print(html)
 
     #detailPane_webEngineView.setHtml(html, QUrl("file:///"))
     # Load HTML into a QWebEnginePage with a handler for link clicks
@@ -3487,6 +3975,10 @@ def detailPane_populate(i_rowNo):
     #webEnginePage.setView(detailPane_webEngineView)
     detailPane_webEngineView.setPage(webEnginePage)
 
+# + }}}
+
+# + Statusbar {{{
+
 # Create statusbar
 label_statusbar = QLabel()
 label_statusbar.setProperty("class", "statusbar")
@@ -3494,6 +3986,8 @@ label_statusbar.setProperty("class", "statusbar")
 mainWindow_layout.addWidget(label_statusbar)
 label_statusbar.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 label_statusbar.setContentsMargins(8, 8, 8, 8)
+
+# + }}}
 
 ## Create test for styling
 #class StyleTest(QWidget):
@@ -3606,7 +4100,7 @@ def menu_file_showSubprocessOutput_onTriggered(i_checked):
 
     subprocessOutput_log.show()
 
-action = fileMenu_action.addAction("Show subprocess &output")
+action = fileMenu.addAction("Show subprocess &output")
 action.triggered.connect(menu_file_showSubprocessOutput_onTriggered)
 
 # + }}}
