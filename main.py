@@ -1366,6 +1366,7 @@ def dbRow_getPhotoRelativePath(i_row):
 
 # + }}}
 
+# + Column name bar {{{
 
 class ColumnNameBar(QWidget):
     """
@@ -1969,6 +1970,10 @@ class ColumnNameBar(QWidget):
 
     # + }}}
 
+# + }}}
+
+# + Column filter bar {{{
+
 class ColumnFilterBar(QWidget):
     """
     One or more rows of text box controls for entering filter criteria per column.
@@ -2311,6 +2316,25 @@ class ColumnFilterBar(QWidget):
     def lineEdit_onTextChange(self):
         self.filterChange.emit()
 
+    def setFilterValues(self, i_oredRows):
+        """
+        Params:
+         i_oredRows:
+          (list)
+          As returned from sqlWhereExpressionToColumnFilters().
+        """
+        self.resetFilterRowCount(max(len(i_oredRows), 1), False, False)
+
+        for oredRowNo, oredRow in enumerate(i_oredRows):
+            for andedFieldId, andedFieldValue in oredRow.items():
+                # If table column doesn't exist (ie. is not visible)
+                # then add it (ie. unhide it)
+                if tableColumn_getById(andedFieldId) == None:
+                    tableColumn_add(andedFieldId)
+
+                # Set text in widget
+                self.columnWidgets[andedFieldId]["filterEdits"][oredRowNo].setText(andedFieldValue)
+
     # + }}}
 
     # + Scrolling {{{
@@ -2383,6 +2407,10 @@ class ColumnFilterBar(QWidget):
 
     # + }}}
 
+# + }}}
+
+# + SQL filter bar {{{
+
 class SqlFilterBar(QWidget):
     # Emitted after the text in the filter text box is changed
     filterChange = Signal()
@@ -2409,6 +2437,54 @@ class SqlFilterBar(QWidget):
 
     # + }}}
 
+# + }}}
+
+# + Filter history {{{
+
+g_filterHistory = [""]
+g_filterHistory_pos = 1
+
+def filterHistory_goBack():
+    global g_filterHistory_pos
+
+    # If already at start of history,
+    # nothing to do
+    if g_filterHistory_pos == 1:
+        return
+
+    #
+    g_filterHistory_pos -= 1
+
+    #
+    sqlWhereExpression = g_filterHistory[g_filterHistory_pos - 1]
+
+    oredRows = sqlWhereExpressionToColumnFilters(sqlWhereExpression)
+    columnFilterBar.setFilterValues(oredRows)
+
+    tableView.refilter(sqlWhereExpression)
+
+def filterHistory_goForward():
+    global g_filterHistory_pos
+
+    # If already at end of history,
+    # nothing to do
+    if g_filterHistory_pos == len(g_filterHistory):
+        return
+
+    #
+    g_filterHistory_pos += 1
+
+    #
+    sqlWhereExpression = g_filterHistory[g_filterHistory_pos - 1]
+
+    oredRows = sqlWhereExpressionToColumnFilters(sqlWhereExpression)
+    columnFilterBar.setFilterValues(oredRows)
+
+    tableView.refilter(sqlWhereExpression)
+
+# + }}}
+
+# + Game table view {{{
 
 class MyStyledItemDelegate(QStyledItemDelegate):
     def __init__(self, i_parent=None):
@@ -2578,12 +2654,6 @@ def getGameInfoDict(i_dbRow):
     """
     return dbRowToDict(i_dbRow, g_dbColumnNames)
 
-def findGameWithId(i_id):
-    idColumnNo = g_dbColumnNames.index("GA_Id")
-    for rowNo, row in enumerate(g_dbRows):
-        if row[idColumnNo] == i_id:
-            return rowNo
-    return None
 
 class MyTableView(QTableView):
     def __init__(self, i_parent=None):
@@ -2697,6 +2767,46 @@ class MyTableView(QTableView):
 
         #self.verticalScrollBar().setSingleStep(30)
 
+    def refilter(self, i_sqlWhereExpression):
+        """
+        Params:
+         i_sqlWhereExpression:
+          (str)
+        """
+
+        # Remember what game is currently selected and where on the screen the row is
+        selectedIndex = self.selectionModel().currentIndex()
+        if selectedIndex.row() < 0 or selectedIndex.row() >= len(g_dbRows):
+            selectedGameId = None
+        else:
+            selectedGameId = g_dbRows[selectedIndex.row()][g_dbColumnNames.index("GA_Id")]
+            selectedRowTopY = self.rowViewportPosition(selectedIndex.row())
+
+        # Query database
+        queryDb(i_sqlWhereExpression)
+        # Update table widget data
+        self.requery()
+
+        # If a game was previously selected,
+        # search for new row number of that game
+        # and if found, scroll to put that game in the same screen position it previously was
+        if selectedGameId != None:
+            idColumnNo = g_dbColumnNames.index("GA_Id")
+            newDbRowNo = None
+            for dbRowNo, dbRow in enumerate(g_dbRows):
+                if dbRow[idColumnNo] == selectedGameId:
+                    newDbRowNo = dbRowNo
+                    break
+
+            if newDbRowNo == None:
+                self.scrollToTop()
+            else:
+                self.verticalScrollBar().setValue(self.rowHeight() * newDbRowNo - selectedRowTopY)
+                self.selectionModel().setCurrentIndex(self.selectionModel().model().index(newDbRowNo, selectedIndex.column()), QItemSelectionModel.ClearAndSelect)
+
+    def requery(self):
+        self.tableModel.modelReset.emit()
+
     def focusInEvent(self, i_event):  # override from QWidget
         # If don't have a selection, its row and column both showing up as -1
         # (which can happen eg. after a column is added or deleted),
@@ -2779,13 +2889,20 @@ class MyTableView(QTableView):
                 if gameId != 0:
                     self.selectGameWithId(gameId)
 
+    def findGameWithId(self, i_id):
+        idColumnNo = g_dbColumnNames.index("GA_Id")
+        for rowNo, row in enumerate(g_dbRows):
+            if row[idColumnNo] == i_id:
+                return rowNo
+        return None
+
     def selectGameWithId(self, i_gameId):
         # Look for row in table,
         # and if not found then clear filter and look again
-        rowNo = findGameWithId(i_gameId)
+        rowNo = self.findGameWithId(i_gameId)
         if rowNo == None:
             columnFilterBar.resetFilterRowCount(1)
-            rowNo = findGameWithId(i_gameId)
+            rowNo = self.findGameWithId(i_gameId)
 
         # If found, select it
         if rowNo != None:
@@ -2863,9 +2980,6 @@ class MyTableView(QTableView):
         self.horizontalScrollBar().setValue(self.horizontalScrollBar().value() + i_dx)
 
     # + }}}
-
-    def requery(self):
-        self.tableModel.modelReset.emit()
 
     def updateGeometries(self):  # override from QAbstractItemView
         # Increase the horizontal scrollbar's maximum to enable scrolling to the insert/delete filter row buttons 
@@ -3071,6 +3185,8 @@ class MyTableView(QTableView):
 
     # + }}}
 
+# + }}}
+
 # Create a Qt application
 # (or reuse old one if it already exists; ie. when re-running in REPL during development)
 if not QApplication.instance():
@@ -3240,99 +3356,6 @@ editMenu.addAction("Copy")
 
 import sql
 
-def filterFormat_perColumn():
-    columnFilterBar.show()
-    sqlFilterBar.hide()
-
-    # Convert SQL text to per-column filters
-    # and set it in the per-column widget
-
-    # Get the expression text
-    whereExpression = sqlFilterBar.text().strip()
-
-    # Tokenize, parse and postprocess it
-    tokenized = sql.tokenizeWhereExpr(whereExpression)
-    if len(tokenized) == 0:
-        return
-    sql.initializeOperatorTable()
-    parsed = sql.parseExpression(tokenized)
-    #print(parsed)
-    if parsed == None:
-        statusbar.setText("failed to parse")
-        return
-    parsed = sql.flattenOperator(parsed, "AND")
-    parsed = sql.flattenOperator(parsed, "OR")
-    pprint.pprint(parsed)
-
-    # Get or construct a top-level OR array
-    if parsed["op"] == ("operator", "OR"):
-        orExpressions = parsed["children"]
-    else:
-        orExpressions = [parsed]
-
-    columnFilterBar.resetFilterRowCount(len(orExpressions), False, False)
-
-    for orExpressionNo, orExpression in enumerate(orExpressions):
-        # Get or construct a second-level AND array
-        if orExpression["op"] == ("operator", "AND"):
-            andExpressions = orExpression["children"]
-        else:
-            andExpressions = [orExpression]
-
-        #
-        for andExpression in andExpressions:
-            pprint.pprint(andExpression)
-            operator, columnName, value = interpretColumnOperation(andExpression)
-            #print("operator, columnName, value: " + str((operator, columnName, value)))
-            #if columnName != None:
-            usableColumn = usableColumn_getByDbIdentifier(columnName)
-            if usableColumn != None:
-                # Get table column,
-                # which if it doesn't exist then add it (ie. unhide it)
-                tableColumn = tableColumn_getById(usableColumn["id"])
-                if tableColumn == None:
-                    tableColumn = tableColumn_add(usableColumn["id"])
-
-                #
-                widgetText = None
-                if operator == "LIKE":
-                    # If have percent sign at beginning and end and nowhere else
-                    if len(value) >= 2 and value[0] == "%" and value[-1] == "%" and value[1:-1].find("%") == -1:
-                        widgetText = value[1:-1]
-                    else:
-                        widgetText = value
-                elif operator == "REGEXP":
-                    widgetText = "/" + value + "/"
-                elif operator == "BETWEEN":
-                    widgetText = value
-                elif operator == "IS":
-                    widgetText = "=" + value
-                elif operator == "IS NOT":
-                    widgetText = "<>" + value
-                elif operator == "=" or operator == "==":
-                    widgetText = "=" + value
-                elif operator == "<":
-                    widgetText = "<" + value
-                elif operator == "<=":
-                    widgetText = "<=" + value
-                elif operator == ">":
-                    widgetText = ">" + value
-                elif operator == ">=":
-                    widgetText = ">=" + value
-                elif operator == "<>" or operator == "!=":
-                    widgetText = "<>" + value
-
-                # Set text in widget
-                if widgetText != None:
-                    columnFilterBar.columnWidgets[usableColumn["id"]]["filterEdits"][orExpressionNo].setText(widgetText)
-
-    columnFilterBar.repositionFilterEdits()
-    columnFilterBar.repositionTabOrder()
-    columnFilterBar.filterChange.emit()
-    """
-(Games.Name LIKE '%zz%' ESCAPE '\') OR (Publishers.Publisher LIKE '%oo%' ESCAPE '\')
-    """
-
 def interpretColumnOperation(i_node):
     """
     Params:
@@ -3389,7 +3412,126 @@ def interpretColumnOperation(i_node):
         return None, None, None
     return operator, columnName, value
 
+def sqlWhereExpressionToColumnFilters(i_whereExpression):
+    """
+    Convert SQL text to per-column filter values
+
+    Params:
+     i_sqlWhereExpression:
+      (str)
+
+    Returns:
+     (list)
+     An element for each 'row' of filter edits in the UI.
+     Each element is:
+      (dict with arbitrary key-value properties)
+      The filter UI text for a particular column.
+      Dict has:
+       Keys:
+        (str)
+        ID of column
+       Value:
+        (str)
+        Text for the filter box.
+    """
+    # Tokenize, parse and postprocess it
+    tokenized = sql.tokenizeWhereExpr(i_whereExpression)
+    if len(tokenized) == 0:
+        return []
+    sql.initializeOperatorTable()
+    parsed = sql.parseExpression(tokenized)
+    #print(parsed)
+    if parsed == None:
+        statusbar.setText("failed to parse")
+        return []
+    parsed = sql.flattenOperator(parsed, "AND")
+    parsed = sql.flattenOperator(parsed, "OR")
+    #pprint.pprint(parsed)
+
+    # Get or construct a top-level OR array from the input parse tree
+    if parsed["op"] == ("operator", "OR"):
+        orExpressions = parsed["children"]
+    else:
+        orExpressions = [parsed]
+
+    # Initialize a top-level OR array for output,
+    # and then for every input OR expression
+    oredRows = []
+    for orExpressionNo, orExpression in enumerate(orExpressions):
+
+        # Get or construct a second-level AND array from the input parse tree
+        if orExpression["op"] == ("operator", "AND"):
+            andExpressions = orExpression["children"]
+        else:
+            andExpressions = [orExpression]
+
+        # Initialize a second-level AND dict for output,
+        # and then for every input AND expression
+        andedFields = {}
+        for andExpression in andExpressions:
+            operator, columnName, value = interpretColumnOperation(andExpression)
+            #print("operator, columnName, value: " + str((operator, columnName, value)))
+            #if columnName != None:
+            usableColumn = usableColumn_getByDbIdentifier(columnName)
+            if usableColumn != None:
+                widgetText = None
+                if operator == "LIKE":
+                    # If have percent sign at beginning and end and nowhere else
+                    if len(value) >= 2 and value[0] == "%" and value[-1] == "%" and value[1:-1].find("%") == -1:
+                        widgetText = value[1:-1]
+                    else:
+                        widgetText = value
+                elif operator == "REGEXP":
+                    widgetText = "/" + value + "/"
+                elif operator == "BETWEEN":
+                    widgetText = value
+                elif operator == "IS":
+                    widgetText = "=" + value
+                elif operator == "IS NOT":
+                    widgetText = "<>" + value
+                elif operator == "=" or operator == "==":
+                    widgetText = "=" + value
+                elif operator == "<":
+                    widgetText = "<" + value
+                elif operator == "<=":
+                    widgetText = "<=" + value
+                elif operator == ">":
+                    widgetText = ">" + value
+                elif operator == ">=":
+                    widgetText = ">=" + value
+                elif operator == "<>" or operator == "!=":
+                    widgetText = "<>" + value
+
+                # Save widget text in output dict
+                if widgetText != None:
+                    andedFields[usableColumn["id"]] = widgetText
+
+        #
+        oredRows.append(andedFields)
+
+    return oredRows
+
+def filterFormat_perColumn():
+    # Show column filter bar instead of SQL filter bar
+    columnFilterBar.show()
+    sqlFilterBar.hide()
+
+    # Convert SQL text to per-column filters
+    # and set it in the per-column widgets
+
+    # Get the expression text
+    whereExpression = sqlFilterBar.text().strip()
+
+    #
+    oredRows = sqlWhereExpressionToColumnFilters(whereExpression)
+    columnFilterBar.setFilterValues(oredRows)
+
+    columnFilterBar.repositionFilterEdits()
+    columnFilterBar.repositionTabOrder()
+    columnFilterBar.filterChange.emit()
+
 def filterFormat_sql():
+    # Show SQL filter bar instead of column filter bar
     columnFilterBar.hide()
     sqlFilterBar.show()
 
@@ -3399,22 +3541,65 @@ def filterFormat_sql():
     sqlFilterBar.setText(sqlWhereExpression)
 
 filterMenu = menuBar.addMenu("F&ilter")
+
+#filterMenu.addSection("Go")
+filterMenu_back_action = filterMenu.addAction("Go &back")
+filterMenu_back_action.triggered.connect(filterHistory_goBack)
+filterMenu_forward_action = filterMenu.addAction("Go &forward")
+filterMenu_forward_action.triggered.connect(filterHistory_goForward)
+
+filterMenu.addSeparator()
+
 actionGroup = QActionGroup(filterMenu)
 actionGroup.setExclusive(True)
-filterMenu_filterFormat_perColumn_action = filterMenu.addAction("Per-&column")
+filterMenu_filterFormat_perColumn_action = filterMenu.addAction("Edit per-&column")
 filterMenu_filterFormat_perColumn_action.setCheckable(True)
 filterMenu_filterFormat_perColumn_action.setChecked(True)
 filterMenu_filterFormat_perColumn_action.triggered.connect(filterFormat_perColumn)
 actionGroup.addAction(filterMenu_filterFormat_perColumn_action)
 #filterMenu_separator = filterMenu.addAction("sep")
 #filterMenu_separator.setSeparator(True)
-filterMenu_filterFormat_sql_action = filterMenu.addAction("&SQL")
+filterMenu_filterFormat_sql_action = filterMenu.addAction("Edit as &SQL")
 filterMenu_filterFormat_sql_action.setCheckable(True)
 filterMenu_filterFormat_sql_action.triggered.connect(filterFormat_sql)
 actionGroup.addAction(filterMenu_filterFormat_sql_action)
 #filterMenu.addAction(actionGroup)
 #menuBar.addMenu("View")
 #menuBar.addMenu("Help")
+
+filterMenu.addSeparator()
+
+filterMenu_filterFormat_copySql_action = filterMenu.addAction("C&opy SQL")
+
+viewMenu = menuBar.addMenu("&View")
+viewMenu_toolbar_action = viewMenu.addAction("&Toolbar")
+viewMenu_toolbar_action.setCheckable(True)
+viewMenu_toolbar_action.setChecked(True)
+
+viewMenu.addSeparator()
+
+#viewMenu_splitMenu = QMenu("&Split")
+#viewMenu_toolbar_action = viewMenu.addMenu(viewMenu_splitMenu)
+viewMenu_horizontalAction = viewMenu.addAction("Split &horizontally")
+viewMenu_horizontalAction.setCheckable(True)
+viewMenu_horizontalAction.setChecked(True)
+viewMenu_verticalAction = viewMenu.addAction("Split &vertically")
+viewMenu_verticalAction.setCheckable(True)
+actionGroup = QActionGroup(filterMenu)
+actionGroup.setExclusive(True)
+actionGroup.addAction(viewMenu_horizontalAction)
+actionGroup.addAction(viewMenu_verticalAction)
+
+# + }}}
+
+# + Toolbar {{{
+
+toolbar = QToolBar()
+toolbar_back_action = toolbar.addAction(QIcon(application.style().standardIcon(QStyle.SP_ArrowLeft)), "Back")
+toolbar_back_action.triggered.connect(filterHistory_goBack)
+toolbar_forward_action = toolbar.addAction(QIcon(application.style().standardIcon(QStyle.SP_ArrowRight)), "Forward")
+toolbar_forward_action.triggered.connect(filterHistory_goForward)
+mainWindow_layout.addWidget(toolbar)
 
 # + }}}
 
@@ -3470,35 +3655,20 @@ columnFilterBar.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 gameTable_layout.addWidget(columnFilterBar)
 
 def columnFilterBar_onFilterChange():
-    # Remember what game is currently selected and where on the screen the row is
-    selectedIndex = tableView.selectionModel().currentIndex()
-    if selectedIndex.row() < 0 or selectedIndex.row() >= len(g_dbRows):
-        selectedGameId = None
-    else:
-        selectedGameId = g_dbRows[selectedIndex.row()][g_dbColumnNames.index("GA_Id")]
-        selectedRowTopY = tableView.rowViewportPosition(selectedIndex.row())
-
-    # Query database and update table widget data
+    #
     sqlWhereExpression = getSqlWhereExpression()
-    queryDb(sqlWhereExpression)
-    tableView.requery()
 
-    # If a game was previously selected,
-    # search for new row number of that game
-    # and if found, scroll to put that game in the same screen position it previously was
-    if selectedGameId != None:
-        idColumnNo = g_dbColumnNames.index("GA_Id")
-        newDbRowNo = None
-        for dbRowNo, dbRow in enumerate(g_dbRows):
-            if dbRow[idColumnNo] == selectedGameId:
-                newDbRowNo = dbRowNo
-                break
+    # If expression is different from the last history item at the current position,
+    # truncate history at current position and append new item
+    global g_filterHistory
+    global g_filterHistory_pos
+    if g_filterHistory[g_filterHistory_pos - 1] != sqlWhereExpression:
+        del(g_filterHistory[g_filterHistory_pos:])
+        g_filterHistory.append(sqlWhereExpression)
+        g_filterHistory_pos += 1
 
-        if newDbRowNo == None:
-            tableView.scrollToTop()
-        else:
-            tableView.verticalScrollBar().setValue(tableView.rowHeight() * newDbRowNo - selectedRowTopY)
-            tableView.selectionModel().setCurrentIndex(tableView.selectionModel().model().index(newDbRowNo, selectedIndex.column()), QItemSelectionModel.ClearAndSelect)
+    #
+    tableView.refilter(sqlWhereExpression)
 columnFilterBar.filterChange.connect(columnFilterBar_onFilterChange)
 
 # + }}}
