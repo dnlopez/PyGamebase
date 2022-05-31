@@ -995,96 +995,6 @@ connectionsFromGamesTable = {
 }
 
 
-def getSqlWhereExpression():
-    """
-    Returns:
-     (str)
-    """
-    andGroups = []
-
-    for filterRowNo in range(0, len(columnFilterBar.filterRows)):
-        andTerms = []
-
-        for column in tableColumn_getBySlice():
-            usableColumn = usableColumn_getById(column["id"])
-            if column["filterable"]:
-                value = columnFilterBar.columnWidgets[column["id"]]["filterEdits"][filterRowNo].text()
-                value = value.strip()
-                if value != "":
-                    # If range operator
-                    betweenValues = value.split("~")
-                    if len(betweenValues) == 2 and stringLooksLikeNumber(betweenValues[0]) and stringLooksLikeNumber(betweenValues[1]):
-                        andTerms.append(usableColumn["dbTableName"] + "." + usableColumn["dbFieldName"] + " BETWEEN " + betweenValues[0] + " AND " + betweenValues[1])
-
-                    # Else if regular expression
-                    elif len(value) > 2 and value.startswith("/") and value.endswith("/"):
-                        # Get regexp
-                        value = value[1:-1]
-
-                        # Format value as a string
-                        value = value.replace("'", "''")
-                        value = "'" + value + "'"
-
-                        #
-                        andTerms.append(usableColumn["dbTableName"] + "." + usableColumn["dbFieldName"] + " REGEXP " + value)
-                        # Format value as a string
-                        value = value.replace("'", "''")
-                        value = "'" + value + "'"
-
-                    # Else if a comparison operator (=, <>, >, <, >=, <=)
-                    elif value.startswith("=") or value.startswith(">") or value.startswith("<"):
-                        # Get operator and value
-                        if value.startswith(">=") or value.startswith("<=") or value.startswith("<>"):
-                            operator = value[:2]
-                            value = value[2:]
-                        else:
-                            operator = value[:1]
-                            value = value[1:]
-
-                        # If testing for exact equality, handle the special value "NULL"
-                        if operator == "=" and value == "NULL":
-                            operator = "IS"
-                        elif operator == "<>" and value == "NULL":
-                            operator = "IS NOT"
-                        # Else if value doesn't look like a number, format it as a string
-                        elif not stringLooksLikeNumber(value):
-                            value = value.replace("'", "''")
-                            value = "'" + value + "'"
-
-                        #
-                        andTerms.append(usableColumn["dbTableName"] + "." + usableColumn["dbFieldName"] + " " + operator + " " + value)
-
-                    # Else if a LIKE expression (contains an unescaped %)
-                    elif value.replace("\\%", "").find("%") != -1:
-                        # Format value as a string
-                        value = value.replace("'", "''")
-                        value = "'" + value + "'"
-
-                        #
-                        andTerm = usableColumn["dbTableName"] + "." + usableColumn["dbFieldName"] + " LIKE " + value
-                        if value.find("\\%") != -1:
-                            andTerm += " ESCAPE '\\'"
-                        andTerms.append(andTerm)
-
-                    # Else if a plain string
-                    else:
-                        value = "%" + value + "%"
-
-                        # Format value as a string
-                        value = value.replace("'", "''")
-                        value = "'" + value + "'"
-
-                        #
-                        andTerms.append(usableColumn["dbTableName"] + "." + usableColumn["dbFieldName"] + " LIKE " + value)
-
-        if len(andTerms) > 0:
-            andGroups.append(andTerms)
-
-    if len(andGroups) > 0:
-        return " OR ".join(["(" + andGroupStr + ")"  for andGroupStr in [" AND ".join(andGroup)  for andGroup in andGroups]])
-    else:
-        return ""
-
 def queryDb(i_whereExpression):
     """
     Params:
@@ -1452,7 +1362,7 @@ class ColumnNameBar(QWidget):
                     columnFilterBar.repositionTabOrder()
 
                     # Requery DB in case filter criteria have changed
-                    queryDb(getSqlWhereExpression())
+                    refilterFromCurrentlyVisibleBar()
                     tableView.requery()
                     #
                     tableView.resizeAllColumns([column["width"]  for column in tableColumn_getBySlice()])
@@ -1665,7 +1575,7 @@ class ColumnNameBar(QWidget):
         self.sort_updateGui()
 
         # Requery DB in new order
-        queryDb(getSqlWhereExpression())
+        refilterFromCurrentlyVisibleBar()
         tableView.requery()
 
     def sort_updateGui(self):
@@ -2337,6 +2247,96 @@ class ColumnFilterBar(QWidget):
 
     # + }}}
 
+    def getSqlWhereExpression(self):
+        """
+        Returns:
+         (str)
+        """
+        andGroups = []
+
+        for filterRowNo in range(0, len(self.filterRows)):
+            andTerms = []
+
+            for column in tableColumn_getBySlice():
+                usableColumn = usableColumn_getById(column["id"])
+                if column["filterable"]:
+                    value = self.columnWidgets[column["id"]]["filterEdits"][filterRowNo].text()
+                    value = value.strip()
+                    if value != "":
+                        # If range operator
+                        betweenValues = value.split("~")
+                        if len(betweenValues) == 2 and stringLooksLikeNumber(betweenValues[0]) and stringLooksLikeNumber(betweenValues[1]):
+                            andTerms.append(usableColumn["dbTableName"] + "." + usableColumn["dbFieldName"] + " BETWEEN " + betweenValues[0] + " AND " + betweenValues[1])
+
+                        # Else if regular expression
+                        elif len(value) > 2 and value.startswith("/") and value.endswith("/"):
+                            # Get regexp
+                            value = value[1:-1]
+
+                            # Format value as a string
+                            value = value.replace("'", "''")
+                            value = "'" + value + "'"
+
+                            #
+                            andTerms.append(usableColumn["dbTableName"] + "." + usableColumn["dbFieldName"] + " REGEXP " + value)
+                            # Format value as a string
+                            value = value.replace("'", "''")
+                            value = "'" + value + "'"
+
+                        # Else if a comparison operator (=, <>, >, <, >=, <=)
+                        elif value.startswith("=") or value.startswith(">") or value.startswith("<"):
+                            # Get operator and value
+                            if value.startswith(">=") or value.startswith("<=") or value.startswith("<>"):
+                                operator = value[:2]
+                                value = value[2:]
+                            else:
+                                operator = value[:1]
+                                value = value[1:]
+
+                            # If testing for exact equality, handle the special value "NULL"
+                            if operator == "=" and value == "NULL":
+                                operator = "IS"
+                            elif operator == "<>" and value == "NULL":
+                                operator = "IS NOT"
+                            # Else if value doesn't look like a number, format it as a string
+                            elif not stringLooksLikeNumber(value):
+                                value = value.replace("'", "''")
+                                value = "'" + value + "'"
+
+                            #
+                            andTerms.append(usableColumn["dbTableName"] + "." + usableColumn["dbFieldName"] + " " + operator + " " + value)
+
+                        # Else if a LIKE expression (contains an unescaped %)
+                        elif value.replace("\\%", "").find("%") != -1:
+                            # Format value as a string
+                            value = value.replace("'", "''")
+                            value = "'" + value + "'"
+
+                            #
+                            andTerm = usableColumn["dbTableName"] + "." + usableColumn["dbFieldName"] + " LIKE " + value
+                            if value.find("\\%") != -1:
+                                andTerm += " ESCAPE '\\'"
+                            andTerms.append(andTerm)
+
+                        # Else if a plain string
+                        else:
+                            value = "%" + value + "%"
+
+                            # Format value as a string
+                            value = value.replace("'", "''")
+                            value = "'" + value + "'"
+
+                            #
+                            andTerms.append(usableColumn["dbTableName"] + "." + usableColumn["dbFieldName"] + " LIKE " + value)
+
+            if len(andTerms) > 0:
+                andGroups.append(andTerms)
+
+        if len(andGroups) > 0:
+            return " OR ".join(["(" + andGroupStr + ")"  for andGroupStr in [" AND ".join(andGroup)  for andGroup in andGroups]])
+        else:
+            return ""
+
     # + Scrolling {{{
 
     def scroll(self, i_dx, i_dy):  # override from QWidget
@@ -2458,6 +2458,7 @@ def filterHistory_goBack():
     #
     sqlWhereExpression = g_filterHistory[g_filterHistory_pos - 1]
 
+    # TODO if sql bar is visible update that instead
     oredRows = sqlWhereExpressionToColumnFilters(sqlWhereExpression)
     columnFilterBar.setFilterValues(oredRows)
 
@@ -2477,6 +2478,7 @@ def filterHistory_goForward():
     #
     sqlWhereExpression = g_filterHistory[g_filterHistory_pos - 1]
 
+    # TODO if sql bar is visible update that instead
     oredRows = sqlWhereExpressionToColumnFilters(sqlWhereExpression)
     columnFilterBar.setFilterValues(oredRows)
 
@@ -2767,23 +2769,48 @@ class MyTableView(QTableView):
 
         #self.verticalScrollBar().setSingleStep(30)
 
+    def selectedGameId(self):
+        """
+        Returns:
+         (int)
+        """
+        selectedIndex = self.selectionModel().currentIndex()
+        return g_dbRows[selectedIndex.row()][g_dbColumnNames.index("GA_Id")]
+
     def refilter(self, i_sqlWhereExpression):
         """
         Params:
          i_sqlWhereExpression:
           (str)
-        """
 
+        Returns:
+         (bool)
+        """
         # Remember what game is currently selected and where on the screen the row is
         selectedIndex = self.selectionModel().currentIndex()
         if selectedIndex.row() < 0 or selectedIndex.row() >= len(g_dbRows):
             selectedGameId = None
         else:
-            selectedGameId = g_dbRows[selectedIndex.row()][g_dbColumnNames.index("GA_Id")]
+            selectedGameId = self.selectedGameId()
             selectedRowTopY = self.rowViewportPosition(selectedIndex.row())
 
         # Query database
-        queryDb(i_sqlWhereExpression)
+        sqlValid = True
+        try:
+            queryDb(i_sqlWhereExpression)
+        except sqlite3.OperationalError as e:
+            sqlValid = False
+
+            import traceback
+            print(traceback.format_exc())
+
+            #messageBox = QMessageBox(QMessageBox.Critical, "Error", "")
+            messageBox = MyMessageBox(application.style().standardIcon(QStyle.SP_MessageBoxCritical), "Error", "")
+            messageBox.setText("<big><b>In SQL WHERE expression:</b></big>")
+            messageBox.setInformativeText("\n".join(traceback.format_exception_only(e)))
+            messageBox.resizeToContent()
+            messageBox.exec()
+
         # Update table widget data
         self.requery()
 
@@ -2803,6 +2830,8 @@ class MyTableView(QTableView):
             else:
                 self.verticalScrollBar().setValue(self.rowHeight() * newDbRowNo - selectedRowTopY)
                 self.selectionModel().setCurrentIndex(self.selectionModel().model().index(newDbRowNo, selectedIndex.column()), QItemSelectionModel.ClearAndSelect)
+
+        return sqlValid
 
     def requery(self):
         self.tableModel.modelReset.emit()
@@ -2842,8 +2871,9 @@ class MyTableView(QTableView):
             detailPaneWasAlreadyVisible = detailPane_height() > 0
             detailPane_show()
             self.scrollTo(i_modelIndex, QAbstractItemView.PositionAtTop)
-            if g_dbRows[i_modelIndex.row()][g_dbColumnNames.index("GA_Id")] != detailPane_currentGameId:
-                detailPane_populate(i_modelIndex.row())
+            gameId = g_dbRows[i_modelIndex.row()][g_dbColumnNames.index("GA_Id")]
+            if gameId != detailPane_currentGameId:
+                detailPane_populate(gameId)
             if i_keyboardOriented and detailPaneWasAlreadyVisible:
                 detailPane_webEngineView.setFocus(Qt.OtherFocusReason)
 
@@ -2916,8 +2946,8 @@ class MyTableView(QTableView):
         # repopulate it from the new row
         if detailPane_height() > 0:
             selectedIndex = self.selectionModel().currentIndex()
-            if g_dbRows[selectedIndex.row()][g_dbColumnNames.index("GA_Id")] != detailPane_currentGameId:
-                detailPane_populate(selectedIndex.row())
+            if self.selectedGameId() != detailPane_currentGameId:
+                detailPane_populate(self.selectedGameId())
 
     # + Context menu {{{
 
@@ -3260,8 +3290,8 @@ def f12Shortcut_onActivated():
         # Open, populate and focus the detail pane
         detailPane_show()
 
-        if g_dbRows[selectedIndex.row()][g_dbColumnNames.index("GA_Id")] != detailPane_currentGameId:
-            detailPane_populate(selectedIndex.row())
+        if tableView.selectedGameId() != detailPane_currentGameId:
+            detailPane_populate(self.selectedGameId())
 
         detailPane_webEngineView.setFocus(Qt.OtherFocusReason)
     # Else if detail pane is open,
@@ -3537,7 +3567,7 @@ def filterFormat_sql():
 
     # Convert per-column filters to SQL text
     # and set it in the SQL widget
-    sqlWhereExpression = getSqlWhereExpression()
+    sqlWhereExpression = columnFilterBar.getSqlWhereExpression()
     sqlFilterBar.setText(sqlWhereExpression)
 
 filterMenu = menuBar.addMenu("F&ilter")
@@ -3647,40 +3677,6 @@ columnNameBar.setFixedHeight(30)
 gameTable_layout.addWidget(columnNameBar)
 
 # + }}}
-
-# + Column filter bar {{{
-
-columnFilterBar = ColumnFilterBar()
-columnFilterBar.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-gameTable_layout.addWidget(columnFilterBar)
-
-def columnFilterBar_onFilterChange():
-    #
-    sqlWhereExpression = getSqlWhereExpression()
-
-    # If expression is different from the last history item at the current position,
-    # truncate history at current position and append new item
-    global g_filterHistory
-    global g_filterHistory_pos
-    if g_filterHistory[g_filterHistory_pos - 1] != sqlWhereExpression:
-        del(g_filterHistory[g_filterHistory_pos:])
-        g_filterHistory.append(sqlWhereExpression)
-        g_filterHistory_pos += 1
-
-    #
-    tableView.refilter(sqlWhereExpression)
-columnFilterBar.filterChange.connect(columnFilterBar_onFilterChange)
-
-# + }}}
-
-# + SQL filter bar {{{
-
-#sqlFilterBar = SqlFilterBar()
-sqlFilterBar = ColumnFilterBar.FilterEdit("")
-sqlFilterBar.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-sqlFilterBar.setFixedHeight(30)
-sqlFilterBar.hide()
-gameTable_layout.addWidget(sqlFilterBar)
 
 class MyMessageBox(QDialog):
     def __init__(self, i_icon, i_title, i_text, i_buttons=QDialogButtonBox.Ok, i_parent=None, i_windowFlags=Qt.Dialog):
@@ -3799,47 +3795,60 @@ class MyMessageBox(QDialog):
     def setInformativeText(self, i_text):
         self.informativeLabel.setText(i_text)
 
+def refilterFromCurrentlyVisibleBar():
+    if columnFilterBar.isVisible():
+        sqlWhereExpression = columnFilterBar.getSqlWhereExpression()
+    else: #if columnFilterBar.isVisible():
+        sqlWhereExpression = sqlFilterBar.text()
+
+    tableView.refilter(sqlWhereExpression)
+
+# + Column filter bar {{{
+
+columnFilterBar = ColumnFilterBar()
+columnFilterBar.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+gameTable_layout.addWidget(columnFilterBar)
+
+def columnFilterBar_onFilterChange():
+    sqlWhereExpression = columnFilterBar.getSqlWhereExpression()
+    if not tableView.refilter(sqlWhereExpression):
+        return
+
+    # If expression is different from the last history item at the current position,
+    # truncate history at current position and append new item
+    global g_filterHistory
+    global g_filterHistory_pos
+    if g_filterHistory[g_filterHistory_pos - 1] != sqlWhereExpression:
+        del(g_filterHistory[g_filterHistory_pos:])
+        g_filterHistory.append(sqlWhereExpression)
+        g_filterHistory_pos += 1
+
+columnFilterBar.filterChange.connect(columnFilterBar_onFilterChange)
+
+# + }}}
+
+# + SQL filter bar {{{
+
+#sqlFilterBar = SqlFilterBar()
+sqlFilterBar = ColumnFilterBar.FilterEdit("")
+sqlFilterBar.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+sqlFilterBar.setFixedHeight(30)
+sqlFilterBar.hide()
+gameTable_layout.addWidget(sqlFilterBar)
+
 def sqlFilterBar_onTextChange():
-    # Remember what game is currently selected and where on the screen the row is
-    selectedIndex = tableView.selectionModel().currentIndex()
-    if selectedIndex.row() < 0 or selectedIndex.row() >= len(g_dbRows):
-        selectedGameId = None
-    else:
-        selectedGameId = g_dbRows[selectedIndex.row()][g_dbColumnNames.index("GA_Id")]
-        selectedRowTopY = tableView.rowViewportPosition(selectedIndex.row())
-
-    # Query database and update table widget data
     sqlWhereExpression = sqlFilterBar.text()
-    try:
-        queryDb(sqlWhereExpression)
-    except sqlite3.OperationalError as e:
-        import traceback
-        print(traceback.format_exc())
+    if not tableView.refilter(sqlWhereExpression):
+        return
 
-        #messageBox = QMessageBox(QMessageBox.Critical, "Error", "")
-        messageBox = MyMessageBox(application.style().standardIcon(QStyle.SP_MessageBoxCritical), "Error", "")
-        messageBox.setText("<big><b>In SQL WHERE expression:</b></big>")
-        messageBox.setInformativeText("\n".join(traceback.format_exception_only(e)))# + "\nhad just plonked the code across - and suddenly it now looked like a lot of WTF, even though it's not all that big. I have the halfway progress of tidying here on my PC uncommitted, so I'd like to recheck and had just plonked the code across - and suddenly it now looked like a lot of WTF, even though it's not all that big. I have the halfway progress of tidying here on my PC uncommitted, so I'd like to recheck and had just plonked the code across - and suddenly it now looked like a lot of WTF, even though it's not all that big. I have the halfway progress of tidying here on my PC uncommitted, so I'd like to recheck and had just plonked the code across - and suddenly it now looked like a lot of WTF, even though it's not all that big. I have the halfway progress of tidying here on my PC uncommitted, so I'd like to recheck and had just plonked the code across - and suddenly it now looked like a lot of WTF, even though it's not all that big. I have the halfway progress of tidying here on my PC uncommitted, so I'd like to recheck and had just plonked the code across - and suddenly it now looked like a lot of WTF, even though it's not all that big. I have the halfway progress of tidying here on my PC uncommitted, so I'd like to recheck and had just plonked the code across - and suddenly it now looked like a lot of WTF, even though it's not all that big. I have the halfway progress of tidying here on my PC uncommitted, so I'd like to recheck and had just plonked the code across - and suddenly it now looked like a lot of WTF, even though it's not all that big. I have the halfway progress of tidying here on my PC uncommitted, so I'd like to recheck and again END")
-        messageBox.resizeToContent()
-        messageBox.exec()
-    tableView.requery()
-
-    # If a game was previously selected,
-    # search for new row number of that game
-    # and if found, scroll to put that game in the same screen position it previously was
-    if selectedGameId != None:
-        idColumnNo = g_dbColumnNames.index("GA_Id")
-        newDbRowNo = None
-        for dbRowNo, dbRow in enumerate(g_dbRows):
-            if dbRow[idColumnNo] == selectedGameId:
-                newDbRowNo = dbRowNo
-                break
-
-        if newDbRowNo == None:
-            tableView.scrollToTop()
-        else:
-            tableView.verticalScrollBar().setValue(tableView.rowHeight() * newDbRowNo - selectedRowTopY)
-            tableView.selectionModel().setCurrentIndex(tableView.selectionModel().model().index(newDbRowNo, selectedIndex.column()), QItemSelectionModel.ClearAndSelect)
+    # If expression is different from the last history item at the current position,
+    # truncate history at current position and append new item
+    global g_filterHistory
+    global g_filterHistory_pos
+    if g_filterHistory[g_filterHistory_pos - 1] != sqlWhereExpression:
+        del(g_filterHistory[g_filterHistory_pos:])
+        g_filterHistory.append(sqlWhereExpression)
+        g_filterHistory_pos += 1
 sqlFilterBar.textChange.connect(sqlFilterBar_onTextChange)
 
 # + }}}
@@ -3926,13 +3935,13 @@ detailPane_webEngineView.setProperty("class", "webEngineView")
 detailPane_layout.addWidget(detailPane_webEngineView)
 
 detailPane_currentGameId = None
-def detailPane_populate(i_rowNo):
+def detailPane_populate(i_gameId):
     """
     Params:
-     i_rowNo:
+     i_gameId:
       (int)
     """
-    gameRow = getGameRecord(g_dbRows[i_rowNo][g_dbColumnNames.index("GA_Id")], True)
+    gameRow = getGameRecord(i_gameId, True)
 
     global detailPane_currentGameId
     detailPane_currentGameId = gameRow["GA_Id"]
@@ -4192,7 +4201,7 @@ openDb()
 
 columnNameBar.initFromColumns()
 columnFilterBar.initFromColumns()
-queryDb(getSqlWhereExpression())
+refilterFromCurrentlyVisibleBar()
 tableView.requery()
 tableView.resizeAllColumns([column["width"]  for column in tableColumn_getBySlice()])
 
