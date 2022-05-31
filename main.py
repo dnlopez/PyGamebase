@@ -998,8 +998,7 @@ connectionsFromGamesTable = {
 def getSqlWhereExpression():
     """
     Returns:
-     Either (str)
-     or (None)
+     (str)
     """
     andGroups = []
 
@@ -1084,14 +1083,13 @@ def getSqlWhereExpression():
     if len(andGroups) > 0:
         return " OR ".join(["(" + andGroupStr + ")"  for andGroupStr in [" AND ".join(andGroup)  for andGroup in andGroups]])
     else:
-        return None
+        return ""
 
 def queryDb(i_whereExpression):
     """
     Params:
      i_whereExpression:
-      Either (str)
-      or (None)
+      (str)
     """
     selectTerms = [
         "Games.GA_Id",
@@ -1124,10 +1122,9 @@ def queryDb(i_whereExpression):
     sql += "\nFROM " + " ".join(fromTerms)
 
     # WHERE
-    if i_whereExpression != None:
-        i_whereExpression = i_whereExpression.strip()
-        if i_whereExpression != "":
-            sql += "\nWHERE " + i_whereExpression
+    i_whereExpression = i_whereExpression.strip()
+    if i_whereExpression != "":
+        sql += "\nWHERE " + i_whereExpression
 
     # ORDER BY
     if len(columnNameBar.sort_operations) > 0:
@@ -3399,8 +3396,6 @@ def filterFormat_sql():
     # Convert per-column filters to SQL text
     # and set it in the SQL widget
     sqlWhereExpression = getSqlWhereExpression()
-    if sqlWhereExpression == None:
-        sqlWhereExpression = ""
     sqlFilterBar.setText(sqlWhereExpression)
 
 filterMenu = menuBar.addMenu("F&ilter")
