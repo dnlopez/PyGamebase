@@ -894,11 +894,6 @@ def closeDb():
     g_db.close()
     g_db = None
 
-g_dbColumnNames = None
-#  (list of str)
-g_dbRows = None
-#  (list of tuple)
-
 def stringLooksLikeNumber(i_str):
     try:
         float(i_str)
@@ -994,71 +989,6 @@ connectionsFromGamesTable = {
     },
 }
 
-
-def queryDb(i_whereExpression):
-    """
-    Params:
-     i_whereExpression:
-      (str)
-    """
-    selectTerms = [
-        "Games.GA_Id",
-        "Games.ScrnshotFilename",
-        "Games.Comment",
-        "Games.Gemus",
-        "Games.Filename",
-        "Games.FileToRun",
-        "Games.MemoText"
-    ]
-
-    fromTerms = [
-        "Games"
-    ]
-
-    tableConnections = copy.deepcopy(connectionsFromGamesTable)
-    visibleDbNames = [(usableColumn["dbTableName"], usableColumn["dbFieldName"])
-                      for usableColumn in [usableColumn_getById(column["id"])  for column in tableColumn_getBySlice()]
-                      if "dbTableName" in usableColumn and "dbFieldName" in usableColumn]
-    for tableName, fieldName in visibleDbNames:
-        fromTerms += getJoinTermsToTable(tableName, tableConnections)
-
-        if tableName == "Games" and fieldName == "GA_Id":
-            pass
-        else:
-            selectTerms.append(tableName + "." + fieldName)
-
-    # SELECT
-    sql = "SELECT " + ", ".join(selectTerms)
-    sql += "\nFROM " + " ".join(fromTerms)
-
-    # WHERE
-    i_whereExpression = i_whereExpression.strip()
-    if i_whereExpression != "":
-        sql += "\nWHERE " + i_whereExpression
-
-    # ORDER BY
-    if len(columnNameBar.sort_operations) > 0:
-        sql += "\nORDER BY "
-
-        orderByTerms = []
-        for columnId, direction in columnNameBar.sort_operations:
-            usableColumn = usableColumn_getById(columnId)
-            term = usableColumn["dbTableName"] + "." + usableColumn["dbFieldName"]
-            if direction == -1:
-                term += " DESC"
-            orderByTerms.append(term)
-        sql += ", ".join(orderByTerms)
-
-    # Execute
-    #print(sql)
-    cursor = g_db.execute(sql)
-
-    global g_dbColumnNames
-    g_dbColumnNames = [column[0]  for column in cursor.description]
-    global g_dbRows
-    g_dbRows = cursor.fetchall()
-
-    label_statusbar.setText("Showing " + str(len(g_dbRows)) + " games.")
 
 def getGameRecord(i_gameId, i_includeRelatedGameNames=False):
     """
@@ -2511,13 +2441,13 @@ class MyStyledItemDelegate(QStyledItemDelegate):
 
         # Screenshot
         if column["id"] == "pic":
-            screenshotPath = dbRow_getScreenshotRelativePath(g_dbRows[i_index.row()])
+            screenshotPath = dbRow_getScreenshotRelativePath(self.parent().dbRows[i_index.row()])
             if screenshotPath != None:
                 if hasattr(gamebase, "config_screenshotsBaseDirPath"):
                     pixmap = QPixmap(normalizeDirPathFromConfig(gamebase.config_screenshotsBaseDirPath) + "/" + screenshotPath)
                     i_painter.drawPixmap(i_option.rect, pixmap)
         elif column["id"] == "musician_photo":
-            photoPath = dbRow_getPhotoRelativePath(g_dbRows[i_index.row()])
+            photoPath = dbRow_getPhotoRelativePath(self.parent().dbRows[i_index.row()])
             if photoPath != None:
                 if hasattr(gamebase, "config_photosBaseDirPath"):
                     pixmap = QPixmap(normalizeDirPathFromConfig(gamebase.config_photosBaseDirPath) + "/" + photoPath)
@@ -2532,9 +2462,9 @@ class MyTableModel(QAbstractTableModel):
         QAbstractTableModel.__init__(self, i_parent, *args)
 
     def rowCount(self, i_parent):  # override from QAbstractTableModel
-        if g_dbRows == None:
+        if self.parent().dbRows == None:
             return 0
-        return len(g_dbRows)
+        return len(self.parent().dbRows)
 
     def columnCount(self, i_parent):  # override from QAbstractTableModel
         return tableColumn_count()
@@ -2556,7 +2486,7 @@ class MyTableModel(QAbstractTableModel):
         # Play
         elif column["id"] == "play":
             if i_role == Qt.DisplayRole or i_role == MyTableModel.FilterRole:
-                if g_dbRows[i_index.row()][g_dbColumnNames.index("Filename")] == None:
+                if self.parent().dbRows[i_index.row()][self.parent().dbColumnNames.index("Filename")] == None:
                     return ""
                 return "▶"
             elif i_role == Qt.TextAlignmentRole:
@@ -2564,7 +2494,7 @@ class MyTableModel(QAbstractTableModel):
         # Music
         elif column["id"] == "music":
             if i_role == Qt.DisplayRole or i_role == MyTableModel.FilterRole:
-                if g_dbRows[i_index.row()][g_dbColumnNames.index("SidFilename")] == None:
+                if self.parent().dbRows[i_index.row()][self.parent().dbColumnNames.index("SidFilename")] == None:
                     return ""
                 return "M"
             elif i_role == Qt.TextAlignmentRole:
@@ -2573,7 +2503,7 @@ class MyTableModel(QAbstractTableModel):
         elif column["id"] == "pic":
             # (Done via delegate)
             #if i_role == Qt.DecorationRole:
-            #    screenshotPath = g_dbRows[i_index.row()][g_dbColumnNames.index("ScrnshotFilename")]
+            #    screenshotPath = self.parent().dbRows[i_index.row()][self.parent().dbColumnNames.index("ScrnshotFilename")]
             #    pixmap = QPixmap(normalizeDirPathFromConfig(gamebase.config_screenshotsBaseDirPath) + "/" + screenshotPath)
             #    return pixmap;
             pass
@@ -2583,9 +2513,9 @@ class MyTableModel(QAbstractTableModel):
             # Enum field
             if "type" in usableColumn and usableColumn["type"] == "enum":
                 if i_role == MyTableModel.FilterRole:
-                    return g_dbRows[i_index.row()][usableColumn["dbFieldName"]]
+                    return self.parent().dbRows[i_index.row()][usableColumn["dbFieldName"]]
                 elif i_role == Qt.DisplayRole:
-                    value = g_dbRows[i_index.row()][usableColumn["dbFieldName"]]
+                    value = self.parent().dbRows[i_index.row()][usableColumn["dbFieldName"]]
                     if value in usableColumn["enumMap"]:
                         value = str(value) + ": " + usableColumn["enumMap"][value]
                     return value
@@ -2597,9 +2527,9 @@ class MyTableModel(QAbstractTableModel):
             # Game ID field
             if "type" in usableColumn and usableColumn["type"] == "gameId":
                 if i_role == MyTableModel.FilterRole:
-                    return g_dbRows[i_index.row()][usableColumn["dbFieldName"]]
+                    return self.parent().dbRows[i_index.row()][usableColumn["dbFieldName"]]
                 elif i_role == Qt.DisplayRole:
-                    value = g_dbRows[i_index.row()][usableColumn["dbFieldName"]]
+                    value = self.parent().dbRows[i_index.row()][usableColumn["dbFieldName"]]
                     if value == 0:
                         return ""
                     return ">" + str(value)
@@ -2611,7 +2541,7 @@ class MyTableModel(QAbstractTableModel):
             # Other ordinary text field
             else:
                 if i_role == Qt.DisplayRole or i_role == MyTableModel.FilterRole:
-                    return g_dbRows[i_index.row()][usableColumn["dbFieldName"]]
+                    return self.parent().dbRows[i_index.row()][usableColumn["dbFieldName"]]
                 elif i_role == Qt.TextAlignmentRole:
                     if column["textAlignment"] == "center":
                         return Qt.AlignCenter
@@ -2647,15 +2577,6 @@ def dbRowToDict(i_row, i_columnNames):
 
     return rv
 
-# [No longer used]
-def getGameInfoDict(i_dbRow):
-    """
-    Params:
-     i_dbRow:
-      (list)
-    """
-    return dbRowToDict(i_dbRow, g_dbColumnNames)
-
 
 class MyTableView(QTableView):
     def __init__(self, i_parent=None):
@@ -2668,9 +2589,16 @@ class MyTableView(QTableView):
         ## set column width to fit contents (set font first!)
         #self.resizeColumnsToContents()
 
+        self.dbColumnNames = None
+        #  (list of str)
+        self.dbRows = None
+        #  (list of tuple)
+
         # Create model and set it in the table view
-        self.tableModel = MyTableModel(None)
+        self.tableModel = MyTableModel(self)
         self.setModel(self.tableModel)
+
+        self.setItemDelegate(MyStyledItemDelegate(self))
 
         # Set row height
         #self.rowHeight(200)
@@ -2769,13 +2697,82 @@ class MyTableView(QTableView):
 
         #self.verticalScrollBar().setSingleStep(30)
 
+    def queryDb(self, i_whereExpression):
+        """
+        Params:
+         i_whereExpression:
+          (str)
+        """
+        selectTerms = [
+            "Games.GA_Id",
+            "Games.ScrnshotFilename",
+            "Games.Comment",
+            "Games.Gemus",
+            "Games.Filename",
+            "Games.FileToRun",
+            "Games.MemoText"
+        ]
+
+        fromTerms = [
+            "Games"
+        ]
+
+        tableConnections = copy.deepcopy(connectionsFromGamesTable)
+        visibleDbNames = [(usableColumn["dbTableName"], usableColumn["dbFieldName"])
+                          for usableColumn in [usableColumn_getById(column["id"])  for column in tableColumn_getBySlice()]
+                          if "dbTableName" in usableColumn and "dbFieldName" in usableColumn]
+        #visibleDbNames = []
+        #for tableColumn in tableColumn_getBySlice():
+        #    usableColumn = usableColumn_getById(tableColumn["id"])
+        #    if "dbTableName" in usableColumn and "dbFieldName" in usableColumn:
+        #        visibleDbNames.append((usableColumn["dbTableName"], usableColumn["dbFieldName"]))
+
+        for tableName, fieldName in visibleDbNames:
+            fromTerms += getJoinTermsToTable(tableName, tableConnections)
+
+            if tableName == "Games" and fieldName == "GA_Id":
+                pass
+            else:
+                selectTerms.append(tableName + "." + fieldName)
+
+        # SELECT
+        sql = "SELECT " + ", ".join(selectTerms)
+        sql += "\nFROM " + " ".join(fromTerms)
+
+        # WHERE
+        i_whereExpression = i_whereExpression.strip()
+        if i_whereExpression != "":
+            sql += "\nWHERE " + i_whereExpression
+
+        # ORDER BY
+        if len(columnNameBar.sort_operations) > 0:
+            sql += "\nORDER BY "
+
+            orderByTerms = []
+            for columnId, direction in columnNameBar.sort_operations:
+                usableColumn = usableColumn_getById(columnId)
+                term = usableColumn["dbTableName"] + "." + usableColumn["dbFieldName"]
+                if direction == -1:
+                    term += " DESC"
+                orderByTerms.append(term)
+            sql += ", ".join(orderByTerms)
+
+        # Execute
+        #print(sql)
+        cursor = g_db.execute(sql)
+
+        self.dbColumnNames = [column[0]  for column in cursor.description]
+        self.dbRows = cursor.fetchall()
+
+        label_statusbar.setText("Showing " + str(len(self.dbRows)) + " games.")
+
     def selectedGameId(self):
         """
         Returns:
          (int)
         """
         selectedIndex = self.selectionModel().currentIndex()
-        return g_dbRows[selectedIndex.row()][g_dbColumnNames.index("GA_Id")]
+        return self.dbRows[selectedIndex.row()][self.dbColumnNames.index("GA_Id")]
 
     def refilter(self, i_sqlWhereExpression):
         """
@@ -2788,7 +2785,7 @@ class MyTableView(QTableView):
         """
         # Remember what game is currently selected and where on the screen the row is
         selectedIndex = self.selectionModel().currentIndex()
-        if selectedIndex.row() < 0 or selectedIndex.row() >= len(g_dbRows):
+        if selectedIndex.row() < 0 or selectedIndex.row() >= len(self.dbRows):
             selectedGameId = None
         else:
             selectedGameId = self.selectedGameId()
@@ -2797,7 +2794,7 @@ class MyTableView(QTableView):
         # Query database
         sqlValid = True
         try:
-            queryDb(i_sqlWhereExpression)
+            self.queryDb(i_sqlWhereExpression)
         except sqlite3.OperationalError as e:
             sqlValid = False
 
@@ -2818,9 +2815,9 @@ class MyTableView(QTableView):
         # search for new row number of that game
         # and if found, scroll to put that game in the same screen position it previously was
         if selectedGameId != None:
-            idColumnNo = g_dbColumnNames.index("GA_Id")
+            idColumnNo = self.dbColumnNames.index("GA_Id")
             newDbRowNo = None
-            for dbRowNo, dbRow in enumerate(g_dbRows):
+            for dbRowNo, dbRow in enumerate(self.dbRows):
                 if dbRow[idColumnNo] == selectedGameId:
                     newDbRowNo = dbRowNo
                     break
@@ -2871,7 +2868,7 @@ class MyTableView(QTableView):
             detailPaneWasAlreadyVisible = detailPane_height() > 0
             detailPane_show()
             self.scrollTo(i_modelIndex, QAbstractItemView.PositionAtTop)
-            gameId = g_dbRows[i_modelIndex.row()][g_dbColumnNames.index("GA_Id")]
+            gameId = self.dbRows[i_modelIndex.row()][self.dbColumnNames.index("GA_Id")]
             if gameId != detailPane_currentGameId:
                 detailPane_populate(gameId)
             if i_keyboardOriented and detailPaneWasAlreadyVisible:
@@ -2879,11 +2876,11 @@ class MyTableView(QTableView):
 
         elif columnId == "play":
             rowNo = i_modelIndex.row()
-            gameId = g_dbRows[rowNo][g_dbColumnNames.index("GA_Id")]
+            gameId = self.dbRows[rowNo][self.dbColumnNames.index("GA_Id")]
 
             try:
-                gamebase.runGame(g_dbRows[rowNo][g_dbColumnNames.index("Filename")],
-                                 g_dbRows[rowNo][g_dbColumnNames.index("FileToRun")],
+                gamebase.runGame(self.dbRows[rowNo][self.dbColumnNames.index("Filename")],
+                                 self.dbRows[rowNo][self.dbColumnNames.index("FileToRun")],
                                  getGameRecord(gameId))
             except Exception as e:
                 import traceback
@@ -2896,10 +2893,10 @@ class MyTableView(QTableView):
 
         elif columnId == "music":
             rowNo = i_modelIndex.row()
-            gameId = g_dbRows[rowNo][g_dbColumnNames.index("GA_Id")]
+            gameId = self.dbRows[rowNo][self.dbColumnNames.index("GA_Id")]
 
             try:
-                gamebase.runMusic(g_dbRows[rowNo][g_dbColumnNames.index("SidFilename")],
+                gamebase.runMusic(self.dbRows[rowNo][self.dbColumnNames.index("SidFilename")],
                                   getGameRecord(gameId))
             except Exception as e:
                 import traceback
@@ -2915,13 +2912,13 @@ class MyTableView(QTableView):
             if "type" in usableColumn and usableColumn["type"] == "gameId":
                 # Get the target game ID
                 rowNo = i_modelIndex.row()
-                gameId = g_dbRows[rowNo][g_dbColumnNames.index(usableColumn["dbFieldName"])]
+                gameId = self.dbRows[rowNo][self.dbColumnNames.index(usableColumn["dbFieldName"])]
                 if gameId != 0:
                     self.selectGameWithId(gameId)
 
     def findGameWithId(self, i_id):
-        idColumnNo = g_dbColumnNames.index("GA_Id")
-        for rowNo, row in enumerate(g_dbRows):
+        idColumnNo = self.dbColumnNames.index("GA_Id")
+        for rowNo, row in enumerate(self.dbRows):
             if row[idColumnNo] == i_id:
                 return rowNo
         return None
@@ -3153,7 +3150,7 @@ class MyTableView(QTableView):
 
                     # Remember where on the screen the row being resized is
                     #selectedIndex = self.selectionModel().currentIndex()
-                    #self.resize_selectedRowId = g_dbRows[selectedIndex.row()][g_dbColumnNames.index("GA_Id")]
+                    #self.resize_selectedRowId = self.dbRows[selectedIndex.row()][self.dbColumnNames.index("GA_Id")]
                     self.resize_selectedRowTopY = self.rowViewportPosition(rowNo)
 
                     # If scrolling is per item,
@@ -3858,7 +3855,6 @@ sqlFilterBar.textChange.connect(sqlFilterBar_onTextChange)
 # Create table
 tableView = MyTableView()
 gameTable_layout.addWidget(tableView)
-tableView.setItemDelegate(MyStyledItemDelegate())
 # Set vertical size policy to 'Ignored' which lets widget shrink to zero
 #  https://stackoverflow.com/questions/18342590/setting-qlistwidget-minimum-height
 tableView.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Ignored)
@@ -4140,7 +4136,7 @@ def detailPane_populate(i_gameId):
 
     def webEnginePage_onLinkHovered(i_url):
         if i_url == "":
-            label_statusbar.setText("Showing " + str(len(g_dbRows)) + " games.")
+            label_statusbar.setText("Showing " + str(len(tableView.dbRows)) + " games.")
         else:
             label_statusbar.setText(i_url)
     webEnginePage.linkHovered.connect(webEnginePage_onLinkHovered)
