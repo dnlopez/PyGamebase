@@ -3646,7 +3646,10 @@ def filterFormat_perColumn():
 
     #
     oredRows = sqlWhereExpressionToColumnFilters(whereExpression)
-    columnFilterBar.setFilterValues(oredRows)
+    if oredRows == None:
+        columnFilterBar.resetFilterRowCount(1)
+    else:
+        columnFilterBar.setFilterValues(oredRows)
 
     columnFilterBar.repositionFilterEdits()
     columnFilterBar.repositionTabOrder()
