@@ -3922,10 +3922,10 @@ class MyMessageBox(QDialog):
         self.informativeLabel.setText(i_text)
 
 def refilterFromCurrentlyVisibleBar():
-    if columnFilterBar.isVisible():
-        sqlWhereExpression = columnFilterBar.getSqlWhereExpression()
-    else: #if columnFilterBar.isVisible():
+    if sqlFilterBar.isVisible():
         sqlWhereExpression = sqlFilterBar.text()
+    else:
+        sqlWhereExpression = columnFilterBar.getSqlWhereExpression()
 
     tableView.refilter(sqlWhereExpression)
 
@@ -4015,7 +4015,11 @@ detailPane_widget.setLayout(detailPane_layout)
 
 def detailPane_show():
     # Position splitter so that the table view shows exactly one row
-    topPaneHeight = columnNameBar.geometry().height() + columnFilterBar.geometry().height() + tableView.rowHeight()
+    if sqlFilterBar.isVisible():
+        filterBarHeight = sqlFilterBar.geometry().height()
+    else:
+        filterBarHeight = columnFilterBar.geometry().height()
+    topPaneHeight = columnNameBar.geometry().height() + filterBarHeight + tableView.rowHeight()
     if tableView.horizontalScrollBar().isVisible():
         topPaneHeight += application.style().pixelMetric(QStyle.PM_ScrollBarExtent)  # Scrollbar height
     splitter.setSizes([topPaneHeight, splitter.geometry().height() - topPaneHeight])
