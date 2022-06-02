@@ -2087,6 +2087,7 @@ class ColumnFilterBar(QWidget):
             if column["filterable"]:
                 self.columnWidgets[column["id"]]["filterEdits"][i_position].setText("")
 
+    # [not currently used]
     def clearAllFilterRows(self):
         for filterRowNo in range(0, len(self.filterRows)):
             self.clearFilterRow(filterRowNo)
@@ -2697,12 +2698,15 @@ class MyTableView(QTableView):
 
         #self.verticalScrollBar().setSingleStep(30)
 
-    def queryDb(self, i_whereExpression):
+    def queryDb(self, i_whereExpression, i_whereExpressionMightUseNonVisibleColumns=True):
         """
         Params:
          i_whereExpression:
           (str)
+         i_whereExpressionMightUseNonVisibleColumns:
+          (bool)
         """
+        # Start with fields that are always selected
         selectTerms = [
             "Games.GA_Id",
             "Games.ScrnshotFilename",
@@ -2717,17 +2721,30 @@ class MyTableView(QTableView):
             "Games"
         ]
 
-        tableConnections = copy.deepcopy(connectionsFromGamesTable)
-        visibleDbNames = [(usableColumn["dbTableName"], usableColumn["dbFieldName"])
-                          for usableColumn in [usableColumn_getById(column["id"])  for column in tableColumn_getBySlice()]
-                          if "dbTableName" in usableColumn and "dbFieldName" in usableColumn]
-        #visibleDbNames = []
-        #for tableColumn in tableColumn_getBySlice():
-        #    usableColumn = usableColumn_getById(tableColumn["id"])
-        #    if "dbTableName" in usableColumn and "dbFieldName" in usableColumn:
-        #        visibleDbNames.append((usableColumn["dbTableName"], usableColumn["dbFieldName"]))
+        # Determine what extra fields to select
+        neededTableAndColumnNames = set()
 
-        for tableName, fieldName in visibleDbNames:
+        #  Add fields for all visible table columns
+        for tableColumn in tableColumn_getBySlice():
+            usableColumn = usableColumn_getById(tableColumn["id"])
+            if "dbTableName" in usableColumn and "dbFieldName" in usableColumn:
+                neededTableAndColumnNames.add((usableColumn["dbTableName"], usableColumn["dbFieldName"]))
+
+        #print("---")
+        #pprint.pprint(neededTableAndColumnNames)
+        #pprint.pprint(visibleDbNames)
+
+        #  If needed, parse WHERE expression for column names and add those too
+        if i_whereExpressionMightUseNonVisibleColumns:
+            dbTableAndColumnNames = sqlWhereExpressionToDbTableAndColumnNames(i_whereExpression)
+            for dbTableAndColumnName in dbTableAndColumnNames:
+                neededTableAndColumnNames.add(dbTableAndColumnName)
+
+        #pprint.pprint(neededTableAndColumnNames)
+
+        # Add the extra columns to selectTerms and fromTerms
+        tableConnections = copy.deepcopy(connectionsFromGamesTable)
+        for tableName, fieldName in neededTableAndColumnNames:
             fromTerms += getJoinTermsToTable(tableName, tableConnections)
 
             if tableName == "Games" and fieldName == "GA_Id":
@@ -2759,7 +2776,11 @@ class MyTableView(QTableView):
 
         # Execute
         #print(sql)
-        cursor = g_db.execute(sql)
+        try:
+            cursor = g_db.execute(sql)
+        except sqlite3.OperationalError as e:
+            # TODO if i_whereExpressionMightUseNonVisibleColumns and error was 'no such column', maybe retry with SELECT * and all tables (see getGameRecord())
+            raise
 
         self.dbColumnNames = [column[0]  for column in cursor.description]
         self.dbRows = cursor.fetchall()
@@ -2928,7 +2949,12 @@ class MyTableView(QTableView):
         # and if not found then clear filter and look again
         rowNo = self.findGameWithId(i_gameId)
         if rowNo == None:
-            columnFilterBar.resetFilterRowCount(1)
+            if sqlFilterBar.isVisible():
+                if sqlFilterBar.text().strip() != "":
+                    sqlFilterBar.setText("")
+                    sqlFilterBar_onTextChange()
+            else:
+                columnFilterBar.resetFilterRowCount(1)
             rowNo = self.findGameWithId(i_gameId)
 
         # If found, select it
@@ -3415,21 +3441,38 @@ def interpretColumnOperation(i_node):
         return None, None, None
     operator = i_node["op"][1]
 
+    # Scan operands,
+    # and attempt to pick out one and only one identifier token to be the column name,
+    # and one and only one token of another type to be the value
     columnName = None
     value = None
     for child in i_node["children"]:
+        # If the operand is itself a child operator
         if type(child) == dict:
+            # If it's an 'ESCAPE' operator (an adjunct to 'LIKE'),
+            # pull the actual value (as opposed to the escape character) from out of it
             if "op" in child and child["op"] == ("operator", "ESCAPE"):
                 value = child["children"][0][1]  # TODO unescape?
+            # If it's an 'AND' operator beneath a 'BETWEEN',
+            # assemble the two values with a tilde between them
             elif operator == "BETWEEN" and child["op"] == ("operator", "AND"):
                 value = child["children"][0][1] + "~" + child["children"][1][1]
+            # If it's some other child operator,
+            # don't know how to deal with this so far
             else:
                 return None, None, None
+        #
         elif type(child) == tuple:
+            # If it's an identifier,
+            # consider it the column name,
+            # but fail if we already have one
             if child[0] == "identifier":
                 if columnName != None:
                     return None, None, None
                 columnName = child[1]
+            # Else if it's not an identifier,
+            # consider it the value,
+            # but fail if we already have one
             else:
                 if value != None:
                     return None, None, None
@@ -3439,27 +3482,33 @@ def interpretColumnOperation(i_node):
         return None, None, None
     return operator, columnName, value
 
-def sqlWhereExpressionToColumnFilters(i_whereExpression):
+def sqlWhereExpressionToColumnFilters(i_whereExpression, i_skipFailures=False):
     """
-    Convert SQL text to per-column filter values
+    Parse SQL text
+    and get it as an equivalent set of column names and texts to enter into those boxes on the column filter bar.
 
     Params:
-     i_sqlWhereExpression:
+     i_whereExpression:
       (str)
+     i_skipFailures:
+      (bool)
 
     Returns:
-     (list)
-     An element for each 'row' of filter edits in the UI.
-     Each element is:
-      (dict with arbitrary key-value properties)
-      The filter UI text for a particular column.
-      Dict has:
-       Keys:
-        (str)
-        ID of column
-       Value:
-        (str)
-        Text for the filter box.
+     Either (list)
+      An element for each 'row' of filter edits in the UI.
+      Each element is:
+       (dict with arbitrary key-value properties)
+       The filter UI text for a particular column.
+       Dict has:
+        Keys:
+         (str)
+         ID of column
+        Value:
+         (str)
+         Text for the filter box.
+     or (None)
+      Failed to get SQL expression into the simple column filter bar-compatible form.
+      Perhaps it is too complex for that UI, too complex for the simple SQL parser, etc.
     """
     # Tokenize, parse and postprocess it
     tokenized = sql.tokenizeWhereExpr(i_whereExpression)
@@ -3469,36 +3518,47 @@ def sqlWhereExpressionToColumnFilters(i_whereExpression):
     parsed = sql.parseExpression(tokenized)
     #print(parsed)
     if parsed == None:
-        statusbar.setText("failed to parse")
-        return []
+        label_statusbar.setText("Failed to parse")
+        return None
     parsed = sql.flattenOperator(parsed, "AND")
     parsed = sql.flattenOperator(parsed, "OR")
-    #pprint.pprint(parsed)
 
-    # Get or construct a top-level OR array from the input parse tree
-    if parsed["op"] == ("operator", "OR"):
+    # Get or simulate a top-level OR array from the input parse tree
+    if "op" in parsed and parsed["op"] == ("operator", "OR"):
         orExpressions = parsed["children"]
     else:
         orExpressions = [parsed]
 
-    # Initialize a top-level OR array for output,
+    # Initialize an output top-level OR array,
     # and then for every input OR expression
     oredRows = []
     for orExpressionNo, orExpression in enumerate(orExpressions):
 
-        # Get or construct a second-level AND array from the input parse tree
-        if orExpression["op"] == ("operator", "AND"):
+        # Get or simulate a second-level AND array from the input parse tree
+        if "op" in orExpression and orExpression["op"] == ("operator", "AND"):
             andExpressions = orExpression["children"]
         else:
             andExpressions = [orExpression]
 
-        # Initialize a second-level AND dict for output,
+        # Initialize an output second-level AND dict,
         # and then for every input AND expression
         andedFields = {}
         for andExpression in andExpressions:
+            # Get important parts of term
             operator, columnName, value = interpretColumnOperation(andExpression)
             #print("operator, columnName, value: " + str((operator, columnName, value)))
-            #if columnName != None:
+
+            # If that failed,
+            # either skip this term or fail the whole extraction
+            # [though maybe we should just skip over this andExpression as it could be just a useless term like "1=1"]
+            if operator == None and columnName == None and value == None:
+                if i_skipFailures:
+                    continue
+                else:
+                    label_statusbar.setText("Failed to interpret column")
+                    return None
+
+            # If the column name actually corresponds to a database field
             usableColumn = usableColumn_getByDbIdentifier(columnName)
             if usableColumn != None:
                 widgetText = None
@@ -3537,6 +3597,41 @@ def sqlWhereExpressionToColumnFilters(i_whereExpression):
         oredRows.append(andedFields)
 
     return oredRows
+
+def sqlWhereExpressionToDbTableAndColumnNames(i_whereExpression):
+    """
+    Parse SQL text
+    and get names of database fields referred to in it.
+
+    Params:
+     i_sqlWhereExpression:
+      (str)
+
+    Returns:
+     (list)
+     Each element is:
+      (tuple)
+      Tuple has elements:
+       0:
+        (str)
+        DB table name
+       1:
+        (str)
+        DB field name
+    """
+    try:
+        oredRows = sqlWhereExpressionToColumnFilters(i_whereExpression, True)
+    except:
+        return []
+    if oredRows == None:
+        return []
+
+    dbFields = []
+    for oredRow in oredRows:
+        for andedFieldId in oredRow.keys():
+            usableColumn = usableColumn_getById(andedFieldId)
+            dbFields.append((usableColumn["dbTableName"], usableColumn["dbFieldName"]))
+    return dbFields
 
 def filterFormat_perColumn():
     # Show column filter bar instead of SQL filter bar
