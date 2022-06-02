@@ -109,6 +109,8 @@ g_usableColumns = [
     {
         "id": "play",
         "screenName": "Start game (▶)",
+        "dbTableName": "Games",
+        "dbFieldName": "Filename",
         "defaultWidth": 35,
         "sortable": False,
         "filterable": False,
@@ -117,6 +119,8 @@ g_usableColumns = [
     {
         "id": "pic",
         "screenName": "Picture",
+        "dbTableName": "Games",
+        "dbFieldName": "ScrnshotFilename",
         "defaultWidth": 320,
         "sortable": False,
         "filterable": False,
@@ -2741,13 +2745,7 @@ class MyTableView(QTableView):
         """
         # Start with fields that are always selected
         selectTerms = [
-            "Games.GA_Id",
-            "Games.ScrnshotFilename",
-            "Games.Comment",
-            "Games.Gemus",
-            "Games.Filename",
-            "Games.FileToRun",
-            "Games.MemoText"
+            "Games.GA_Id"
         ]
 
         fromTerms = [
@@ -2931,11 +2929,10 @@ class MyTableView(QTableView):
         elif columnId == "play":
             rowNo = i_modelIndex.row()
             gameId = self.dbRows[rowNo][self.dbColumnNames.index("GA_Id")]
+            gameRecord = getGameRecord(gameId)
 
             try:
-                gamebase.runGame(self.dbRows[rowNo][self.dbColumnNames.index("Filename")],
-                                 self.dbRows[rowNo][self.dbColumnNames.index("FileToRun")],
-                                 getGameRecord(gameId))
+                gamebase.runGame(gameRecord["Filename"], gameRecord["FileToRun"], gameRecord)
             except Exception as e:
                 import traceback
                 print(traceback.format_exc())
@@ -2948,10 +2945,10 @@ class MyTableView(QTableView):
         elif columnId == "music":
             rowNo = i_modelIndex.row()
             gameId = self.dbRows[rowNo][self.dbColumnNames.index("GA_Id")]
+            gameRecord = getGameRecord(gameId)
 
             try:
-                gamebase.runMusic(self.dbRows[rowNo][self.dbColumnNames.index("SidFilename")],
-                                  getGameRecord(gameId))
+                gamebase.runMusic(gameRecord["SidFilename"], gameRecord)
             except Exception as e:
                 import traceback
                 print(traceback.format_exc())
