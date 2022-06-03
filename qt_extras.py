@@ -208,3 +208,47 @@ class ResizableMessageBox(QDialog):
     def setInformativeText(self, i_text):
         self.informativeLabel.setText(i_text)
 
+
+
+class StayOpenMenu(QMenu):
+    """
+    A menu which stays open after something is selected
+    so you can make multiple selections in one go.
+    """
+    def __init__(self, i_title, i_parent=None):
+        QMenu.__init__(self, i_title, i_parent)
+
+    #    # Install event filter to watch for clicks
+    #    self.installEventFilter(self)
+    #
+    #def eventFilter(self, i_watched, i_event):
+    #    if i_event.type() == QEvent.MouseButtonRelease:
+    #        if i_watched.activeAction():
+    #            # If the selected action does not have a submenu,
+    #            # trigger the function and eat the event
+    #            if not i_watched.activeAction().menu():
+    #                i_watched.activeAction().trigger()
+    #                return True
+    #    return QMenu.eventFilter(self, i_watched, i_event)
+
+    def mouseReleaseEvent(self, i_event):
+        # If there is an active action and it's not a submenu,
+        # trigger that action and don't pass the event to the subclass to keep the menu open
+        if self.activeAction() and not self.activeAction().menu():
+            self.activeAction().trigger()
+            return
+
+        #
+        QMenu.mouseReleaseEvent(self, i_event)
+
+    def keyPressEvent(self, i_event):
+        # If pressing a key that would normally select
+        # and there is an active action and it's not a submenu,
+        # trigger that action and don't pass the event to the subclass to keep the menu open
+        if (i_event.key() == Qt.Key_Return or i_event.key() == Qt.Key_Enter) and \
+           self.activeAction() and not self.activeAction().menu():
+            self.activeAction().trigger()
+            return
+
+        #
+        QMenu.keyPressEvent(self, i_event)

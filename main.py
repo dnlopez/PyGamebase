@@ -1340,66 +1340,10 @@ class ColumnNameBar(QWidget):
             # so if we end up showing any new columns, they can be inserted at that position
             contextColumn = self.parent()._columnAtPixelX(invocationPos.x())
 
-            # Build popup menu
-            class StayOpenMenu(QMenu):
-                """
-                A menu which stays open after something is selected
-                so you can make multiple selections in one go.
-                """
-                def __init__(self, i_parent=None):
-                    QMenu.__init__(self, i_parent)
-                    self.installEventFilter(self)
-
-                def eventFilter(self, i_watched, i_event):
-                    if i_event.type() == QEvent.MouseButtonRelease:
-                        if i_watched.activeAction():
-                            # If the selected action does not have a submenu,
-                            # trigger the function and eat the event
-                            if not i_watched.activeAction().menu():
-                                i_watched.activeAction().trigger()
-                                return True
-                    return QMenu.eventFilter(self, i_watched, i_event)
-            contextMenu = StayOpenMenu(self)
-
-            def action_onTriggered(i_selectedColumnId, i_contextMenuColumnId):
-                tableColumn_toggle(i_selectedColumnId, i_contextMenuColumnId)
-
-                # Update GUI
-                # If the following recreateWidgets() call deletes the button which we right-clicked to open this context menu,
-                # QT will subsequently segfault. To workaround this, use a one-shot zero-delay QTimer to continue at idle-time,
-                # when apparently the context menu has been cleaned up and a crash does not happen.
-                continueTimer = QTimer(self)
-                continueTimer.setSingleShot(True)
-                def on_continueTimer():
-                    columnNameBar.recreateWidgets()
-                    columnNameBar.repositionHeadingButtons()
-                    columnNameBar.repositionTabOrder()
-                    columnFilterBar.recreateWidgets()
-                    columnFilterBar.repositionFilterEdits()
-                    columnFilterBar.repositionTabOrder()
-
-                    # Requery DB in case filter criteria have changed
-                    refilterFromCurrentlyVisibleBar()
-                    tableView.requery()
-                    #
-                    tableView.resizeAllColumns([column["width"]  for column in tableColumn_getBySlice()])
-                continueTimer.timeout.connect(on_continueTimer)
-                continueTimer.start(0)
-
-            action = contextMenu.addAction("Columns")
-            action.setEnabled(False)
-            contextMenu.addSeparator()
-            for usableColumnNo, usableColumn in enumerate(g_usableColumns):
-                action = contextMenu.addAction(usableColumn["screenName"])
-                action.setCheckable(True)
-                columnId = usableColumn["id"]
-                action.setChecked(tableColumn_getById(columnId) != None)
-                action.triggered.connect(functools.partial(action_onTriggered, columnId, contextColumn["id"]))
-
-            # Show popup menu
-            contextMenu.popup(self.mapToGlobal(i_pos))
-        #def mousePressEvent(self, i_event):
-        #    if i_event.button() == Qt.MouseButton.RightButton:
+            # Inform the table columns menu of the column
+            # and pop it up
+            viewMenu_tableColumnsMenu.context = contextColumn["id"]
+            viewMenu_tableColumnsMenu.popup(self.mapToGlobal(i_pos))
 
         # + }}}
 
@@ -3773,6 +3717,72 @@ actionGroup = QActionGroup(filterMenu)
 actionGroup.setExclusive(True)
 actionGroup.addAction(viewMenu_horizontalAction)
 actionGroup.addAction(viewMenu_verticalAction)
+
+viewMenu.addSeparator()
+
+class TableColumnsMenu(qt_extras.StayOpenMenu):
+    def __init__(self, i_parent=None):
+        qt_extras.StayOpenMenu.__init__(self, i_parent)
+
+        # Add all the usable columns
+        for usableColumn in g_usableColumns:
+            action = self.addAction(usableColumn["screenName"])
+            action.setCheckable(True)
+            columnId = usableColumn["id"]
+            action.setChecked(tableColumn_getById(columnId) != None)
+            action.triggered.connect(functools.partial(self.action_onTriggered, columnId))
+
+        self.aboutToShow.connect(self.onAboutToShow)
+
+    def onAboutToShow(self):
+        for usableColumnNo, usableColumn in enumerate(g_usableColumns):
+            action = self.actions()[usableColumnNo]
+            columnId = usableColumn["id"]
+            action.setChecked(tableColumn_getById(columnId) != None)
+
+    def action_onTriggered(self, i_selectedColumnId):
+        # Toggle the visibility of the selected column
+        tableColumn_toggle(i_selectedColumnId, viewMenu_tableColumnsMenu.context)
+
+        # Update GUI
+        columnNameBar.recreateWidgets()
+        columnNameBar.repositionHeadingButtons()
+        columnNameBar.repositionTabOrder()
+        columnFilterBar.recreateWidgets()
+        columnFilterBar.repositionFilterEdits()
+        columnFilterBar.repositionTabOrder()
+
+        # Requery DB in case filter criteria have changed
+        refilterFromCurrentlyVisibleBar()
+        tableView.requery()
+        #
+        tableView.resizeAllColumns([column["width"]  for column in tableColumn_getBySlice()])
+
+viewMenu_tableColumnsMenu = TableColumnsMenu("&Table columns")
+viewMenu_tableColumnsMenu_action = viewMenu.addMenu(viewMenu_tableColumnsMenu)
+def viewMenu_tableColumnsMenu_action_onHovered():
+    viewMenu_tableColumnsMenu.context = None
+viewMenu_tableColumnsMenu_action.hovered.connect(viewMenu_tableColumnsMenu_action_onHovered)
+
+viewMenu.addSeparator()
+
+viewMenu_saveLayout = viewMenu.addAction("&Save layout")
+def viewMenu_saveLayout_onTriggered():
+    configColumns = []
+    for tableColumn in g_tableColumns:
+        configColumns.append({
+            "id": tableColumn["id"],
+            "width": tableColumn["width"]
+        })
+
+    configDict = {
+        "tableColumns": configColumns
+    }
+
+    settingsFilePath = QStandardPaths.writableLocation(QStandardPaths.GenericConfigLocation) + os.sep + "pyGamebase.json"
+    with open(settingsFilePath, "wb") as f:
+        f.write(json.dumps(configDict, indent=4).encode("utf-8"))
+viewMenu_saveLayout.triggered.connect(viewMenu_saveLayout_onTriggered)
 
 # + }}}
 
