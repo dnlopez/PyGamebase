@@ -3756,13 +3756,19 @@ viewMenu_toolbar_action.setChecked(True)
 
 viewMenu.addSeparator()
 
+def splitter_setHorizontal():
+    splitter.setOrientation(Qt.Horizontal)
+def splitter_setVertical():
+    splitter.setOrientation(Qt.Vertical)
 #viewMenu_splitMenu = QMenu("&Split")
 #viewMenu_toolbar_action = viewMenu.addMenu(viewMenu_splitMenu)
-viewMenu_horizontalAction = viewMenu.addAction("Split &horizontally")
-viewMenu_horizontalAction.setCheckable(True)
-viewMenu_horizontalAction.setChecked(True)
 viewMenu_verticalAction = viewMenu.addAction("Split &vertically")
 viewMenu_verticalAction.setCheckable(True)
+viewMenu_verticalAction.setChecked(True)
+viewMenu_verticalAction.triggered.connect(splitter_setVertical)
+viewMenu_horizontalAction = viewMenu.addAction("Split &horizontally")
+viewMenu_horizontalAction.setCheckable(True)
+viewMenu_horizontalAction.triggered.connect(splitter_setHorizontal)
 actionGroup = QActionGroup(filterMenu)
 actionGroup.setExclusive(True)
 actionGroup.addAction(viewMenu_horizontalAction)
@@ -3785,6 +3791,11 @@ mainWindow_layout.addWidget(toolbar)
 splitter = QSplitter(Qt.Vertical)
 mainWindow_layout.addWidget(splitter)
 splitter.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+splitter_lastPosition = 200
+def splitter_onSplitterMoved(i_pos, i_index):
+    global splitter_lastPosition
+    splitter_lastPosition = i_pos
+splitter.splitterMoved.connect(splitter_onSplitterMoved)
 
 # + Game table {{{
 
@@ -3919,18 +3930,21 @@ detailPane_layout.setContentsMargins(0, 0, 0, 0)
 detailPane_widget.setLayout(detailPane_layout)
 
 def detailPane_show():
-    # Position splitter so that the table view shows exactly one row
-    if sqlFilterBar.isVisible():
-        filterBarHeight = sqlFilterBar.geometry().height()
+    if (splitter.orientation() == Qt.Vertical):
+        # Position splitter so that the table view shows exactly one row
+        if sqlFilterBar.isVisible():
+            filterBarHeight = sqlFilterBar.geometry().height()
+        else:
+            filterBarHeight = columnFilterBar.geometry().height()
+        topPaneHeight = columnNameBar.geometry().height() + filterBarHeight + tableView.rowHeight()
+        if tableView.horizontalScrollBar().isVisible():
+            topPaneHeight += application.style().pixelMetric(QStyle.PM_ScrollBarExtent)  # Scrollbar height
+        splitter.setSizes([topPaneHeight, splitter.geometry().height() - topPaneHeight])
+        # Switch table view scroll mode so that an item will stay aligned at the top,
+        # to fit neatly into the area we resized above
+        tableView.setVerticalScrollMode(QAbstractItemView.ScrollPerItem)
     else:
-        filterBarHeight = columnFilterBar.geometry().height()
-    topPaneHeight = columnNameBar.geometry().height() + filterBarHeight + tableView.rowHeight()
-    if tableView.horizontalScrollBar().isVisible():
-        topPaneHeight += application.style().pixelMetric(QStyle.PM_ScrollBarExtent)  # Scrollbar height
-    splitter.setSizes([topPaneHeight, splitter.geometry().height() - topPaneHeight])
-    # Switch table view scroll mode so that an item will stay aligned at the top,
-    # to fit neatly into the area we resized above
-    tableView.setVerticalScrollMode(QAbstractItemView.ScrollPerItem)
+        splitter.setSizes([splitter_lastPosition, splitter.geometry().width() - splitter_lastPosition])
 
 def detailPane_hide():
     # Hide detail pane
