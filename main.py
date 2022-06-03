@@ -109,6 +109,58 @@ if os.path.exists(settingsFilePath):
 
 # + + Usable {{{
 
+# g_usableColumns:
+#  (list)
+#  Each element is:
+#   (dict)
+#   Dict has specific key-value properties:
+#    id:
+#     (str)
+#     A unique internal identifier for the column.
+#    screenName:
+#     The text that will appear in the heading for this column and in column selection menus.
+#    dbColumnNames:
+#     (list of str)
+#     Fully-qualified (ie. "<table name>.<column name>") names of columns that all must exist in the database
+#     for this to be a usable column.
+#    dbTableNames:
+#     (list of str)
+#     Names of tables that all must exist in the database for this to be a usable column,
+#     and which will be joined to when doing a database query to get the information for this column.
+#    dbSelect:
+#     (str)
+#     The term to add to the SELECT clause to get the data for this column.
+#     It should end with an "AS ..." alias for predictable referencing in filters and so on.
+#     For a simple column select (as opposed to an expression) use "AS [<table name>.<column name>]".
+#    dbIdentifiers:
+#     (list of str)
+#     Identifiers which can be used to refer to this column in the WHERE clause.
+#     The first of these should be the fully qualified (for a simple column select) or otherwise chosen (for an expression)
+#     name given after "AS" in 'dbSelect'.
+#     Further identifiers may be shorter, still valid alternatives, eg. "<column name>" alone.
+#     These alternatives will consequently be recognised if used in an expression on the  SQL filter bar.
+#    defaultWidth:
+#     (int)
+#     Initial width for the column in pixels.
+#    sortable:
+#     (bool)
+#     True: Give the column a visible heading which can be clicked to sort by it.
+#    filterable:
+#     (bool)
+#     True: Give the column a filter box under its heading.
+#    textAlignment:
+#     (str)
+#     How to align text in the column.
+#     One of
+#      "left"
+#      "center"
+#    dbType:
+#     (str)
+#     As exported from a GameBase 64 MDB file. Not currently used by this program.
+#    comment:
+#     (str)
+#     As exported from a GameBase 64 MDB file. Not currently used by this program.
+
 g_usableColumns = [
     {
         "id": "detail",
@@ -121,6 +173,7 @@ g_usableColumns = [
     {
         "id": "play",
         "screenName": "Start game (▶)",
+        "dbColumnNames": ["Games.Filename"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.Filename AS [Games.Filename]",
         "dbIdentifiers": ["Games.Filename", "Filename"],
@@ -132,6 +185,7 @@ g_usableColumns = [
     {
         "id": "pic",
         "screenName": "Picture",
+        "dbColumnNames": ["Games.ScrnshotFilename"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.ScrnshotFilename AS [Games.ScrnshotFilename]",
         "dbIdentifiers": ["Games.ScrnshotFilename", "ScrnshotFilename"],
@@ -142,6 +196,7 @@ g_usableColumns = [
     {
         "id": "pic[1]",
         "screenName": "Picture 2",
+        "dbColumnNames": ["Games.ScrnshotFilename"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.ScrnshotFilename AS [Games.ScrnshotFilename]",
         "dbIdentifiers": ["Games.ScrnshotFilename", "ScrnshotFilename"],
@@ -152,6 +207,7 @@ g_usableColumns = [
     {
         "id": "pic[2]",
         "screenName": "Picture 3",
+        "dbColumnNames": ["Games.ScrnshotFilename"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.ScrnshotFilename AS [Games.ScrnshotFilename]",
         "dbIdentifiers": ["Games.ScrnshotFilename", "ScrnshotFilename"],
@@ -162,6 +218,7 @@ g_usableColumns = [
     {
         "id": "pic[3]",
         "screenName": "Picture 4",
+        "dbColumnNames": ["Games.ScrnshotFilename"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.ScrnshotFilename AS [Games.ScrnshotFilename]",
         "dbIdentifiers": ["Games.ScrnshotFilename", "ScrnshotFilename"],
@@ -172,6 +229,7 @@ g_usableColumns = [
     {
         "id": "pic[4]",
         "screenName": "Picture 5",
+        "dbColumnNames": ["Games.ScrnshotFilename"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.ScrnshotFilename AS [Games.ScrnshotFilename]",
         "dbIdentifiers": ["Games.ScrnshotFilename", "ScrnshotFilename"],
@@ -182,6 +240,7 @@ g_usableColumns = [
     {
         "id": "id",
         "screenName": "ID",
+        "dbColumnNames": ["Games.GA_Id"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.GA_Id AS [Games.GA_Id]",
         "dbIdentifiers": ["Games.GA_Id", "GA_Id"],
@@ -195,6 +254,7 @@ g_usableColumns = [
     {
         "id": "name",
         "screenName": "Name",
+        "dbColumnNames": ["Games.Name"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.Name AS [Games.Name]",
         "dbIdentifiers": ["Games.Name", "Name"],
@@ -208,6 +268,7 @@ g_usableColumns = [
     {
         "id": "year",
         "screenName": "Year",
+        "dbColumnNames": ["Games.YE_Id", "Years.Year"],
         "dbTableNames": ["Years"],
         "dbSelect": "Years.Year AS [Years.Year]",
         "dbIdentifiers": ["Years.Year", "Year"],
@@ -221,6 +282,7 @@ g_usableColumns = [
     {
         "id": "publisher",
         "screenName": "Publisher",
+        "dbColumnNames": ["Games.PU_Id", "Publishers.Publisher"],
         "dbTableNames": ["Publishers"],
         "dbSelect": "Publishers.Publisher AS [Publishers.Publisher]",
         "dbIdentifiers": ["Publishers.Publisher", "Publisher"],
@@ -233,6 +295,7 @@ g_usableColumns = [
     {
         "id": "developer",
         "screenName": "Developer",
+        "dbColumnNames": ["Games.DE_Id", "Developers.Developer"],
         "dbTableNames": ["Developers"],
         "dbSelect": "Developers.Developer AS [Developers.Developer]",
         "dbIdentifiers": ["Developers.Developer", "Developer"],
@@ -245,6 +308,7 @@ g_usableColumns = [
     {
         "id": "programmer",
         "screenName": "Programmer",
+        "dbColumnNames": ["Games.PR_Id", "Programmers.Programmer"],
         "dbTableNames": ["Programmers"],
         "dbSelect": "Programmers.Programmer AS [Programmers.Programmer]",
         "dbIdentifiers": ["Programmers.Programmer", "Programmer"],
@@ -257,6 +321,7 @@ g_usableColumns = [
     {
         "id": "parent_genre",
         "screenName": "Parent genre",
+        "dbColumnNames": ["Games.GE_Id", "Genres.PG_Id", "PGenres.ParentGenre"],
         "dbTableNames": ["PGenres"],
         "dbSelect": "PGenres.ParentGenre AS [PGenres.ParentGenre]",
         "dbIdentifiers": ["PGenres.ParentGenre", "ParentGenre"],
@@ -269,6 +334,7 @@ g_usableColumns = [
     {
         "id": "genre",
         "screenName": "Genre",
+        "dbColumnNames": ["Games.GE_Id", "Genres.Genre"],
         "dbTableNames": ["Genres"],
         "dbSelect": "Genres.Genre AS [Genres.Genre]",
         "dbIdentifiers": ["Genres.Genre", "Genre"],
@@ -281,6 +347,7 @@ g_usableColumns = [
     {
         "id": "language",
         "screenName": "Language",
+        "dbColumnNames": ["Games.LA_Id", "Languages.Language"],
         "dbTableNames": ["Languages"],
         "dbSelect": "Languages.Language AS [Languages.Language]",
         "dbIdentifiers": ["Languages.Language", "Language"],
@@ -293,6 +360,7 @@ g_usableColumns = [
     {
         "id": "cracker",
         "screenName": "Cracker",
+        "dbColumnNames": ["Games.CR_Id", "Crackers.Cracker"],
         "dbTableNames": ["Crackers"],
         "dbSelect": "Crackers.Cracker AS [Crackers.Cracker]",
         "dbIdentifiers": ["Crackers.Cracker", "Cracker"],
@@ -305,6 +373,7 @@ g_usableColumns = [
     {
         "id": "artist",
         "screenName": "Artist",
+        "dbColumnNames": ["Games.AR_Id", "Artists.Artist"],
         "dbTableNames": ["Artists"],
         "dbSelect": "Artists.Artist AS [Artists.Artist]",
         "dbIdentifiers": ["Artists.Artist", "Artist"],
@@ -317,6 +386,7 @@ g_usableColumns = [
     {
         "id": "license",
         "screenName": "License",
+        "dbColumnNames": ["Games.LI_Id", "Licenses.License"],
         "dbTableNames": ["Licenses"],
         "dbSelect": "Licenses.License AS [Licenses.License]",
         "dbIdentifiers": ["Licenses.License", "License"],
@@ -329,6 +399,7 @@ g_usableColumns = [
     {
         "id": "rarity",
         "screenName": "Rarity",
+        "dbColumnNames": ["Games.RA_Id", "Rarities.Rarity"],
         "dbTableNames": ["Rarities"],
         "dbSelect": "Rarities.Rarity AS [Rarities.Rarity]",
         "dbIdentifiers": ["Rarities.Rarity", "Rarity"],
@@ -341,6 +412,7 @@ g_usableColumns = [
     {
         "id": "musician_name",
         "screenName": "Musician",
+        "dbColumnNames": ["Games.MU_Id", "Musicians.Musician"],
         "dbTableNames": ["Musicians"],
         "dbSelect": "Musicians.Musician AS [Musicians.Musician]",
         "dbIdentifiers": ["Musicians.Musician", "Musician"],
@@ -353,6 +425,7 @@ g_usableColumns = [
     {
         "id": "musician_photo",
         "screenName": "Musician photo",
+        "dbColumnNames": ["Games.MU_Id", "Musicians.Photo"],
         "dbTableNames": ["Musicians"],
         "dbSelect": "Musicians.Photo AS [Musicians.Photo]",
         "dbIdentifiers": ["Musicians.Photo", "Photo"],
@@ -366,6 +439,7 @@ g_usableColumns = [
     {
         "id": "musician_group",
         "screenName": "Musician group",
+        "dbColumnNames": ["Games.MU_Id", "Musicians.Grp"],
         "dbTableNames": ["Musicians"],
         "dbSelect": "Musicians.Grp AS [Musicians.Grp]",
         "dbIdentifiers": ["Musicians.Grp", "Grp"],
@@ -378,6 +452,7 @@ g_usableColumns = [
     {
         "id": "musician_nick",
         "screenName": "Musician nick",
+        "dbColumnNames": ["Games.MU_Id", "Musicians.Nick"],
         "dbTableNames": ["Musicians"],
         "dbSelect": "Musicians.Nick AS [Musicians.Nick]",
         "dbIdentifiers": ["Musicians.Nick", "Nick"],
@@ -390,6 +465,7 @@ g_usableColumns = [
     {
         "id": "music",
         "screenName": "Start music (M)",
+        "dbColumnNames": ["Games.SidFilename"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.SidFilename AS [Games.SidFilename]",
         "dbIdentifiers": ["Games.SidFilename", "SidFilename"],
@@ -403,6 +479,7 @@ g_usableColumns = [
     {
         "id": "pal_ntsc",
         "screenName": "PAL/NTSC",
+        "dbColumnNames": ["Games.V_PalNTSC"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.V_PalNTSC AS [Games.V_PalNTSC]",
         "dbIdentifiers": ["Games.V_PalNTSC", "V_PalNTSC"],
@@ -423,6 +500,7 @@ g_usableColumns = [
     {
         "id": "control",
         "screenName": "Control",
+        "dbColumnNames": ["Games.Control"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.Control AS [Games.Control]",
         "dbIdentifiers": ["Games.Control", "Control"],
@@ -448,6 +526,7 @@ g_usableColumns = [
     {
         "id": "clone_of",
         "screenName": "Clone of",
+        "dbColumnNames": ["Games.CloneOf"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.CloneOf AS [Games.CloneOf]",
         "dbIdentifiers": ["Games.CloneOf", "CloneOf"],
@@ -461,6 +540,7 @@ g_usableColumns = [
     {
         "id": "prequel",
         "screenName": "Prequel",
+        "dbColumnNames": ["Games.Prequel"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.Prequel AS [Games.Prequel]",
         "dbIdentifiers": ["Games.Prequel", "Prequel"],
@@ -475,6 +555,7 @@ g_usableColumns = [
     {
         "id": "sequel",
         "screenName": "Sequel",
+        "dbColumnNames": ["Games.Sequel"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.Sequel AS [Games.Sequel]",
         "dbIdentifiers": ["Games.Sequel", "Sequel"],
@@ -489,6 +570,7 @@ g_usableColumns = [
     {
         "id": "related",
         "screenName": "Related",
+        "dbColumnNames": ["Games.Related"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.Related AS [Games.Related]",
         "dbIdentifiers": ["Games.Related", "Related"],
@@ -503,6 +585,7 @@ g_usableColumns = [
     {
         "id": "gemus",
         "screenName": "Gemus",
+        "dbColumnNames": ["Games.Gemus"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.Gemus AS [Games.Gemus]",
         "dbIdentifiers": ["Games.Gemus", "Gemus"],
@@ -516,6 +599,7 @@ g_usableColumns = [
     {
         "id": "players_from",
         "screenName": "Players from",
+        "dbColumnNames": ["Games.PlayersFrom"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.PlayersFrom AS [Games.PlayersFrom]",
         "dbIdentifiers": ["Games.PlayersFrom", "PlayersFrom"],
@@ -529,6 +613,7 @@ g_usableColumns = [
     {
         "id": "players_to",
         "screenName": "Players to",
+        "dbColumnNames": ["Games.PlayersTo"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.PlayersTo AS [Games.PlayersTo]",
         "dbIdentifiers": ["Games.PlayersTo", "PlayersTo"],
@@ -542,6 +627,7 @@ g_usableColumns = [
     {
         "id": "players_sim",
         "screenName": "Players simultaneous",
+        "dbColumnNames": ["Games.PlayersSim"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.PlayersSim AS [Games.PlayersSim]",
         "dbIdentifiers": ["Games.PlayersSim", "PlayersSim"],
@@ -555,6 +641,7 @@ g_usableColumns = [
     {
         "id": "players",
         "screenName": "Players",
+        "dbColumnNames": ["Games.PlayersFrom", "Games.PlayersTo", "Games.PlayersSim"],
         "dbTableNames": ["Games"],
         "dbSelect": "iif(Games.PlayersFrom == Games.PlayersTo, Games.PlayersFrom, Games.PlayersFrom || ' - ' || Games.PlayersTo) || iif(Games.PlayersSim, ' (simultaneous)', '') AS Players",
         "dbIdentifiers": ["Players"],
@@ -644,9 +731,14 @@ def tableColumn_add(i_id, i_width=None, i_beforeColumnId=None):
        Add the new column as the last one.
 
     Returns:
-     (TableColumn)
+     Either (TableColumn)
+     or (None)
+      The given i_id does not correspond to a usable column (it may not exist in the current Gamebase database).
     """
     usableColumn = usableColumn_getById(i_id)
+    if usableColumn == None:
+        return None
+
     newTableColumn = {
         "id": usableColumn["id"],
         "screenName": usableColumn["screenName"],
@@ -912,21 +1004,6 @@ def openDb():
     rows = cursor.fetchall()
     dbTableNames = [row[0]  for row in rows]
 
-    # Remove columns from g_usableColumns with tables that don't exist in the database
-    global g_usableColumns
-    def validateUsableColumn(i_usableColumn):
-        if not ("dbTableNames" in i_usableColumn):
-            return True
-        for dbTableName in i_usableColumn["dbTableNames"]:
-            if not (dbTableName in dbTableNames):
-                return False
-        return True
-    g_usableColumns = [column  for column in g_usableColumns  if validateUsableColumn(column)]
-
-    # Remove columns from g_tableColumns that don't exist in g_usableColumns
-    global g_tableColumns
-    g_tableColumns = [column  for column in g_tableColumns  if usableColumn_getById(column["id"])]
-
     # Get info about tables
     g_db.row_factory = sqlite3.Row
     global g_dbSchema
@@ -936,6 +1013,30 @@ def openDb():
             rows = cursor.fetchall()
             rows = [sqliteRowToDict(row)  for row in rows]
             g_dbSchema[tableName] = rows
+
+    # Remove columns from g_usableColumns that rely on tables and columns that don't exist in the database
+    global g_usableColumns
+    def validateUsableColumn(i_usableColumn):
+        rv = True
+        if "dbTableNames" in i_usableColumn:
+            for dbTableName in i_usableColumn["dbTableNames"]:
+                if not (dbTableName in dbTableNames):
+                    rv = False
+        if "dbColumnNames" in i_usableColumn:
+            for dbColumnName in i_usableColumn["dbColumnNames"]:
+                tableName, columnName = dbColumnName.split(".")
+                if not (tableName in g_dbSchema.keys()):
+                    rv = False
+                else:
+                    columnNames = [row["name"]  for row in g_dbSchema[tableName]]
+                    if not (columnName in columnNames):
+                        rv = False
+        return rv
+    g_usableColumns = [column  for column in g_usableColumns  if validateUsableColumn(column)]
+
+    # Remove columns from g_tableColumns that don't exist in g_usableColumns
+    global g_tableColumns
+    g_tableColumns = [column  for column in g_tableColumns  if usableColumn_getById(column["id"])]
 
     # Get columns in Games table
     global g_db_gamesColumnNames
@@ -2847,7 +2948,8 @@ class MyTableView(QTableView):
         neededTableNames = set()
         neededSelects = set()
 
-        #  Add fields for all visible table columns
+        #  For all visible table columns,
+        #  collect tables that need to be joined to and the SELECT expression
         for tableColumn in tableColumn_getBySlice():
             usableColumn = usableColumn_getById(tableColumn["id"])
             if "dbTableNames" in usableColumn:
@@ -3847,6 +3949,9 @@ class TableColumnsMenu(qt_extras.StayOpenMenu):
     def __init__(self, i_parent=None):
         qt_extras.StayOpenMenu.__init__(self, i_parent)
 
+        self.aboutToShow.connect(self.onAboutToShow)
+
+    def populateMenu(self):
         # Add all the usable columns
         for usableColumn in g_usableColumns:
             action = self.addAction(usableColumn["screenName"])
@@ -3854,8 +3959,6 @@ class TableColumnsMenu(qt_extras.StayOpenMenu):
             columnId = usableColumn["id"]
             action.setChecked(tableColumn_getById(columnId) != None)
             action.triggered.connect(functools.partial(self.action_onTriggered, columnId))
-
-        self.aboutToShow.connect(self.onAboutToShow)
 
     def onAboutToShow(self):
         for usableColumnNo, usableColumn in enumerate(g_usableColumns):
@@ -4381,6 +4484,8 @@ mainWindow.show()
 
 openDb()
 
+viewMenu_tableColumnsMenu.populateMenu()
+
 # Create initial table columns
 if "tableColumns" in g_frontendSettings:
     initialColumns = g_frontendSettings["tableColumns"]
@@ -4430,7 +4535,8 @@ refilterFromCurrentlyVisibleBar()
 tableView.requery()
 tableView.resizeAllColumns([column["width"]  for column in tableColumn_getBySlice()])
 
-columnNameBar.sort("name", False)  # TODO what if name column is initially not visible
+if tableColumn_getById("name") != None:
+    columnNameBar.sort("name", False)
 
 tableView.selectionModel().setCurrentIndex(tableView.selectionModel().model().index(0, 0), QItemSelectionModel.ClearAndSelect)
 
