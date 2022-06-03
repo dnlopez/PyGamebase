@@ -2641,7 +2641,7 @@ class MyTableView(QTableView):
         """
         # Start with fields that are always selected
         selectTerms = [
-            "Games.GA_Id"
+            "Games.GA_Id AS [Games.GA_Id]"
         ]
 
         fromTerms = [
