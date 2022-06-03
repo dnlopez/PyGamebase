@@ -10,6 +10,7 @@ import os.path
 import re
 import copy
 import urllib.parse
+import json
 import pprint
 
 # Qt
@@ -93,6 +94,16 @@ import importlib
 gamebase = importlib.import_module(os.path.splitext(os.path.basename(param_configModuleFilePath))[0])
 
 
+# Load frontend config settings
+g_frontendSettings = {}
+settingsFilePath = QStandardPaths.writableLocation(QStandardPaths.GenericConfigLocation) + os.sep + "pyGamebase.json"
+if os.path.exists(settingsFilePath):
+    try:
+        with open(settingsFilePath, "rb") as f:
+            g_frontendSettings = json.loads(f.read().decode("utf-8"))
+    except Exception as e:
+        import traceback
+        print("Failed to read frontend settings file: " + "\n".join(traceback.format_exception_only(e)))
 
 # + Columns {{{
 
@@ -551,102 +562,11 @@ def usableColumn_getByDbIdentifier(i_identifier):
                     return usableColumn
     return None
 
-
 # + + }}}
 
 # + + In GUI table view {{{
 
-g_tableColumns = [
-    { "id": "detail",
-      "screenName": "Show detail (+)",
-      "width": 35,
-      "sortable": False,
-      "filterable": False,
-      "textAlignment": "center"
-    },
-    { "id": "play",
-      "screenName": "Start game (▶)",
-      "width": 35,
-      "sortable": False,
-      "filterable": False,
-      "textAlignment": "center"
-    },
-    { "id": "pic",
-      "screenName": "Picture",
-      "width": 320,
-      "sortable": False,
-      "filterable": False
-    },
-    #{ "id": "pic2",
-    #  "screenName": "Picture 2",
-    #  "width": 320,
-    #  "sortable": False,
-    #  "filterable": False
-    #},
-    { "id": "id",
-      "screenName": "ID",
-      "width": 50,
-      "sortable": False,
-      "filterable": False,
-      "textAlignment": "left"
-    },
-    { "id": "name",
-      "screenName": "Name",
-      "width": 250,
-      "sortable": True,
-      "filterable": True,
-      "textAlignment": "left"
-    },
-    { "id": "year",
-      "screenName": "Year",
-      "width": 75,
-      "sortable": True,
-      "filterable": True,
-      "textAlignment": "left"
-    },
-    #{ "id": "playerssim",
-    #  "screenName": "Players",
-    #  "width": 75,
-    #  "sortable": True,
-    #  "filterable": True,
-    #  "textAlignment": "left"
-      #},
-    { "id": "publisher",
-      "screenName": "Publisher",
-      "width": 250,
-      "sortable": True,
-      "filterable": True,
-      "textAlignment": "left"
-    },
-    { "id": "developer",
-      "screenName": "Developer",
-      "width": 250,
-      "sortable": True,
-      "filterable": True,
-      "textAlignment": "left"
-    },
-    { "id": "programmer",
-      "screenName": "Programmer",
-      "width": 250,
-      "sortable": True,
-      "filterable": True,
-      "textAlignment": "left"
-    },
-    { "id": "parent_genre",
-      "screenName": "Parent genre",
-      "width": 150,
-      "sortable": True,
-      "filterable": True,
-      "textAlignment": "left"
-    },
-    { "id": "genre",
-      "screenName": "Genre",
-      "width": 150,
-      "sortable": True,
-      "filterable": True,
-      "textAlignment": "left"
-    }
-]
+g_tableColumns = []
 # (list of TableColumn)
 
 # Type: TableColumn
@@ -663,7 +583,7 @@ g_tableColumns = [
 
 # + + + New column accessors {{{
 
-def tableColumn_add(i_id, i_beforeColumnId=None):
+def tableColumn_add(i_id, i_width=None, i_beforeColumnId=None):
     """
     Add a column to the live table view.
 
@@ -672,6 +592,11 @@ def tableColumn_add(i_id, i_beforeColumnId=None):
       (str)
       ID of column to add to the table view.
       Details of it should exist in g_usableColumns.
+     i_width:
+      Either (int)
+       Width for new column in pixels
+      or (None)
+       Use default width from g_usableColumns.
      i_beforeColumnId:
       Either (str)
        ID of column already present in the table view to insert this column before.
@@ -685,10 +610,13 @@ def tableColumn_add(i_id, i_beforeColumnId=None):
     newTableColumn = {
         "id": usableColumn["id"],
         "screenName": usableColumn["screenName"],
-        "width": usableColumn["defaultWidth"],
         "sortable": usableColumn["sortable"],
         "filterable": usableColumn["filterable"]
     }
+    if i_width != None:
+        newTableColumn["width"] = i_width
+    else:
+        newTableColumn["width"] = usableColumn["defaultWidth"]
     if "textAlignment" in usableColumn:
         newTableColumn["textAlignment"] = usableColumn["textAlignment"]
 
@@ -723,7 +651,7 @@ def tableColumn_remove(i_id):
 def tableColumn_toggle(i_id, i_addBeforeColumnId=None):
     present = tableColumn_getById(i_id)
     if not present:
-        tableColumn_add(i_id, i_addBeforeColumnId)
+        tableColumn_add(i_id, None, i_addBeforeColumnId)
     else:
         tableColumn_remove(i_id)
 
@@ -3979,8 +3907,8 @@ detailPane_layout.addWidget(detailPane_margin)
 #detailPane_margin.setLayout(detailPane_margin_layout)
 
 detailPane_margin.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Expanding)
-#detailPane_margin.setGeometry(0, 0, tableColumn_getByPos(0)["width"], 100)
-detailPane_margin.setFixedWidth(tableColumn_getByPos(0)["width"])
+#detailPane_margin.setFixedWidth(tableColumn_getByPos(0)["width"])
+detailPane_margin.setFixedWidth(usableColumn_getById("detail")["defaultWidth"])
 #print(tableColumn_getByPos(0)["width"])
 
 #detailPane_margin_layout.addWidget(QPushButton())
@@ -4258,6 +4186,49 @@ mainWindow.show()
 
 openDb()
 
+# Create initial table columns
+if "tableColumns" in g_frontendSettings:
+    initialColumns = g_frontendSettings["tableColumns"]
+else:
+    initialColumns = [
+        { "id": "detail",
+          "width": 35,
+        },
+        { "id": "play",
+          "width": 35,
+        },
+        { "id": "pic",
+          "width": 320,
+        },
+        { "id": "id",
+          "width": 50,
+        },
+        { "id": "name",
+          "width": 250,
+        },
+        { "id": "year",
+          "width": 75,
+        },
+        { "id": "publisher",
+          "width": 250,
+        },
+        { "id": "developer",
+          "width": 250,
+        },
+        { "id": "programmer",
+          "width": 250,
+        },
+        { "id": "parent_genre",
+          "width": 150,
+        },
+        { "id": "genre",
+          "width": 150,
+        }
+    ]
+
+for initialColumn in initialColumns:
+    tableColumn_add(initialColumn["id"], initialColumn["width"])
+
 columnNameBar.initFromColumns()
 columnFilterBar.initFromColumns()
 refilterFromCurrentlyVisibleBar()
@@ -4337,6 +4308,7 @@ action = fileMenu.addAction("Show subprocess &output")
 action.triggered.connect(menu_file_showSubprocessOutput_onTriggered)
 
 # + }}}
+
 
 # Enter Qt application main loop
 exitCode = application.exec_()
