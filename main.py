@@ -140,6 +140,46 @@ g_usableColumns = [
         "filterable": False,
     },
     {
+        "id": "pic[1]",
+        "screenName": "Picture 2",
+        "dbTableNames": ["Games"],
+        "dbSelect": "Games.ScrnshotFilename AS [Games.ScrnshotFilename]",
+        "dbIdentifiers": ["Games.ScrnshotFilename", "ScrnshotFilename"],
+        "defaultWidth": 320,
+        "sortable": False,
+        "filterable": False,
+    },
+    {
+        "id": "pic[2]",
+        "screenName": "Picture 3",
+        "dbTableNames": ["Games"],
+        "dbSelect": "Games.ScrnshotFilename AS [Games.ScrnshotFilename]",
+        "dbIdentifiers": ["Games.ScrnshotFilename", "ScrnshotFilename"],
+        "defaultWidth": 320,
+        "sortable": False,
+        "filterable": False,
+    },
+    {
+        "id": "pic[3]",
+        "screenName": "Picture 4",
+        "dbTableNames": ["Games"],
+        "dbSelect": "Games.ScrnshotFilename AS [Games.ScrnshotFilename]",
+        "dbIdentifiers": ["Games.ScrnshotFilename", "ScrnshotFilename"],
+        "defaultWidth": 320,
+        "sortable": False,
+        "filterable": False,
+    },
+    {
+        "id": "pic[4]",
+        "screenName": "Picture 5",
+        "dbTableNames": ["Games"],
+        "dbSelect": "Games.ScrnshotFilename AS [Games.ScrnshotFilename]",
+        "dbIdentifiers": ["Games.ScrnshotFilename", "ScrnshotFilename"],
+        "defaultWidth": 320,
+        "sortable": False,
+        "filterable": False,
+    },
+    {
         "id": "id",
         "screenName": "ID",
         "dbTableNames": ["Games"],
@@ -2334,6 +2374,141 @@ def filterHistory_goForward():
 
 # + Game table view {{{
 
+# + + dan/math/Rect2.js {{{
+
+def fitLetterboxed(i_rect, i_container, i_align=0.5):
+    """
+    Reposition and (without changing its aspect ratio) resize a rectangle
+    to fit fully inside a container rectangle with letterboxing,
+    ie. one pair of this rectangle's opposing edges will touch the container's edges precisely,
+    such that the other pair of this rectangle's opposing edges will lie inside the container's
+    edges leaving some unused 'black borders' space.
+
+    Params:
+     i_rect:
+      (dict)
+      The rectangle to fit. [Is really only the aspect ratio used here?...]
+      Dictionary has specific properties:
+       x, y, width, height:
+        (float)
+     i_container:
+      (dict)
+      The rectangle to fit i_rect within.
+      Dictionary has specific properties:
+       x, y, width, height:
+        (float)
+     i_align:
+      Either (float)
+       How to align the resulting rectangle in the underfitting dimension;
+       or in other words, the relative size of the letterbox borders.
+       0.5:
+        align in centre; make both borders the same size
+       0:
+        align at left or top; make the left or top border zero and the opposite
+        border full size
+       1:
+        align at right or bottom; make the right or bottom border zero and the
+        opposite border full size
+      or (None)
+       Use default of 0.5.
+
+    Returns:
+     (dict)
+     Dictionary has specific properties:
+      x, y, width, height:
+       (float)
+    """
+    # Find the scaling required to make the horizontal edges fit exactly,
+    # and the vertical edges fit exactly
+    requiredHorizontalScale = float(i_container["width"]) / float(i_rect["width"])
+    requiredVerticalScale = float(i_container["height"]) / float(i_rect["height"])
+    # Use the smaller of the two
+    if requiredHorizontalScale < requiredVerticalScale:
+        i_rect["left"] = i_container["left"]
+        i_rect["width"] = i_container["width"]
+        combinedBorderSize = i_container["height"] - i_rect["height"] * requiredHorizontalScale
+        i_rect["top"] = i_container["top"] + i_align * combinedBorderSize
+        i_rect["height"] = i_container["height"] - combinedBorderSize
+    else:
+        i_rect["top"] = i_container["top"]
+        i_rect["height"] = i_container["height"]
+        combinedBorderSize = i_container["width"] - i_rect["width"] * requiredVerticalScale
+        i_rect["left"] = i_container["left"] + i_align * combinedBorderSize
+        i_rect["width"] = i_container["width"] - combinedBorderSize
+
+    return i_rect
+
+def fitPanned(i_rect, i_container, i_align=0.5):
+    """
+    Reposition and (without changing its aspect ratio) resize a rectangle
+    to fit inside a container rectangle with panning,
+    ie. one pair of this rectangle's opposing edges will touch the container's edges precisely,
+    such that the other pair of this rectangle's opposing edges will lie outside the container's
+    edges causing some of the rectangle to be cropped by the container.
+
+    Params:
+     i_rect:
+      (dict)
+      The rectangle to fit.
+      Dictionary has specific properties:
+       x, y, width, height:
+        (float)
+     i_container:
+      (dict)
+      The rectangle to fit i_rect within.
+      Dictionary has specific properties:
+       x, y, width, height:
+        (float)
+     i_align:
+      Either (float)
+       How to align the resulting rectangle in the overfitting dimension;
+       or in other words, the relative size of the cropped areas.
+       0.5:
+        align in centre; crop equal amounts on both sides
+       0:
+        align at / pan to left or top;
+        crop nothing from the left or top and crop fully from the right or bottom
+       1:
+        align at / pan to right or bottom;
+        crop nothing from the right or bottom and crop fully from the left or top
+      or (None)
+       Use default of 0.5.
+
+    Returns:
+     (dict)
+     Dictionary has specific properties:
+      x, y, width, height:
+       (float)
+    """
+    # Find the scaling required to make the horizontal edges fit exactly,
+    # and the vertical edges fit exactly
+    requiredHorizontalScale = float(i_container["width"]) / float(i_rect["width"])
+    requiredVerticalScale = float(i_container["height"]) / float(i_rect["height"])
+    # Use the larger of the two
+    if requiredHorizontalScale > requiredVerticalScale:
+        i_rect["left"] = i_container["left"]
+        i_rect["width"] = i_container["width"]
+        combinedBorderSize = i_container["height"] - i_rect["height"] * requiredHorizontalScale
+        i_rect["top"] = i_container["top"] + i_align * combinedBorderSize
+        i_rect["height"] = i_container["height"] - combinedBorderSize
+    else:
+        i_rect["top"] = i_container["top"]
+        i_rect["height"] = i_container["height"]
+        combinedBorderSize = i_container["width"] - i_rect["width"] * requiredVerticalScale
+        i_rect["left"] = i_container["left"] + i_align * combinedBorderSize
+        i_rect["width"] = i_container["width"] - combinedBorderSize
+
+    return i_rect
+
+#fitLetterboxed({"left": 0, "top": 0, "width": 426, "height": 1034}, {"left": 0, "top": 0, "width": 4.0, "height": 3.0}, 0.5)
+
+def qrectToDanrect(i_qrect):
+    return { "left": i_qrect.left(), "top": i_qrect.top(), "width": i_qrect.width(), "height": i_qrect.height() }
+def danrectToQrect(i_danrect):
+    return QRect(i_danrect["left"], i_danrect["top"], i_danrect["width"], i_danrect["height"])
+
+# + + }}}
+
 class MyStyledItemDelegate(QStyledItemDelegate):
     def __init__(self, i_parent=None):
         QStyledItemDelegate.__init__(self, i_parent)
@@ -2361,13 +2536,33 @@ class MyStyledItemDelegate(QStyledItemDelegate):
             if screenshotPath != None:
                 if hasattr(gamebase, "config_screenshotsBaseDirPath"):
                     pixmap = QPixmap(normalizeDirPathFromConfig(gamebase.config_screenshotsBaseDirPath) + "/" + screenshotPath)
-                    i_painter.drawPixmap(i_option.rect, pixmap)
+                    destRect = danrectToQrect(fitLetterboxed(qrectToDanrect(pixmap.rect()), qrectToDanrect(i_option.rect)))
+                    i_painter.drawPixmap(destRect, pixmap)
+
+        elif column["id"].startswith("pic[") and column["id"].endswith("]"):
+            picNo = int(column["id"][4:-1])
+
+            screenshotPath = None
+            if picNo == 0:
+                screenshotPath = dbRow_getScreenshotRelativePath(self.parent().dbRows[i_index.row()])
+            else:
+                screenshotPaths = dbRow_getSupplementaryScreenshotPaths(self.parent().dbRows[i_index.row()])
+                if picNo-1 < len(screenshotPaths):
+                    screenshotPath = screenshotPaths[picNo-1]
+
+            if screenshotPath != None:
+                if hasattr(gamebase, "config_screenshotsBaseDirPath"):
+                    pixmap = QPixmap(normalizeDirPathFromConfig(gamebase.config_screenshotsBaseDirPath) + "/" + screenshotPath)
+                    destRect = danrectToQrect(fitLetterboxed(qrectToDanrect(pixmap.rect()), qrectToDanrect(i_option.rect)))
+                    i_painter.drawPixmap(destRect, pixmap)
+
         elif column["id"] == "musician_photo":
             photoPath = dbRow_getPhotoRelativePath(self.parent().dbRows[i_index.row()])
             if photoPath != None:
                 if hasattr(gamebase, "config_photosBaseDirPath"):
                     pixmap = QPixmap(normalizeDirPathFromConfig(gamebase.config_photosBaseDirPath) + "/" + photoPath)
-                    i_painter.drawPixmap(i_option.rect, pixmap)
+                    destRect = danrectToQrect(fitLetterboxed(qrectToDanrect(pixmap.rect()), qrectToDanrect(i_option.rect)))
+                    i_painter.drawPixmap(destRect, pixmap)
         else:
             QStyledItemDelegate.paint(self, i_painter, i_option, i_index)
 
@@ -2416,7 +2611,7 @@ class MyTableModel(QAbstractTableModel):
             elif i_role == Qt.TextAlignmentRole:
                 return Qt.AlignCenter
         # Screenshot
-        elif column["id"] == "pic":
+        elif column["id"] == "pic" or (column["id"].startswith("pic[") and column["id"].endswith("]")):
             # (Done via delegate)
             #if i_role == Qt.DecorationRole:
             #    screenshotPath = self.parent().dbRows[i_index.row()][self.parent().dbColumnNames.index("Games.ScrnshotFilename")]
