@@ -1211,7 +1211,7 @@ def dbRow_getPhotoRelativePath(i_row):
     # compute and cache it now
     if True:#(!i_row.photoRelativePath)
         #i_row.
-        photoRelativePath = i_row["Photo"]
+        photoRelativePath = i_row["Musicians.Photo"]
         if photoRelativePath != None:
             photoRelativePath = photoRelativePath.replace("\\", "/")
 
