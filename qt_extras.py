@@ -8,6 +8,89 @@ from PySide2.QtGui import *
 from PySide2.QtWebEngineWidgets import *
 
 
+class LineEditWithClearButton(QFrame):
+    # Emitted after the text is changed
+    textChange = Signal()
+
+    def __init__(self, i_height, i_parent=None):
+        """
+        Params:
+         i_height:
+          (int)
+        """
+        QFrame.__init__(self, i_parent)
+
+        self.setAttribute(Qt.WA_StyledBackground, True)
+        self.setProperty("class", "LineEditWithClearButton")
+        self.setAutoFillBackground(True)
+
+        self.layout = QHBoxLayout(self)
+        self.setLayout(self.layout)
+        self.layout.setSpacing(0)
+        self.layout.setContentsMargins(0, 0, 0, 0)
+
+        self.lineEdit = QLineEdit(self)
+        self.lineEdit.setFixedHeight(i_height)
+        self.layout.addWidget(self.lineEdit)
+        self.layout.setStretch(0, 1)
+
+        self.clearButton = QPushButton("", self)
+        self.clearButton.setIcon(self.style().standardIcon(QStyle.SP_DialogCloseButton))
+        self.clearButton.setStyleSheet("QPushButton { margin: 4px; border-width: 1px; border-radius: 10px; }");
+        #self.clearButton.setFlat(True)
+        self.clearButton.setFixedHeight(i_height)
+        self.clearButton.setFixedWidth(i_height)
+        self.clearButton.setFocusPolicy(Qt.NoFocus)
+        self.clearButton.setVisible(False)
+        self.layout.addWidget(self.clearButton)
+        self.layout.setStretch(1, 0)
+        self.clearButton.clicked.connect(self.clearButton_onClicked)
+
+        self.lineEdit.textEdited.connect(self.lineEdit_onTextEdited)
+
+    # + Internal event handling {{{
+
+    def lineEdit_onTextEdited(self, i_text):
+        # Hide or show clear button depending on whether there's text
+        self.clearButton.setVisible(i_text != "")
+
+    def clearButton_onClicked(self):
+        self.lineEdit.setText("")
+        self.clearButton.setVisible(False)
+        self.textChange.emit()
+
+    # + }}}
+
+    # + Text {{{
+
+    def text(self):
+        """
+        Returns:
+         (str)
+        """
+        return self.lineEdit.text()
+
+    def setText(self, i_text):
+        """
+        Params:
+         i_text:
+          (str)
+        """
+        textChanged = i_text == self.lineEdit.text()
+        self.lineEdit.setText(i_text)
+        if textChanged:
+            self.lineEdit_onTextEdited(i_text)
+
+    # + }}}
+
+    # + Focus {{{
+
+    def setFocus(self, i_reason):
+        self.lineEdit.setFocus(i_reason)
+
+    # + }}}
+
+
 class ResizableMessageBox(QDialog):
     def __init__(self, i_icon, i_title, i_text, i_buttons=QDialogButtonBox.Ok, i_parent=None, i_windowFlags=Qt.Dialog):
         """

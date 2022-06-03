@@ -1899,83 +1899,6 @@ class ColumnNameBar(QWidget):
 
 # + }}}
 
-class LineEditWithClearButton(QFrame):
-    # Emitted after the text is changed
-    textChange = Signal()
-
-    def __init__(self, i_parent=None):
-        QFrame.__init__(self, i_parent)
-
-        self.setAttribute(Qt.WA_StyledBackground, True)
-        self.setProperty("class", "LineEditWithClearButton")
-        self.setAutoFillBackground(True)
-
-        self.layout = QHBoxLayout(self)
-        self.setLayout(self.layout)
-        self.layout.setSpacing(0)
-        self.layout.setContentsMargins(0, 0, 0, 0)
-
-        self.lineEdit = QLineEdit(self)
-        self.lineEdit.setFixedHeight(ColumnFilterBar.filterRowHeight)
-        self.layout.addWidget(self.lineEdit)
-        self.layout.setStretch(0, 1)
-
-        self.clearButton = QPushButton("", self)
-        self.clearButton.setIcon(self.style().standardIcon(QStyle.SP_DialogCloseButton))
-        self.clearButton.setStyleSheet("QPushButton { margin: 4px; border-width: 1px; border-radius: 10px; }");
-        #self.clearButton.setFlat(True)
-        self.clearButton.setFixedHeight(ColumnFilterBar.filterRowHeight)
-        self.clearButton.setFixedWidth(ColumnFilterBar.filterRowHeight)
-        self.clearButton.setFocusPolicy(Qt.NoFocus)
-        self.clearButton.setVisible(False)
-        self.layout.addWidget(self.clearButton)
-        self.layout.setStretch(1, 0)
-        self.clearButton.clicked.connect(self.clearButton_onClicked)
-
-        self.lineEdit.textEdited.connect(self.lineEdit_onTextEdited)
-
-    # + Internal event handling {{{
-
-    def lineEdit_onTextEdited(self, i_text):
-        # Hide or show clear button depending on whether there's text
-        self.clearButton.setVisible(i_text != "")
-
-    def clearButton_onClicked(self):
-        self.lineEdit.setText("")
-        self.clearButton.setVisible(False)
-        self.textChange.emit()
-
-    # + }}}
-
-    # + Text {{{
-
-    def text(self):
-        """
-        Returns:
-         (str)
-        """
-        return self.lineEdit.text()
-
-    def setText(self, i_text):
-        """
-        Params:
-         i_text:
-          (str)
-        """
-        textChanged = i_text == self.lineEdit.text()
-        self.lineEdit.setText(i_text)
-        if textChanged:
-            self.lineEdit_onTextEdited(i_text)
-
-    # + }}}
-
-    # + Focus {{{
-
-    def setFocus(self, i_reason):
-        self.lineEdit.setFocus(i_reason)
-
-    # + }}}
-
 # + Column filter bar {{{
 
 class ColumnFilterBar(QWidget):
@@ -1987,9 +1910,9 @@ class ColumnFilterBar(QWidget):
     # Emitted after the text in one of the filter text boxes is changed, or a row is deleted
     filterChange = Signal()
 
-    class FilterEdit(LineEditWithClearButton):
+    class FilterEdit(qt_extras.LineEditWithClearButton):
         def __init__(self, i_columnId, i_parent=None):
-            LineEditWithClearButton.__init__(self, i_parent)
+            qt_extras.LineEditWithClearButton.__init__(self, ColumnFilterBar.filterRowHeight, i_parent)
 
             self.columnId = i_columnId
 
@@ -2439,12 +2362,12 @@ class ColumnFilterBar(QWidget):
 
 # + SQL filter bar {{{
 
-class SqlFilterBar(LineEditWithClearButton):
+class SqlFilterBar(qt_extras.LineEditWithClearButton):
     # Emitted after the text in the filter text box is changed
     textChange = Signal()
 
     def __init__(self, i_parent=None):
-        LineEditWithClearButton.__init__(self, i_parent)
+        qt_extras.LineEditWithClearButton.__init__(self, ColumnFilterBar.filterRowHeight, i_parent)
 
         self.lineEdit.editingFinished.connect(self.lineEdit_onEditingFinished)
 
