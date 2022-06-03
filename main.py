@@ -389,7 +389,7 @@ g_usableColumns = [
     },
     {
         "id": "music",
-        "screenName": "Music",
+        "screenName": "Start music (M)",
         "dbTableNames": ["Games"],
         "dbSelect": "Games.SidFilename AS [Games.SidFilename]",
         "dbIdentifiers": ["Games.SidFilename", "SidFilename"],
