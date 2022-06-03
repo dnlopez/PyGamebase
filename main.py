@@ -109,8 +109,9 @@ g_usableColumns = [
     {
         "id": "play",
         "screenName": "Start game (▶)",
-        "dbTableName": "Games",
-        "dbFieldName": "Filename",
+        "dbTableNames": ["Games"],
+        "dbSelect": "Games.Filename AS [Games.Filename]",
+        "dbIdentifiers": ["Games.Filename", "Filename"],
         "defaultWidth": 35,
         "sortable": False,
         "filterable": False,
@@ -119,8 +120,9 @@ g_usableColumns = [
     {
         "id": "pic",
         "screenName": "Picture",
-        "dbTableName": "Games",
-        "dbFieldName": "ScrnshotFilename",
+        "dbTableNames": ["Games"],
+        "dbSelect": "Games.ScrnshotFilename AS [Games.ScrnshotFilename]",
+        "dbIdentifiers": ["Games.ScrnshotFilename", "ScrnshotFilename"],
         "defaultWidth": 320,
         "sortable": False,
         "filterable": False,
@@ -128,8 +130,9 @@ g_usableColumns = [
     {
         "id": "id",
         "screenName": "ID",
-        "dbTableName": "Games",
-        "dbFieldName": "GA_Id",
+        "dbTableNames": ["Games"],
+        "dbSelect": "Games.GA_Id AS [Games.GA_Id]",
+        "dbIdentifiers": ["Games.GA_Id", "GA_Id"],
         "dbType": "Long Integer",
         "defaultWidth": 50,
         "sortable": False,
@@ -140,8 +143,9 @@ g_usableColumns = [
     {
         "id": "name",
         "screenName": "Name",
-        "dbTableName": "Games",
-        "dbFieldName": "Name",
+        "dbTableNames": ["Games"],
+        "dbSelect": "Games.Name AS [Games.Name]",
+        "dbIdentifiers": ["Games.Name", "Name"],
         "dbType": "Text (510)",
         "defaultWidth": 250,
         "sortable": True,
@@ -152,8 +156,9 @@ g_usableColumns = [
     {
         "id": "year",
         "screenName": "Year",
-        "dbTableName": "Years",
-        "dbFieldName": "Year",
+        "dbTableNames": ["Years"],
+        "dbSelect": "Years.Year AS [Years.Year]",
+        "dbIdentifiers": ["Years.Year", "Year"],
         "dbType": "Long Integer",
         "defaultWidth": 75,
         "sortable": True,
@@ -164,8 +169,9 @@ g_usableColumns = [
     {
         "id": "publisher",
         "screenName": "Publisher",
-        "dbTableName": "Publishers",
-        "dbFieldName": "Publisher",
+        "dbTableNames": ["Publishers"],
+        "dbSelect": "Publishers.Publisher AS [Publishers.Publisher]",
+        "dbIdentifiers": ["Publishers.Publisher", "Publisher"],
         "dbType": "Text (510)",
         "defaultWidth": 250,
         "sortable": True,
@@ -175,8 +181,9 @@ g_usableColumns = [
     {
         "id": "developer",
         "screenName": "Developer",
-        "dbTableName": "Developers",
-        "dbFieldName": "Developer",
+        "dbTableNames": ["Developers"],
+        "dbSelect": "Developers.Developer AS [Developers.Developer]",
+        "dbIdentifiers": ["Developers.Developer", "Developer"],
         "dbType": "Text (510)",
         "defaultWidth": 250,
         "sortable": True,
@@ -186,8 +193,9 @@ g_usableColumns = [
     {
         "id": "programmer",
         "screenName": "Programmer",
-        "dbTableName": "Programmers",
-        "dbFieldName": "Programmer",
+        "dbTableNames": ["Programmers"],
+        "dbSelect": "Programmers.Programmer AS [Programmers.Programmer]",
+        "dbIdentifiers": ["Programmers.Programmer", "Programmer"],
         "dbType": "Text (510)",
         "defaultWidth": 250,
         "sortable": True,
@@ -197,8 +205,9 @@ g_usableColumns = [
     {
         "id": "parent_genre",
         "screenName": "Parent genre",
-        "dbTableName": "PGenres",
-        "dbFieldName": "ParentGenre",
+        "dbTableNames": ["PGenres"],
+        "dbSelect": "PGenres.ParentGenre AS [PGenres.ParentGenre]",
+        "dbIdentifiers": ["PGenres.ParentGenre", "ParentGenre"],
         "dbType": "Text (510)",
         "defaultWidth": 150,
         "sortable": True,
@@ -208,8 +217,9 @@ g_usableColumns = [
     {
         "id": "genre",
         "screenName": "Genre",
-        "dbTableName": "Genres",
-        "dbFieldName": "Genre",
+        "dbTableNames": ["Genres"],
+        "dbSelect": "Genres.Genre AS [Genres.Genre]",
+        "dbIdentifiers": ["Genres.Genre", "Genre"],
         "dbType": "Text (510)",
         "defaultWidth": 150,
         "sortable": True,
@@ -219,8 +229,9 @@ g_usableColumns = [
     {
         "id": "language",
         "screenName": "Language",
-        "dbTableName": "Languages",
-        "dbFieldName": "Language",
+        "dbTableNames": ["Languages"],
+        "dbSelect": "Languages.Language AS [Languages.Language]",
+        "dbIdentifiers": ["Languages.Language", "Language"],
         "dbType": "Text (510)",
         "defaultWidth": 150,
         "sortable": True,
@@ -230,8 +241,9 @@ g_usableColumns = [
     {
         "id": "cracker",
         "screenName": "Cracker",
-        "dbTableName": "Crackers",
-        "dbFieldName": "Cracker",
+        "dbTableNames": ["Crackers"],
+        "dbSelect": "Crackers.Cracker AS [Crackers.Cracker]",
+        "dbIdentifiers": ["Crackers.Cracker", "Cracker"],
         "dbType": "Text (510)",
         "defaultWidth": 150,
         "sortable": True,
@@ -241,8 +253,9 @@ g_usableColumns = [
     {
         "id": "artist",
         "screenName": "Artist",
-        "dbTableName": "Artists",
-        "dbFieldName": "Artist",
+        "dbTableNames": ["Artists"],
+        "dbSelect": "Artists.Artist AS [Artists.Artist]",
+        "dbIdentifiers": ["Artists.Artist", "Artist"],
         "dbType": "Text (510)",
         "defaultWidth": 250,
         "sortable": True,
@@ -252,8 +265,9 @@ g_usableColumns = [
     {
         "id": "license",
         "screenName": "License",
-        "dbTableName": "Licenses",
-        "dbFieldName": "License",
+        "dbTableNames": ["Licenses"],
+        "dbSelect": "Licenses.License AS [Licenses.License]",
+        "dbIdentifiers": ["Licenses.License", "License"],
         "dbType": "Text (510)",
         "defaultWidth": 150,
         "sortable": True,
@@ -263,8 +277,9 @@ g_usableColumns = [
     {
         "id": "rarity",
         "screenName": "Rarity",
-        "dbTableName": "Rarities",
-        "dbFieldName": "Rarity",
+        "dbTableNames": ["Rarities"],
+        "dbSelect": "Rarities.Rarity AS [Rarities.Rarity]",
+        "dbIdentifiers": ["Rarities.Rarity", "Rarity"],
         "dbType": "Text (510)",
         "defaultWidth": 150,
         "sortable": True,
@@ -274,8 +289,9 @@ g_usableColumns = [
     {
         "id": "musician_name",
         "screenName": "Musician",
-        "dbTableName": "Musicians",
-        "dbFieldName": "Musician",
+        "dbTableNames": ["Musicians"],
+        "dbSelect": "Musicians.Musician AS [Musicians.Musician]",
+        "dbIdentifiers": ["Musicians.Musician", "Musician"],
         "dbType": "Text (510)",
         "defaultWidth": 150,
         "sortable": True,
@@ -285,8 +301,9 @@ g_usableColumns = [
     {
         "id": "musician_photo",
         "screenName": "Musician photo",
-        "dbTableName": "Musicians",
-        "dbFieldName": "Photo",
+        "dbTableNames": ["Musicians"],
+        "dbSelect": "Musicians.Photo AS [Musicians.Photo]",
+        "dbIdentifiers": ["Musicians.Photo", "Photo"],
         "dbType": "Text (510)",
         "defaultWidth": 100,
         "sortable": True,
@@ -297,8 +314,9 @@ g_usableColumns = [
     {
         "id": "musician_group",
         "screenName": "Musician group",
-        "dbTableName": "Musicians",
-        "dbFieldName": "Grp",
+        "dbTableNames": ["Musicians"],
+        "dbSelect": "Musicians.Grp AS [Musicians.Grp]",
+        "dbIdentifiers": ["Musicians.Grp", "Grp"],
         "dbType": "Text (510)",
         "defaultWidth": 150,
         "sortable": True,
@@ -308,8 +326,9 @@ g_usableColumns = [
     {
         "id": "musician_nick",
         "screenName": "Musician nick",
-        "dbTableName": "Musicians",
-        "dbFieldName": "Nick",
+        "dbTableNames": ["Musicians"],
+        "dbSelect": "Musicians.Nick AS [Musicians.Nick]",
+        "dbIdentifiers": ["Musicians.Nick", "Nick"],
         "dbType": "Text (510)",
         "defaultWidth": 150,
         "sortable": True,
@@ -319,8 +338,9 @@ g_usableColumns = [
     {
         "id": "music",
         "screenName": "Music",
-        "dbTableName": "Games",
-        "dbFieldName": "SidFilename",
+        "dbTableNames": ["Games"],
+        "dbSelect": "Games.SidFilename AS [Games.SidFilename]",
+        "dbIdentifiers": ["Games.SidFilename", "SidFilename"],
         "dbType": "Memo/Hyperlink (255)",
         "defaultWidth": 35,
         "sortable": False,
@@ -331,8 +351,9 @@ g_usableColumns = [
     {
         "id": "pal_ntsc",
         "screenName": "PAL/NTSC",
-        "dbTableName": "Games",
-        "dbFieldName": "V_PalNTSC",
+        "dbTableNames": ["Games"],
+        "dbSelect": "Games.V_PalNTSC AS [Games.V_PalNTSC]",
+        "dbIdentifiers": ["Games.V_PalNTSC", "V_PalNTSC"],
         "dbType": "Long Integer",
         "type": "enum",
         "enumMap": {
@@ -350,8 +371,9 @@ g_usableColumns = [
     {
         "id": "control",
         "screenName": "Control",
-        "dbTableName": "Games",
-        "dbFieldName": "Control",
+        "dbTableNames": ["Games"],
+        "dbSelect": "Games.Control AS [Games.Control]",
+        "dbIdentifiers": ["Games.Control", "Control"],
         "dbType": "Long Integer",
         "type": "enum",
         "enumMap": {
@@ -374,8 +396,9 @@ g_usableColumns = [
     {
         "id": "clone_of",
         "screenName": "Clone of",
-        "dbTableName": "Games",
-        "dbFieldName": "CloneOf",
+        "dbTableNames": ["Games"],
+        "dbSelect": "Games.CloneOf AS [Games.CloneOf]",
+        "dbIdentifiers": ["Games.CloneOf", "CloneOf"],
         "dbType": "Long Integer",
         "type": "gameId",
         "defaultWidth": 100,
@@ -386,8 +409,9 @@ g_usableColumns = [
     {
         "id": "prequel",
         "screenName": "Prequel",
-        "dbTableName": "Games",
-        "dbFieldName": "Prequel",
+        "dbTableNames": ["Games"],
+        "dbSelect": "Games.Prequel AS [Games.Prequel]",
+        "dbIdentifiers": ["Games.Prequel", "Prequel"],
         "dbType": "Long Integer NOT NULL",
         "type": "gameId",
         "defaultWidth": 100,
@@ -399,8 +423,9 @@ g_usableColumns = [
     {
         "id": "sequel",
         "screenName": "Sequel",
-        "dbTableName": "Games",
-        "dbFieldName": "Sequel",
+        "dbTableNames": ["Games"],
+        "dbSelect": "Games.Sequel AS [Games.Sequel]",
+        "dbIdentifiers": ["Games.Sequel", "Sequel"],
         "dbType": "Long Integer NOT NULL",
         "type": "gameId",
         "defaultWidth": 100,
@@ -412,8 +437,9 @@ g_usableColumns = [
     {
         "id": "related",
         "screenName": "Related",
-        "dbTableName": "Games",
-        "dbFieldName": "Related",
+        "dbTableNames": ["Games"],
+        "dbSelect": "Games.Related AS [Games.Related]",
+        "dbIdentifiers": ["Games.Related", "Related"],
         "dbType": "Long Integer NOT NULL",
         "type": "gameId",
         "defaultWidth": 100,
@@ -425,13 +451,66 @@ g_usableColumns = [
     {
         "id": "gemus",
         "screenName": "Gemus",
-        "dbTableName": "Games",
-        "dbFieldName": "Gemus",
+        "dbTableNames": ["Games"],
+        "dbSelect": "Games.Gemus AS [Games.Gemus]",
+        "dbIdentifiers": ["Games.Gemus", "Gemus"],
         "dbType": "Memo/Hyperlink (255)",
         "defaultWidth": 200,
         "sortable": True,
         "filterable": True,
         "textAlignment": "left",
+    },
+
+    {
+        "id": "players_from",
+        "screenName": "Players from",
+        "dbTableNames": ["Games"],
+        "dbSelect": "Games.PlayersFrom AS [Games.PlayersFrom]",
+        "dbIdentifiers": ["Games.PlayersFrom", "PlayersFrom"],
+        "dbType": "Long Integer",
+        "defaultWidth": 100,
+        "sortable": True,
+        "filterable": True,
+        "textAlignment": "left",
+        "comment": "Minimum number of players the game supports (-1=Unknown)"
+    },
+    {
+        "id": "players_to",
+        "screenName": "Players to",
+        "dbTableNames": ["Games"],
+        "dbSelect": "Games.PlayersTo AS [Games.PlayersTo]",
+        "dbIdentifiers": ["Games.PlayersTo", "PlayersTo"],
+        "dbType": "Long Integer",
+        "defaultWidth": 100,
+        "sortable": True,
+        "filterable": True,
+        "textAlignment": "left",
+        "comment": "Maximum number of players the game supports (-1=Unknown)"
+    },
+    {
+        "id": "players_sim",
+        "screenName": "Players simultaneous",
+        "dbTableNames": ["Games"],
+        "dbSelect": "Games.PlayersSim AS [Games.PlayersSim]",
+        "dbIdentifiers": ["Games.PlayersSim", "PlayersSim"],
+        "dbType": "Boolean NOT NULL",
+        "defaultWidth": 100,
+        "sortable": True,
+        "filterable": True,
+        "textAlignment": "left",
+        "comment": "The Game can be played by more than one player simultaneously"
+    },
+    {
+        "id": "players",
+        "screenName": "Players",
+        "dbTableNames": ["Games"],
+        "dbSelect": "iif(Games.PlayersFrom == Games.PlayersTo, Games.PlayersFrom, Games.PlayersFrom || ' - ' || Games.PlayersTo) || iif(Games.PlayersSim, ' (simultaneous)', '') AS Players",
+        "dbIdentifiers": ["Players"],
+        #"dbType": "Long Integer",
+        "defaultWidth": 100,
+        "sortable": True,
+        "filterable": True,
+        "textAlignment": "left"
     },
 ]
 
@@ -464,15 +543,11 @@ def usableColumn_getByDbIdentifier(i_identifier):
      Either (UsableColumn)
      or (None)
     """
-    parts = i_identifier.split(".", 1)
-    if len(parts) == 1:
-        for column in g_usableColumns:
-            if column["filterable"] and column["dbFieldName"] == parts[0]:
-                return column
-    else:
-        for column in g_usableColumns:
-            if column["filterable"] and column["dbTableName"] == parts[0] and column["dbFieldName"] == parts[1]:
-                return column
+    for usableColumn in g_usableColumns:
+        if "dbIdentifiers" in usableColumn:
+            for dbIdentifier in usableColumn["dbIdentifiers"]:
+                if dbIdentifier == i_identifier:
+                    return usableColumn
     return None
 
 
@@ -867,12 +942,15 @@ def openDb():
     rows = cursor.fetchall()
     dbTableNames = [row[0]  for row in rows]
 
-    # Remove columns from g_usableColumns whose tables don't exist in the database
+    # Remove columns from g_usableColumns with tables that don't exist in the database
     global g_usableColumns
     def validateUsableColumn(i_usableColumn):
-        if not ("dbTableName" in i_usableColumn):
+        if not ("dbTableNames" in i_usableColumn):
             return True
-        return i_usableColumn["dbTableName"] in dbTableNames
+        for dbTableName in i_usableColumn["dbTableNames"]:
+            if not (dbTableName in dbTableNames):
+                return False
+        return True
     g_usableColumns = [column  for column in g_usableColumns  if validateUsableColumn(column)]
 
     # Remove columns from g_tableColumns that don't exist in g_usableColumns
@@ -1001,6 +1079,9 @@ def getGameRecord(i_gameId, i_includeRelatedGameNames=False):
       (int)
      i_includeRelatedGameNames:
       (bool)
+
+    Returns:
+     (dict)
     """
     # From Games table, select all fields
     fromTerms = [
@@ -1009,7 +1090,7 @@ def getGameRecord(i_gameId, i_includeRelatedGameNames=False):
 
     selectTerms = [
     ]
-    fullyQualifiedFieldNames = False
+    fullyQualifiedFieldNames = True
     if fullyQualifiedFieldNames:
         for field in g_dbSchema["Games"]:
             selectTerms.append("Games." + field["name"] + " AS [Games." + field["name"] + "]")
@@ -1096,7 +1177,7 @@ def dbRow_getScreenshotRelativePath(i_row):
     # compute and cache it now
     if True:#(!i_row.screenshotRelativePath)
         #i_row.
-        screenshotRelativePath = i_row["ScrnshotFilename"]
+        screenshotRelativePath = i_row["Games.ScrnshotFilename"]
         if screenshotRelativePath != None:
             screenshotRelativePath = screenshotRelativePath.replace("\\", "/")
 
@@ -2211,7 +2292,7 @@ class ColumnFilterBar(QWidget):
                         # If range operator
                         betweenValues = value.split("~")
                         if len(betweenValues) == 2 and stringLooksLikeNumber(betweenValues[0]) and stringLooksLikeNumber(betweenValues[1]):
-                            andTerms.append(usableColumn["dbTableName"] + "." + usableColumn["dbFieldName"] + " BETWEEN " + betweenValues[0] + " AND " + betweenValues[1])
+                            andTerms.append(usableColumn["dbIdentifiers"][0] + " BETWEEN " + betweenValues[0] + " AND " + betweenValues[1])
 
                         # Else if regular expression
                         elif len(value) > 2 and value.startswith("/") and value.endswith("/"):
@@ -2223,7 +2304,7 @@ class ColumnFilterBar(QWidget):
                             value = "'" + value + "'"
 
                             #
-                            andTerms.append(usableColumn["dbTableName"] + "." + usableColumn["dbFieldName"] + " REGEXP " + value)
+                            andTerms.append(usableColumn["dbIdentifiers"][0] + " REGEXP " + value)
                             # Format value as a string
                             value = value.replace("'", "''")
                             value = "'" + value + "'"
@@ -2249,7 +2330,7 @@ class ColumnFilterBar(QWidget):
                                 value = "'" + value + "'"
 
                             #
-                            andTerms.append(usableColumn["dbTableName"] + "." + usableColumn["dbFieldName"] + " " + operator + " " + value)
+                            andTerms.append(usableColumn["dbIdentifiers"][0] + " " + operator + " " + value)
 
                         # Else if a LIKE expression (contains an unescaped %)
                         elif value.replace("\\%", "").find("%") != -1:
@@ -2258,7 +2339,7 @@ class ColumnFilterBar(QWidget):
                             value = "'" + value + "'"
 
                             #
-                            andTerm = usableColumn["dbTableName"] + "." + usableColumn["dbFieldName"] + " LIKE " + value
+                            andTerm = usableColumn["dbIdentifiers"][0] + " LIKE " + value
                             if value.find("\\%") != -1:
                                 andTerm += " ESCAPE '\\'"
                             andTerms.append(andTerm)
@@ -2272,7 +2353,7 @@ class ColumnFilterBar(QWidget):
                             value = "'" + value + "'"
 
                             #
-                            andTerms.append(usableColumn["dbTableName"] + "." + usableColumn["dbFieldName"] + " LIKE " + value)
+                            andTerms.append(usableColumn["dbIdentifiers"][0] + " LIKE " + value)
 
             if len(andTerms) > 0:
                 andGroups.append(andTerms)
@@ -2524,7 +2605,7 @@ class MyTableModel(QAbstractTableModel):
         # Play
         elif column["id"] == "play":
             if i_role == Qt.DisplayRole or i_role == MyTableModel.FilterRole:
-                if self.parent().dbRows[i_index.row()][self.parent().dbColumnNames.index("Filename")] == None:
+                if self.parent().dbRows[i_index.row()][self.parent().dbColumnNames.index("Games.Filename")] == None:
                     return ""
                 return "▶"
             elif i_role == Qt.TextAlignmentRole:
@@ -2532,7 +2613,7 @@ class MyTableModel(QAbstractTableModel):
         # Music
         elif column["id"] == "music":
             if i_role == Qt.DisplayRole or i_role == MyTableModel.FilterRole:
-                if self.parent().dbRows[i_index.row()][self.parent().dbColumnNames.index("SidFilename")] == None:
+                if self.parent().dbRows[i_index.row()][self.parent().dbColumnNames.index("Games.SidFilename")] == None:
                     return ""
                 return "M"
             elif i_role == Qt.TextAlignmentRole:
@@ -2541,7 +2622,7 @@ class MyTableModel(QAbstractTableModel):
         elif column["id"] == "pic":
             # (Done via delegate)
             #if i_role == Qt.DecorationRole:
-            #    screenshotPath = self.parent().dbRows[i_index.row()][self.parent().dbColumnNames.index("ScrnshotFilename")]
+            #    screenshotPath = self.parent().dbRows[i_index.row()][self.parent().dbColumnNames.index("Games.ScrnshotFilename")]
             #    pixmap = QPixmap(normalizeDirPathFromConfig(gamebase.config_screenshotsBaseDirPath) + "/" + screenshotPath)
             #    return pixmap;
             pass
@@ -2551,9 +2632,9 @@ class MyTableModel(QAbstractTableModel):
             # Enum field
             if "type" in usableColumn and usableColumn["type"] == "enum":
                 if i_role == MyTableModel.FilterRole:
-                    return self.parent().dbRows[i_index.row()][usableColumn["dbFieldName"]]
+                    return self.parent().dbRows[i_index.row()][usableColumn["dbIdentifiers"][0]]
                 elif i_role == Qt.DisplayRole:
-                    value = self.parent().dbRows[i_index.row()][usableColumn["dbFieldName"]]
+                    value = self.parent().dbRows[i_index.row()][usableColumn["dbIdentifiers"][0]]
                     if value in usableColumn["enumMap"]:
                         value = str(value) + ": " + usableColumn["enumMap"][value]
                     return value
@@ -2565,9 +2646,9 @@ class MyTableModel(QAbstractTableModel):
             # Game ID field
             if "type" in usableColumn and usableColumn["type"] == "gameId":
                 if i_role == MyTableModel.FilterRole:
-                    return self.parent().dbRows[i_index.row()][usableColumn["dbFieldName"]]
+                    return self.parent().dbRows[i_index.row()][usableColumn["dbIdentifiers"][0]]
                 elif i_role == Qt.DisplayRole:
-                    value = self.parent().dbRows[i_index.row()][usableColumn["dbFieldName"]]
+                    value = self.parent().dbRows[i_index.row()][usableColumn["dbIdentifiers"][0]]
                     if value == 0:
                         return ""
                     return ">" + str(value)
@@ -2579,7 +2660,7 @@ class MyTableModel(QAbstractTableModel):
             # Other ordinary text field
             else:
                 if i_role == Qt.DisplayRole or i_role == MyTableModel.FilterRole:
-                    return self.parent().dbRows[i_index.row()][usableColumn["dbFieldName"]]
+                    return self.parent().dbRows[i_index.row()][usableColumn["dbIdentifiers"][0]]
                 elif i_role == Qt.TextAlignmentRole:
                     if column["textAlignment"] == "center":
                         return Qt.AlignCenter
@@ -2615,6 +2696,24 @@ def dbRowToDict(i_row, i_columnNames):
 
     return rv
 
+import collections
+class DbRecordDict(collections.UserDict):
+    """
+    A dictionary intended to hold keys which are fully qualified '<table name>.<column name>' names,
+    and overrides __getitem__ so that you can get items by either that full name or just '<column name>'.
+    """
+    def __getitem__(self, i_key):
+        # Try matching the key name as given
+        if i_key in self.data:
+            return self.data[i_key]
+
+        # Try matching just the last name component
+        for realKey, value in self.data.items():
+            if realKey.rsplit(".", 1)[-1] == i_key:
+                return value
+
+        # Raise KeyError
+        return self.data[i_key]
 
 class MyTableView(QTableView):
     def __init__(self, i_parent=None):
@@ -2753,35 +2852,34 @@ class MyTableView(QTableView):
         ]
 
         # Determine what extra fields to select
-        neededTableAndColumnNames = set()
+        neededTableNames = set()
+        neededSelects = set()
 
         #  Add fields for all visible table columns
         for tableColumn in tableColumn_getBySlice():
             usableColumn = usableColumn_getById(tableColumn["id"])
-            if "dbTableName" in usableColumn and "dbFieldName" in usableColumn:
-                neededTableAndColumnNames.add((usableColumn["dbTableName"], usableColumn["dbFieldName"]))
-
-        #print("---")
-        #pprint.pprint(neededTableAndColumnNames)
-        #pprint.pprint(visibleDbNames)
+            if "dbTableNames" in usableColumn:
+                for dbTableName in usableColumn["dbTableNames"]:
+                    neededTableNames.add(dbTableName)
+            if "dbSelect" in usableColumn:
+                neededSelects.add(usableColumn["dbSelect"])
 
         #  If needed, parse WHERE expression for column names and add those too
         if i_whereExpressionMightUseNonVisibleColumns:
-            dbTableAndColumnNames = sqlWhereExpressionToDbTableAndColumnNames(i_whereExpression)
-            for dbTableAndColumnName in dbTableAndColumnNames:
-                neededTableAndColumnNames.add(dbTableAndColumnName)
+            parsedNeededTableNames, parsedNeededSelects = sqlWhereExpressionToTableNamesAndSelects(i_whereExpression)
+            neededTableNames = neededTableNames.union(parsedNeededTableNames)
+            neededSelects = neededSelects.union(parsedNeededSelects)
 
-        #pprint.pprint(neededTableAndColumnNames)
-
-        # Add the extra columns to selectTerms and fromTerms
+        # Add the extra fromTerms
         tableConnections = copy.deepcopy(connectionsFromGamesTable)
-        for tableName, fieldName in neededTableAndColumnNames:
-            fromTerms += getJoinTermsToTable(tableName, tableConnections)
+        for neededTableName in neededTableNames:
+            fromTerms += getJoinTermsToTable(neededTableName, tableConnections)
 
-            if tableName == "Games" and fieldName == "GA_Id":
-                pass
-            else:
-                selectTerms.append(tableName + "." + fieldName)
+        # Add the extra selectTerms
+        for neededSelect in neededSelects:
+            if neededSelect == "Games.GA_Id" or neededSelect == "GA_Id":  # TODO use a set for this too
+                continue
+            selectTerms.append(neededSelect)
 
         # SELECT
         sql = "SELECT " + ", ".join(selectTerms)
@@ -2799,7 +2897,7 @@ class MyTableView(QTableView):
             orderByTerms = []
             for columnId, direction in columnNameBar.sort_operations:
                 usableColumn = usableColumn_getById(columnId)
-                term = usableColumn["dbTableName"] + "." + usableColumn["dbFieldName"]
+                term = usableColumn["dbIdentifiers"][0]
                 if direction == -1:
                     term += " DESC"
                 orderByTerms.append(term)
@@ -2824,7 +2922,7 @@ class MyTableView(QTableView):
          (int)
         """
         selectedIndex = self.selectionModel().currentIndex()
-        return self.dbRows[selectedIndex.row()][self.dbColumnNames.index("GA_Id")]
+        return self.dbRows[selectedIndex.row()][self.dbColumnNames.index("Games.GA_Id")]
 
     def refilter(self, i_sqlWhereExpression):
         """
@@ -2867,7 +2965,7 @@ class MyTableView(QTableView):
         # search for new row number of that game
         # and if found, scroll to put that game in the same screen position it previously was
         if selectedGameId != None:
-            idColumnNo = self.dbColumnNames.index("GA_Id")
+            idColumnNo = self.dbColumnNames.index("Games.GA_Id")
             newDbRowNo = None
             for dbRowNo, dbRow in enumerate(self.dbRows):
                 if dbRow[idColumnNo] == selectedGameId:
@@ -2920,7 +3018,7 @@ class MyTableView(QTableView):
             detailPaneWasAlreadyVisible = detailPane_height() > 0
             detailPane_show()
             self.scrollTo(i_modelIndex, QAbstractItemView.PositionAtTop)
-            gameId = self.dbRows[i_modelIndex.row()][self.dbColumnNames.index("GA_Id")]
+            gameId = self.dbRows[i_modelIndex.row()][self.dbColumnNames.index("Games.GA_Id")]
             if gameId != detailPane_currentGameId:
                 detailPane_populate(gameId)
             if i_keyboardOriented and detailPaneWasAlreadyVisible:
@@ -2928,11 +3026,12 @@ class MyTableView(QTableView):
 
         elif columnId == "play":
             rowNo = i_modelIndex.row()
-            gameId = self.dbRows[rowNo][self.dbColumnNames.index("GA_Id")]
+            gameId = self.dbRows[rowNo][self.dbColumnNames.index("Games.GA_Id")]
             gameRecord = getGameRecord(gameId)
+            gameRecord = DbRecordDict(gameRecord)
 
             try:
-                gamebase.runGame(gameRecord["Filename"], gameRecord["FileToRun"], gameRecord)
+                gamebase.runGame(gameRecord["Games.Filename"], gameRecord["Games.FileToRun"], gameRecord)
             except Exception as e:
                 import traceback
                 print(traceback.format_exc())
@@ -2944,11 +3043,12 @@ class MyTableView(QTableView):
 
         elif columnId == "music":
             rowNo = i_modelIndex.row()
-            gameId = self.dbRows[rowNo][self.dbColumnNames.index("GA_Id")]
+            gameId = self.dbRows[rowNo][self.dbColumnNames.index("Games.GA_Id")]
             gameRecord = getGameRecord(gameId)
+            gameRecord = DbRecordDict(gameRecord)
 
             try:
-                gamebase.runMusic(gameRecord["SidFilename"], gameRecord)
+                gamebase.runMusic(gameRecord["Games.SidFilename"], gameRecord)
             except Exception as e:
                 import traceback
                 print(traceback.format_exc())
@@ -2963,12 +3063,12 @@ class MyTableView(QTableView):
             if "type" in usableColumn and usableColumn["type"] == "gameId":
                 # Get the target game ID
                 rowNo = i_modelIndex.row()
-                gameId = self.dbRows[rowNo][self.dbColumnNames.index(usableColumn["dbFieldName"])]
+                gameId = self.dbRows[rowNo][self.dbColumnNames.index(usableColumn["dbIdentifiers"][0])]
                 if gameId != 0:
                     self.selectGameWithId(gameId)
 
     def findGameWithId(self, i_id):
-        idColumnNo = self.dbColumnNames.index("GA_Id")
+        idColumnNo = self.dbColumnNames.index("Games.GA_Id")
         for rowNo, row in enumerate(self.dbRows):
             if row[idColumnNo] == i_id:
                 return rowNo
@@ -3204,7 +3304,7 @@ class MyTableView(QTableView):
 
                     # Remember where on the screen the row being resized is
                     #selectedIndex = self.selectionModel().currentIndex()
-                    #self.resize_selectedRowId = self.dbRows[selectedIndex.row()][self.dbColumnNames.index("GA_Id")]
+                    #self.resize_selectedRowId = self.dbRows[selectedIndex.row()][self.dbColumnNames.index("Games.GA_Id")]
                     self.resize_selectedRowTopY = self.rowViewportPosition(rowNo)
 
                     # If scrolling is per item,
@@ -3512,7 +3612,7 @@ def interpretColumnOperation(i_node):
 
 def sqlWhereExpressionToColumnFilters(i_whereExpression, i_skipFailures=False):
     """
-    Parse SQL text
+    Parse SQL WHERE expression
     and get it as an equivalent set of column names and texts to enter into those boxes on the column filter bar.
 
     Params:
@@ -3626,26 +3726,24 @@ def sqlWhereExpressionToColumnFilters(i_whereExpression, i_skipFailures=False):
 
     return oredRows
 
-def sqlWhereExpressionToDbTableAndColumnNames(i_whereExpression):
+def sqlWhereExpressionToTableNamesAndSelects(i_whereExpression):
     """
-    Parse SQL text
-    and get names of database fields referred to in it.
+    Parse SQL WHERE expression
+    and get database table names and select terms needed to get the columns being referenced in it.
 
     Params:
      i_sqlWhereExpression:
       (str)
 
     Returns:
-     (list)
-     Each element is:
-      (tuple)
-      Tuple has elements:
-       0:
-        (str)
-        DB table name
-       1:
-        (str)
-        DB field name
+     (tuple)
+     Tuple has elements:
+      0:
+       (set)
+       Table names
+      1:
+       (set)
+       Identifiers
     """
     try:
         oredRows = sqlWhereExpressionToColumnFilters(i_whereExpression, True)
@@ -3654,12 +3752,15 @@ def sqlWhereExpressionToDbTableAndColumnNames(i_whereExpression):
     if oredRows == None:
         return []
 
-    dbFields = []
+    dbTableNames = set()
+    dbSelects = set()
     for oredRow in oredRows:
         for andedFieldId in oredRow.keys():
             usableColumn = usableColumn_getById(andedFieldId)
-            dbFields.append((usableColumn["dbTableName"], usableColumn["dbFieldName"]))
-    return dbFields
+            for dbTableName in usableColumn["dbTableNames"]:
+                dbTableNames.add(dbTableName)
+            dbSelects.add(usableColumn["dbSelect"])
+    return dbTableNames, dbSelects
 
 def filterFormat_perColumn():
     # Show column filter bar instead of SQL filter bar
@@ -4069,7 +4170,7 @@ def detailPane_populate(i_gameId):
     gameRow = getGameRecord(i_gameId, True)
 
     global detailPane_currentGameId
-    detailPane_currentGameId = gameRow["GA_Id"]
+    detailPane_currentGameId = gameRow["Games.GA_Id"]
 
     html = ""
 
@@ -4084,48 +4185,48 @@ def detailPane_populate(i_gameId):
 
     # If there are related games,
     # insert links to the originals
-    if "CloneOf_Name" in gameRow and gameRow["CloneOf_Name"] != None:
+    if "Games.CloneOf_Name" in gameRow and gameRow["Games.CloneOf_Name"] != None:
         html += '<p style="white-space: pre-wrap;">'
         html += 'Clone of: '
-        html += '<a href="game:///' + str(gameRow["CloneOf"]) + '">' + gameRow["CloneOf_Name"] + '</a>'
+        html += '<a href="game:///' + str(gameRow["Games.CloneOf"]) + '">' + gameRow["Games.CloneOf_Name"] + '</a>'
         html += '</p>'
 
-    if "Prequel_Name" in gameRow and gameRow["Prequel_Name"] != None:
+    if "Games.Prequel_Name" in gameRow and gameRow["Games.Prequel_Name"] != None:
         html += '<p style="white-space: pre-wrap;">'
         html += 'Prequel: '
-        html += '<a href="game:///' + str(gameRow["Prequel"]) + '">' + gameRow["Prequel_Name"] + '</a>'
+        html += '<a href="game:///' + str(gameRow["Games.Prequel"]) + '">' + gameRow["Games.Prequel_Name"] + '</a>'
         html += '</p>'
 
-    if "Sequel_Name" in gameRow and gameRow["Sequel_Name"] != None:
+    if "Games.Sequel_Name" in gameRow and gameRow["Games.Sequel_Name"] != None:
         html += '<p style="white-space: pre-wrap;">'
         html += 'Sequel: '
-        html += '<a href="game:///' + str(gameRow["Sequel"]) + '">' + gameRow["Sequel_Name"] + '</a>'
+        html += '<a href="game:///' + str(gameRow["Games.Sequel"]) + '">' + gameRow["Games.Sequel_Name"] + '</a>'
         html += '</p>'
 
-    if "Related_Name" in gameRow and gameRow["Related_Name"] != None:
+    if "Games.Related_Name" in gameRow and gameRow["Games.Related_Name"] != None:
         html += '<p style="white-space: pre-wrap;">'
         html += 'Related: '
-        html += '<a href="game:///' + str(gameRow["Related"]) + '">' + gameRow["Related_Name"] + '</a>'
+        html += '<a href="game:///' + str(gameRow["Games.Related"]) + '">' + gameRow["Games.Related_Name"] + '</a>'
         html += '</p>'
 
     # Insert memo text
-    if gameRow["MemoText"] != None:
+    if gameRow["Games.MemoText"] != None:
         html += '<p style="white-space: pre-wrap;">'
-        html += gameRow["MemoText"]
+        html += gameRow["Games.MemoText"]
         html += '</p>'
 
     # Insert comment
-    if gameRow["Comment"] != None:
+    if gameRow["Games.Comment"] != None:
         html += '<p style="white-space: pre-wrap;">'
-        html += gameRow["Comment"]
+        html += gameRow["Games.Comment"]
         html += '</p>'
 
     # Insert weblink(s)
-    if "WebLink_Name" in gameRow and gameRow["WebLink_Name"] != None:
+    if "Games.WebLink_Name" in gameRow and gameRow["Games.WebLink_Name"] != None:
         html += '<p style="white-space: pre-wrap;">'
 
-        html += gameRow["WebLink_Name"] + ": "
-        url = gameRow["WebLink_URL"]
+        html += gameRow["Games.WebLink_Name"] + ": "
+        url = gameRow["Games.WebLink_URL"]
         html += '<a href="' + url + '">'
         html += url
         html += '</a>'
@@ -4135,7 +4236,7 @@ def detailPane_populate(i_gameId):
         #});
 
         # If it's a World Of Spectrum link then insert a corresponding Spectrum Computing link
-        if gameRow["WebLink_Name"] == "WOS":
+        if gameRow["Games.WebLink_Name"] == "WOS":
             # Separator
             html += '<span style="margin-left: 8px; margin-right: 8px; border-left: 1px dotted #666;"></span>'
             # Label
@@ -4154,7 +4255,7 @@ def detailPane_populate(i_gameId):
         html += '</p>'
 
     # Get extras
-    extrasRows = getExtrasRecords(str(gameRow["GA_Id"]))
+    extrasRows = getExtrasRecords(str(gameRow["Games.GA_Id"]))
 
     # Seperate extras which are and aren't images
     imageRows = []
@@ -4231,6 +4332,8 @@ def detailPane_populate(i_gameId):
                     extraPath = urllib.parse.unquote(extraPath)
                     extraInfo = [row  for row in self.extrasRows  if row["Path"] == extraPath][0]
                     gameInfo = self.gameRow
+                    gameInfo = DbRecordDict(gameInfo)
+
                     try:
                         gamebase.runExtra(extraPath, extraInfo, gameInfo)
                     except Exception as e:
