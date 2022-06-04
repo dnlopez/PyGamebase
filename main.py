@@ -3962,8 +3962,10 @@ filterMenu = menuBar.addMenu("F&ilter")
 #filterMenu.addSection("Go")
 filterMenu_back_action = filterMenu.addAction("Go &back")
 filterMenu_back_action.triggered.connect(filterHistory_goBack)
+filterMenu_back_action.setShortcut(QKeySequence("Alt+Left"))
 filterMenu_forward_action = filterMenu.addAction("Go &forward")
 filterMenu_forward_action.triggered.connect(filterHistory_goForward)
+filterMenu_forward_action.setShortcut(QKeySequence("Alt+Right"))
 
 filterMenu.addSeparator()
 
