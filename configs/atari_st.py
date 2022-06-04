@@ -1,6 +1,7 @@
 # Python std
 import os.path
 import shutil
+import tempfile
 import pprint
 
 # This program
@@ -47,7 +48,7 @@ def runGame(i_gamePath, i_fileToRun = None, i_gameInfo = None):
 
     # Extract zip
     gamesBaseDirPath = gamebaseBaseDirPath + "/Games/"
-    tempDirPath = "/tmp/gamebase"
+    tempDirPath = tempfile.gettempdir() + "/gamebase"
     zipMembers = utils.extractZip(gamesBaseDirPath + i_gamePath, tempDirPath)
 
     # Filter non-game files out of zip member list
@@ -75,7 +76,7 @@ def runExtra(i_extraPath, i_extraInfo, i_gameInfo):
         # [Don't see any extras that are zipped games in this DB]
 
         # Extract zip
-        tempDirPath = "/tmp/gamebase"
+        tempDirPath = tempfile.gettempdir() + "/gamebase"
         zipMembers = utils.extractZip(config_extrasBaseDirPath + "/" + i_extraPath, tempDirPath)
 
         # Get game description

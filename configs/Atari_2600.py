@@ -1,6 +1,7 @@
 # Python std
 import os.path
 import shutil
+import tempfile
 import pprint
 
 # This program
@@ -83,7 +84,7 @@ def runGame(i_gamePath, i_fileToRun = None, i_gameInfo = None):
 
     #
     gamesBaseDirPath = gamebaseBaseDirPath + "/roms/"
-    tempDirPath = "/tmp/gamebase"
+    tempDirPath = tempfile.gettempdir() + "/gamebase"
 
     # Copy ROM file
     if not os.path.exists(tempDirPath):
@@ -104,7 +105,7 @@ def runExtra(i_extraPath, i_extraInfo, i_gameInfo):
     # If zip file
     if utils.pathHasExtension(i_extraPath, ".ZIP"):
         # Extract zip
-        tempDirPath = "/tmp/gamebase"
+        tempDirPath = tempfile.gettempdir() + "/gamebase"
         zipMembers = utils.extractZip(config_extrasBaseDirPath + "/" + i_extraPath, tempDirPath)
 
         # Get game description

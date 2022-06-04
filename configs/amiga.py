@@ -1,6 +1,7 @@
 # Python std
 import os.path
 import shutil
+import tempfile
 import pprint
 
 # This program
@@ -171,7 +172,7 @@ def runGame(i_gamePath, i_fileToRun = None, i_gameInfo = None):
     #print('runGame(' + pprint.pformat(i_gamePath) + ', ' + pprint.pformat(i_fileToRun) + ', ' + pprint.pformat(i_gameInfo) + ')')
 
     gamesBaseDirPath = gamebaseBaseDirPath + "/Games/"
-    tempDirPath = "/tmp/gamebase"
+    tempDirPath = tempfile.gettempdir() + "/gamebase"
 
     gameFiles = []
     for gamePath in utils.findFileSequence(gamesBaseDirPath, i_gamePath):
@@ -207,7 +208,7 @@ def runExtra(i_extraPath, i_extraInfo, i_gameInfo):
     # If file is a zip
     if utils.pathHasExtension(i_extraPath, ".ZIP"):
         # Extract it
-        tempDirPath = "/tmp/gamebase"
+        tempDirPath = tempfile.gettempdir() + "/gamebase"
         zipMembers = utils.extractZip(config_extrasBaseDirPath + "/" + i_extraPath, tempDirPath)
 
         # Get game description
