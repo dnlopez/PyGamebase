@@ -28,17 +28,17 @@ config_extrasBaseDirPath = gamebaseBaseDirPath + "/Extras"
 #  games with Name containing "{ROM}" are actually in Extras/MSX1/ROM or Extras/MSX2/ROM, not in Games/MSX1/ROM or Games/MSX2/ROM
 
 
-def runGameOnMachine(i_gameDescription, i_machineName, i_gameFilePaths, i_gemusText):
+def runGameWithRezopenmsx(i_gameDescription, i_region, i_gameFilePaths, i_gemusText):
     """
     Params:
      i_gameDescription:
       Either (str)
       or (None)
-     i_machineName:
+     i_region:
       (str)
       One of
-       "rezopenmsx (NTSC)"
-       "rezopenmsx (PAL)"
+       "ntsc"
+       "pal"
      i_gameFilePaths:
       (list of str)
      i_gemusText:
@@ -46,13 +46,11 @@ def runGameOnMachine(i_gameDescription, i_machineName, i_gameFilePaths, i_gemusT
     """
     executableAndArgs = ["rezopenmsx.py"]
 
-    if i_machineName == "rezopenmsx (NTSC)":
-        executableAndArgs += ["--region", "ntsc"]
-    elif i_machineName == "rezopenmsx (PAL)":
-        executableAndArgs += ["--region", "pal"]
+    executableAndArgs += ["--region", i_region]
 
-    for gameFilePath in i_gameFilePaths:
-        executableAndArgs += ["--media", gameFilePath]
+    # [if calling gemusScript(), don't need this]
+    #for gameFilePath in i_gameFilePaths:
+    #    executableAndArgs += ["--media", gameFilePath]
 
     #
     if i_gameDescription != None:
@@ -60,26 +58,12 @@ def runGameOnMachine(i_gameDescription, i_machineName, i_gameFilePaths, i_gemusT
 
     #
     executableAndArgs.append("--")
-    argsFromGemus = gemusScript(i_gameFilePaths[0], utils.Gemus(i_gemusText))
+    argsFromGemus = gemusScript(i_gameFilePaths[0], i_gemusText)
     executableAndArgs.extend(argsFromGemus)
 
     # Execute
     print(executableAndArgs)
     utils.shellStartTask(executableAndArgs)
-
-"""
-function runGame_gemus(i_gameFilePaths, i_gemusText)
-# Params:
-#  i_gameFilePaths:
-#   (array of string)
-#  i_gemusText:
-#   (string)
-{
-    var executableAndArgs = ["openmsx"]
-    executableAndArgs = executableAndArgs.concat(gemusScript(i_gameFilePaths[0], new utils.Gemus(i_gemusText)))
-    utils.directExecList(executableAndArgs)
-}
-"""
 
 def runGameMenu(i_gameDescription, i_gameFilePaths, i_gemusText=""):
     """
@@ -98,9 +82,9 @@ def runGameMenu(i_gameDescription, i_gameFilePaths, i_gemusText=""):
     ])
 
     if method == "rezopenmsx (NTSC)":
-        runGameOnMachine(i_gameDescription, "rezopenmsx (NTSC)", i_gameFilePaths, i_gemusText)
+        runGameWithRezopenmsx(i_gameDescription, "ntsc", i_gameFilePaths, i_gemusText)
     elif method == "rezopenmsx (PAL)":
-        runGameOnMachine(i_gameDescription, "rezopenmsx (PAL)", i_gameFilePaths, i_gemusText)
+        runGameWithRezopenmsx(i_gameDescription, "pal", i_gameFilePaths, i_gemusText)
 
 def runGame(i_gamePath, i_fileToRun = None, i_gameInfo = None):
     #print('runGame(' + pprint.pformat(i_gamePath) + ', ' + pprint.pformat(i_fileToRun) + ', ' + pprint.pformat(i_gameInfo) + ')')
@@ -157,10 +141,10 @@ def runExtra(i_extraPath, i_extraInfo, i_gameInfo):
         utils.openInDefaultApplication(config_extrasBaseDirPath + "/" + i_extraPath)
 
 
-msxGbScriptsLocation = "/home/daniel/docs/code/js/gamebase/databases/msx_gb_scripts"
-
-def gemusScript(i_gameFilePath, i_gemus):
+def gemusScript(i_gameFilePath, i_gemusText):
     args = []
+
+    gemus = utils.Gemus(i_gemusText)
 
     # Made to use same GEMUS as BlueMSX.
     # These associated script files must be available and in the correct folder.
@@ -174,6 +158,7 @@ def gemusScript(i_gameFilePath, i_gemus):
     # %dbpath%\scripts\auto_on.xml       - Type loading command for TAPE (stored in database).
     # %dbpath%\scripts\auto_off.xml      - Disables auto-load command for custom loader on TAPE.
     # %dbpath%\scripts\settings.xml      - OpenMSX settings (how i like it).
+    scriptsDirPath = gamebaseBaseDirPath + "/scripts"
 
     # If game file is a cartridge
     if utils.pathHasExtension(i_gameFilePath, ".ROM"):
@@ -181,35 +166,35 @@ def gemusScript(i_gameFilePath, i_gemus):
 
         # Japanese
         #  MSX 1
-        if i_gemus.fieldIs("machine", "msx1jp"):
+        if gemus.fieldIs("machine", "msx1jp"):
             args.extend(["-machine", "National_CF-3300"])
         #  MSX 2
-        elif i_gemus.fieldIs("machine", "msx2jp"):
+        elif gemus.fieldIs("machine", "msx2jp"):
             args.extend(["-machine", "Philips_NMS_8245"])
         #  turboR
-        elif i_gemus.fieldIsOneOf("machine", ["turbor", "turbor7", "turbor21"]):
+        elif gemus.fieldIsOneOf("machine", ["turbor", "turbor7", "turbor21"]):
             args.extend(["-machine", "Panasonic_FS-A1GT"])
 
         # Korean
         #  MSX 1
-        elif i_gemus.fieldIs("machine", "msx1ko"):
+        elif gemus.fieldIs("machine", "msx1ko"):
             args.extend(["-machine", "Goldstar_FC-80U"])
 
         # Arabic
         #  MSX 1
-        elif i_gemus.fieldIs("machine", "msx1ar"):
+        elif gemus.fieldIs("machine", "msx1ar"):
             args.extend(["-machine", "Al_Alamiah_AX170"])
         #  MSX 2
-        elif i_gemus.fieldIs("machine", "msx2ar"):
+        elif gemus.fieldIs("machine", "msx2ar"):
             args.extend(["-machine", "Yamaha_AX350IIF"])
 
         # Spanish
         #  MSX 2
-        elif i_gemus.fieldIs("machine", "msx2sp"):
+        elif gemus.fieldIs("machine", "msx2sp"):
             args.extend(["-machine", "Philips_NMS_8245"])
 
         # Dooly
-        elif i_gemus.fieldIs("machine", "cbiosmsx1"):
+        elif gemus.fieldIs("machine", "cbiosmsx1"):
             args.extend(["-machine", "C-BIOS_MSX1"])
 
         # Else default to European
@@ -220,48 +205,48 @@ def gemusScript(i_gameFilePath, i_gemus):
         # + }}}
 
         # Add SCC cart to slot 2
-        if i_gemus.fieldIs("romtype2", "scc"):
+        if gemus.fieldIs("romtype2", "scc"):
             args.extend(["-exta", "scc"])
 
         # Press SHIFT during boot
-        if i_gemus.fieldIs("startup", "shift"):
-            args.extend(["-script", msxGbScriptsLocation + "/pressshift.tcl"])
+        if gemus.fieldIs("startup", "shift"):
+            args.extend(["-script", scriptsDirPath + "/pressshift.tcl"])
 
         # Dual boot carts - R-Type Boot Menu
-        if i_gemus.fieldIs("rom", "boot"):
-            args.extend(["-cart", node_path.dirname(i_gameFilePath) + "/" + i_gemus.properties["boot"], "-cartb", i_gameFilePath])
+        if gemus.fieldIs("rom", "boot"):
+            args.extend(["-cart", node_path.dirname(i_gameFilePath) + "/" + gemus.properties["boot"], "-cartb", i_gameFilePath])
         else:
             args.extend(["-cart", i_gameFilePath])
 
         # Select mapper for any unknown/new roms, using BlueMSX mapper number.
         # Most roms will run automatically without any need for this setting.
         # 3: KonamiSCC
-        if i_gemus.fieldIs("mapper", "3"):
+        if gemus.fieldIs("mapper", "3"):
             args.extend(["-romtype", "konamiscc"])
         # 4: Konami
-        elif i_gemus.fieldIs("mapper", "4"):
+        elif gemus.fieldIs("mapper", "4"):
             args.extend(["-romtype", "konami"])
         # 5: ASCII8
-        elif i_gemus.fieldIs("mapper", "5"):
+        elif gemus.fieldIs("mapper", "5"):
             args.extend(["-romtype", "ascii18"])
         # 6: ASCII16
-        elif i_gemus.fieldIs("mapper", "6"):
+        elif gemus.fieldIs("mapper", "6"):
             args.extend(["-romtype", "ascii16"])
         # 17: GenericKonami
-        elif i_gemus.fieldIs("mapper", "17"):
+        elif gemus.fieldIs("mapper", "17"):
             args.extend(["-romtype", "generickonami"])
         # 39: BASICx8000
-        elif i_gemus.fieldIs("mapper", "39"):
+        elif gemus.fieldIs("mapper", "39"):
             args.extend(["-romtype", "0x8000"])
         # 42: Normalx4000
-        elif i_gemus.fieldIs("mapper", "42"):
+        elif gemus.fieldIs("mapper", "42"):
             args.extend(["-romtype", "0x4000"])
         # 55: SCC Generic
-        elif i_gemus.fieldIs("mapper", "55"):
+        elif gemus.fieldIs("mapper", "55"):
             args.extend(["-romtype", "scc"])
 
         # Add custom settings for GFX mode
-        #args.extend(["-setting", msxGbScriptsLocation + "/settings.xml"])
+        #args.extend(["-setting", scriptsDirPath + "/settings.xml"])
 
     # If game file is a floppy disk
     if utils.pathHasExtension(i_gameFilePath, ".DSK"):
@@ -279,104 +264,107 @@ def gemusScript(i_gameFilePath, i_gemus):
 
         # European
         #  MSX1
-        if i_gemus.fieldIs("machine", "msx1uk"):
-            args.extend(["-machine", "Toshiba_HX-10", "-ext", "Panasonic_FS-FD1A", "-diska", i_gameFilePath])
+        if gemus.fieldIs("machine", "msx1uk"):
+            args.extend(["-machine", "Toshiba_HX-10", "-ext", "Panasonic_FS-FD1A"])
         #  MSX2
-        elif i_gemus.fieldIs("machine", "msx2uk"):
-            args.extend(["-machine", "Philips_NMS_8245", "-diska", i_gameFilePath])
+        elif gemus.fieldIs("machine", "msx2uk"):
+            args.extend(["-machine", "Philips_NMS_8245"])
         #  MSX2 Sony HB-F700D/P
         #  for Vaxol Disk / Mortadelo y Filemon (DSK)
-        elif i_gemus.fieldIs("machine", "HBF700D"):
-            args.extend(["-machine", "Sony_HB-F700D", "-diska", i_gameFilePath])
+        elif gemus.fieldIs("machine", "HBF700D"):
+            args.extend(["-machine", "Sony_HB-F700D"])
 
         # Arabic
         #  MSX1
-        elif i_gemus.fieldIs("machine", "msx1ar"):
-            args.extend(["-machine", "Al_Alamiah_AX170", "-ext", "Panasonic_FS-FD1A", "-diska", i_gameFilePath])
+        elif gemus.fieldIs("machine", "msx1ar"):
+            args.extend(["-machine", "Al_Alamiah_AX170", "-ext", "Panasonic_FS-FD1A"])
         #  MSX2
-        elif i_gemus.fieldIs("machine", "msx2ar"):
-            args.extend(["-machine", "Yamaha_AX350IIF", "-diska", i_gameFilePath])
+        elif gemus.fieldIs("machine", "msx2ar"):
+            args.extend(["-machine", "Yamaha_AX350IIF"])
 
         # Korean
         #  MSX1
-        elif i_gemus.fieldIs("machine", "msx1ko"):
-            args.extend(["-machine", "Goldstar_FC-80U", "-ext", "Panasonic_FS-FD1A", "-diska", i_gameFilePath])
+        elif gemus.fieldIs("machine", "msx1ko"):
+            args.extend(["-machine", "Goldstar_FC-80U", "-ext", "Panasonic_FS-FD1A"])
 
         # Japanese
         #  MSX1
-        elif i_gemus.fieldIs("machine", "msx1jp"):
-            args.extend(["-machine", "National_FS-1300", "-ext", "Panasonic_FS-FD1A", "-diska", i_gameFilePath])
+        elif gemus.fieldIs("machine", "msx1jp"):
+            args.extend(["-machine", "National_FS-1300", "-ext", "Panasonic_FS-FD1A"])
         #  MSX2
-        elif i_gemus.fieldIs("machine", "msx2jp"):
+        elif gemus.fieldIs("machine", "msx2jp"):
             # Machine has 256k RAM as default - Metal Gear 2 disk needs 512k for SCC sound to work.
-            args.extend(["-machine", "National_FS-5000", "-diska", i_gameFilePath])
+            args.extend(["-machine", "National_FS-5000F2"])
         #  MSX2 2MB
         #  mainly for hacked carts on disk
-        elif i_gemus.fieldIs("machine", "msx2jp2mb"):
-            args.extend(["-machine", "National_FS-5000", "-diska", i_gameFilePath, "-ext", "ram2mb"])
+        elif gemus.fieldIs("machine", "msx2jp2mb"):
+            args.extend(["-machine", "National_FS-5000F2", "-ext", "ram2mb"])
         #  turboR
-        elif i_gemus.fieldIs("machine", "turbor"):
-            args.extend(["-machine", "Panasonic_FS-A1GT", "-diska", i_gameFilePath])
+        elif gemus.fieldIs("machine", "turbor"):
+            args.extend(["-machine", "Panasonic_FS-A1GT"])
 
         # Spanish
         #  MSX1
-        elif i_gemus.fieldIs("machine", "msx1sp"):
-            args.extend(["-machine", "Talent_DPC-200", "-ext", "Philips_NMS_1200", "-diska", i_gameFilePath])
+        elif gemus.fieldIs("machine", "msx1sp"):
+            args.extend(["-machine", "Talent_DPC-200", "-ext", "Philips_NMS_1200"])
         #  MSX2
-        elif i_gemus.fieldIs("machine", "msx2sp"):
-            args.extend(["-machine", "Mitsubishi_ML-G3_ES", "-diska", i_gameFilePath])
+        elif gemus.fieldIs("machine", "msx2sp"):
+            args.extend(["-machine", "Mitsubishi_ML-G3_ES"])
         #  MSX2 2MB
-        elif i_gemus.fieldIs("machine", "msx2sp2mb"):
-            args.extend(["-machine", "Mitsubishi_ML-G3_ES", "-diska", i_gameFilePath, "-ext", "ram2mb"])
+        elif gemus.fieldIs("machine", "msx2sp2mb"):
+            args.extend(["-machine", "Mitsubishi_ML-G3_ES", "-ext", "ram2mb"])
         #  Same as Spanish machine above for Alien2 Rom2Disk
-        elif i_gemus.fieldIs("machine", "MSX2-MLG3"):
-            args.extend(["-machine", "Mitsubishi_ML-G3_ES", "-diska", i_gameFilePath])
+        elif gemus.fieldIs("machine", "MSX2-MLG3"):
+            args.extend(["-machine", "Mitsubishi_ML-G3_ES"])
 
         # Brazilian
-        elif i_gemus.fieldIs("machine", "msx1br"):
-            args.extend(["-machine", "Gradiente_Expert_GPC-1", "-ext", "Panasonic_FS-FD1A", "-diska", i_gameFilePath])
+        elif gemus.fieldIs("machine", "msx1br"):
+            args.extend(["-machine", "Gradiente_Expert_GPC-1", "-ext", "Panasonic_FS-FD1A"])
 
         # Custom machines
         #  ICE (Magi-cracks Disk version)
-        elif i_gemus.fieldIsOneOf("machine", ["ice", "jvc"]):
-            args.extend(["-machine", "JVC_HC-7GB", "-ext", "Mitsubishi_ML-30DC_ML-30FD", "-diska", i_gameFilePath])
+        elif gemus.fieldIsOneOf("machine", ["ice", "jvc"]):
+            args.extend(["-machine", "JVC_HC-7GB", "-ext", "Mitsubishi_ML-30DC_ML-30FD"])
         #  Breakout!
-        elif i_gemus.fieldIs("machine", "toshiba"):
-            args.extend(["-machine", "Toshiba_HX-10D", "-ext", "Sharp_HB-3600", "-diska", i_gameFilePath])
+        elif gemus.fieldIs("machine", "toshiba"):
+            args.extend(["-machine", "Toshiba_HX-10D", "-ext", "Sharp_HB-3600"])
         #  Mortadelo y Filemon (DSK)
-        elif i_gemus.fieldIs("machine", "Sony_HB-F1II"):
-            args.extend(["-machine", "Sony_HB-F1II", "-ext", "Sony_HBD-F1", "-diska", i_gameFilePath])
+        elif gemus.fieldIs("machine", "Sony_HB-F1II"):
+            args.extend(["-machine", "Sony_HB-F1II", "-ext", "Sony_HBD-F1"])
 
         # + }}}
+
+        # Insert the disk image
+        args.extend(["-diska", i_gameFilePath])
 
         # Custom extensions
         # "METAL GEAR 2 - SOLID SNAKE"
 
         # Add SCC cart to slot 1
-        if i_gemus.fieldIs("romtype", "scc"):
+        if gemus.fieldIs("romtype", "scc"):
             args.extend(["-ext", "scc"])
         # Add SCC cart to slot 2
-        elif i_gemus.fieldIs("romtype2", "scc"):
+        elif gemus.fieldIs("romtype2", "scc"):
             args.extend(["-extb", "scc"])
 
         # Add memory expansion (for MSX2 machine only)
-        if i_gemus.fieldIsOneOf("ram", ["512k", "1mb", "2mb", "4mb"]):
-            args.extend(["-ext", "ram" + i_gemus.properties["ram"]])
+        if gemus.fieldIsOneOf("ram", ["512k", "1mb", "2mb", "4mb"]):
+            args.extend(["-ext", "ram" + gemus.properties["ram"]])
 
         # Press CTRL during boot
-        if i_gemus.fieldIs("startup", "control"):
-            if i_gemus.fieldContains("machine", "msx2"):
-                args.extend(["-script", msxGbScriptsLocation + "/pressctrl-15.tcl"])
+        if gemus.fieldIs("startup", "control"):
+            if gemus.fieldContains("machine", "msx2"):
+                args.extend(["-script", scriptsDirPath + "/pressctrl-15.tcl"])
             else:
-                args.extend(["-script", msxGbScriptsLocation + "/pressctrl.tcl"])
+                args.extend(["-script", scriptsDirPath + "/pressctrl.tcl"])
 
         # Set GFX9000 extension for Battle Bomber [f6] to swap gfx mode.
-        if i_gemus.fieldIs("video", "gfx9000"):
+        if gemus.fieldIs("video", "gfx9000"):
             args.extend(["-ext", "gfx9000", "-extb", "moonsound"])
 
         # Load Emulator with GAMEBASE SETTINGS.
         #  Game folder, GFX MODE, Key Bindings.
-        args.extend(["-setting", msxGbScriptsLocation + "/settings.xml"])
+        args.extend(["-setting", scriptsDirPath + "/settings.xml"])
 
     # If game file is a cassette tape
     if utils.pathHasExtension(i_gameFilePath, ".CAS"):
@@ -391,38 +379,41 @@ def gemusScript(i_gameFilePath, i_gemus):
 
         # UK
         #  MSX 1
-        if i_gemus.fieldIsOneOf("machine", ["casuk", "msx1uk"]):
-            args.extend(["-machine", "Toshiba_HX-10", "-cassetteplayer", i_gameFilePath])
+        if gemus.fieldIsOneOf("machine", ["casuk", "msx1uk"]):
+            args.extend(["-machine", "Toshiba_HX-10"])
 
         # Japanese
         #  MSX 1
-        elif i_gemus.fieldIsOneOf("machine", ["casjap", "msx1jp"]):
-            args.extend(["-machine", "Toshiba_HX-22", "-cassetteplayer", i_gameFilePath])
+        elif gemus.fieldIsOneOf("machine", ["casjap", "msx1jp"]):
+            args.extend(["-machine", "Toshiba_HX-22"])
         #  MSX 2
-        elif i_gemus.fieldIsOneOf("machine", ["casmsx2jap", "msx2jp"]):
-            args.extend(["-machine", "Sanyo_MPC-25FD", "-cassetteplayer", i_gameFilePath])
+        elif gemus.fieldIsOneOf("machine", ["casmsx2jap", "msx2jp"]):
+            args.extend(["-machine", "Sanyo_MPC-25FD"])
 
         # Spanish
         #  MSX 1
-        elif i_gemus.fieldIsOneOf("machine", ["casspan", "msx1sp"]):
-            args.extend(["-machine", "Talent_DPC-200", "-cassetteplayer", i_gameFilePath])
+        elif gemus.fieldIsOneOf("machine", ["casspan", "msx1sp"]):
+            args.extend(["-machine", "Talent_DPC-200"])
 
         # Else default to Brazilian
         #  MSX 1
         else:
-            args.extend(["-machine", "Gradiente_Expert_GPC-1", "-cassetteplayer", i_gameFilePath])
+            args.extend(["-machine", "Gradiente_Expert_GPC-1"])
 
         # + }}}
 
+        # Insert the cassette image
+        args.extend(["-cassetteplayer", i_gameFilePath])
+
         # Custom cassette settings (pss)
         #  Use setting with Autorun OFF
-        if i_gemus.fieldIsOneOf("cas", ["pss", "off"]):
-            args.extend(["-setting", msxGbScriptsLocation + "/auto_off.xml"])
+        if gemus.fieldIsOneOf("cas", ["pss", "off"]):
+            args.extend(["-setting", scriptsDirPath + "/auto_off.xml"])
 
             # type custom load command after emulator boot.
             #Run_Emulator_Send_Keys([6]%sendkeys_value%{enter}||50)
         else:
-            args.extend(["-setting", msxGbScriptsLocation + "/auto_on.xml"])
+            args.extend(["-setting", scriptsDirPath + "/auto_on.xml"])
 
     #
     return args

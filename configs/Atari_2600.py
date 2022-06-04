@@ -18,7 +18,7 @@ else:
 # Frontend configuration
 config_title = "Atari 2600"
 gamebaseBaseDirPath = driveBasePath + "/games/Atari 2600/gamebases/Atari 2600"
-config_databaseFilePath = gamebaseBaseDirPath + "/Atari_2600.sqlite"
+config_databaseFilePath = gamebaseBaseDirPath + "/Atari 2600.sqlite"
 config_screenshotsBaseDirPath = gamebaseBaseDirPath + "/Screenshots"
 config_extrasBaseDirPath = gamebaseBaseDirPath + "/Extras"
 

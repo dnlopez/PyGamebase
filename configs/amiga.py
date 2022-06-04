@@ -168,7 +168,7 @@ def runGameMenu(i_gameDescription, i_gameFilePaths):
         runGameWithRezmame(i_gameDescription, "a1200n", i_gameFilePaths)
 
 def runGame(i_gamePath, i_fileToRun = None, i_gameInfo = None):
-    print('runGame(' + pprint.pformat(i_gamePath) + ', ' + pprint.pformat(i_fileToRun) + ', ' + pprint.pformat(i_gameInfo) + ')')
+    #print('runGame(' + pprint.pformat(i_gamePath) + ', ' + pprint.pformat(i_fileToRun) + ', ' + pprint.pformat(i_gameInfo) + ')')
 
     gamesBaseDirPath = gamebaseBaseDirPath + "/Games/"
     tempDirPath = "/tmp/gamebase"

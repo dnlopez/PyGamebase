@@ -23,7 +23,7 @@ config_screenshotsBaseDirPath = gamebaseBaseDirPath + "/Screenshots"
 config_extrasBaseDirPath = gamebaseBaseDirPath + "/Extras"
 
 
-def runGameOnMachine(i_gameDescription, i_machineName, i_gameFilePaths):
+def runGameWithRezmame(i_gameDescription, i_machineName, i_gameFilePaths):
     """
     Params:
      i_gameDescription:
@@ -32,9 +32,8 @@ def runGameOnMachine(i_gameDescription, i_machineName, i_gameFilePaths):
      i_machineName:
       (str)
       One of
-       "tutor"
-       "pyuuta"
-       "pyuutajr"
+       "bbcb"
+       "bbcm"
      i_gameFilePaths:
       (list of str)
     """
@@ -42,18 +41,16 @@ def runGameOnMachine(i_gameDescription, i_machineName, i_gameFilePaths):
 
     # Assign game files to available MAME media slots
     availableDevices = [
+        ["cassette", [".wav", ".csw", ".uef"]],
+        ["romimage1", [".rom", ".bin"]],
+        ["romimage2", [".rom", ".bin"]],
+        ["romimage3", [".rom", ".bin"]],
+        ["romimage4", [".rom", ".bin"]],
         ["printout", [".prn"]],
-        ["cassette", [".wav"]],
-        ["cartridge", [".bin"]]
+        ["floppydisk1", [".mfi", ".dfi", ".hfe", ".mfm", ".td0", ".imd", ".d77", ".d88", ".1dd", ".cqm", ".cqi", ".dsk", ".ima", ".img", ".ufi", ".360", ".ipf", ".ssd", ".bbc", ".dsd", ".adf", ".ads", ".adm", ".adl", ".fsd"]],
+        ["floppydisk2", [".mfi", ".dfi", ".hfe", ".mfm", ".td0", ".imd", ".d77", ".d88", ".1dd", ".cqm", ".cqi", ".dsk", ".ima", ".img", ".ufi", ".360", ".ipf", ".ssd", ".bbc", ".dsd", ".adf", ".ads", ".adm", ".adl", ".fsd"]]
     ]
-    for gameFilePath in i_gameFilePaths:
-        for availableDeviceNo, availableDevice in enumerate(availableDevices):
-            deviceName, allowedFileExtensions = availableDevice
-
-            if utils.pathHasExtension(gameFilePath, allowedFileExtensions):
-                executableAndArgs.extend(["-" + deviceName, gameFilePath])
-                del(availableDevices[availableDeviceNo])
-                break
+    executableAndArgs.extend(utils.allocateGameFilesToMameMediaSlots(i_gameFilePaths, availableDevices))
 
     if i_gameDescription:
         executableAndArgs.extend(["--game-description", i_gameDescription])
@@ -72,17 +69,31 @@ def runGameMenu(i_gameDescription, i_gameFilePaths):
       (list of str)
     """
     method = utils.popupMenu([
-        "rezmame tutor",
-        "rezmame pyuuta",
-        "rezmame pyuutajr"
+        "rezmame bbcb (BBC Micro Model B)",
+        "rezmame bbcm (BBC Master 128)",
+        "BeebEm",
     ])
 
-    if method == "rezmame tutor":
-        runGameOnMachine(i_gameDescription, "tutor", i_gameFilePaths)
-    elif method == "rezmame pyuuta":
-        runGameOnMachine(i_gameDescription, "pyuuta", i_gameFilePaths)
-    elif method == "rezmame pyuutajr":
-        runGameOnMachine(i_gameDescription, "pyuutajr", i_gameFilePaths)
+    if method == "rezmame bbcb (BBC Micro Model B)":
+        runGameWithRezmame(i_gameDescription, "bbcb", i_gameFilePaths)
+    elif method == "rezmame bbcm (BBC Master 128)":
+        runGameWithRezmame(i_gameDescription, "bbcm", i_gameFilePaths)
+    elif method == "BeebEm":
+        # The following command line options can be passed to BeebEm:
+        #   -Model <0=Model B, 1=B+IntegraB, 2=B Plus, 3=Master>
+        #   -Tube <0=off, 1=on>
+        #   -EcoStn <Econet station number>
+        #   -EcoFF <Econet flag fill timeout, see the econet section>
+        #   <disk image file name>
+        #   <state file name>
+        executableAndArgs = ["beebem"]
+
+        executableAndArgs.append(i_gameFilePaths[0])
+
+        #if (i_gameDescription)
+        #    executableAndArgs.push("--game-description", i_gameDescription)
+
+        utils.shellStartTask(executableAndArgs)
 
 def runGame(i_gamePath, i_fileToRun = None, i_gameInfo = None):
     #print('runGame(' + pprint.pformat(i_gamePath) + ', ' + pprint.pformat(i_fileToRun) + ', ' + pprint.pformat(i_gameInfo) + ')')

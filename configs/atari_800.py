@@ -20,6 +20,8 @@ config_title = "Atari 800 v12"
 gamebaseBaseDirPath = driveBasePath + "/games/Atari 800/gamebases/Atari 800 v12"
 config_databaseFilePath = gamebaseBaseDirPath + "/Atari 800 v12.sqlite"
 config_screenshotsBaseDirPath = gamebaseBaseDirPath + "/screenshots"
+config_photosBaseDirPath = gamebaseBaseDirPath + "/Photos"
+config_musicBaseDirPath = gamebaseBaseDirPath + "/Music"
 config_extrasBaseDirPath = gamebaseBaseDirPath + "/Extras"
 
 
@@ -94,6 +96,8 @@ def runGame2(i_gameDescription, i_gameFilePaths):
 def runGame(i_gamePath, i_fileToRun = None, i_gameInfo = None):
     #print('runGame(' + pprint.pformat(i_gamePath) + ', ' + pprint.pformat(i_fileToRun) + ', ' + pprint.pformat(i_gameInfo) + ')')
 
+    os.environ["AUDIODEV"] = "sysdefault"
+
     # Extract zip
     gamesBaseDirPath = gamebaseBaseDirPath + "/Games/"
     tempDirPath = "/tmp/gamebase"
@@ -134,6 +138,12 @@ def runExtra(i_extraPath, i_extraInfo, i_gameInfo):
         runGame2(gameDescription, utils.joinPaths(tempDirPath, zipMembers))
     else:
         utils.openInDefaultApplication(config_extrasBaseDirPath + "/" + i_extraPath)
+
+def runMusic(i_musicPath, i_gameInfo):
+    print('runMusic(' + pprint.pformat(i_musicPath) + ', ' + pprint.pformat(i_gameInfo) + ')')
+
+    print(config_musicBaseDirPath + "/" + i_musicPath)
+    utils.openInDefaultApplication(config_musicBaseDirPath + "/" + i_musicPath)
 
 
 """

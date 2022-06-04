@@ -20,6 +20,8 @@ config_title = "Sinclair ZX Spectrum (Speccymania v5)"
 gamebaseBaseDirPath = driveBasePath + "/games/Sinclair ZX Spectrum/gamebases/Speccymania v5/Sinclair ZX Spectrum"
 config_databaseFilePath = gamebaseBaseDirPath + "/SpeccyMania_v5.sqlite"
 config_screenshotsBaseDirPath = gamebaseBaseDirPath + "/Screenshots"
+config_photosBaseDirPath = gamebaseBaseDirPath + "/Musician Photos"
+config_musicBaseDirPath = gamebaseBaseDirPath + "/C64Music"
 config_extrasBaseDirPath = gamebaseBaseDirPath + "/Extras"
 
 
@@ -207,3 +209,8 @@ def runExtra(i_extraPath, i_extraInfo, i_gameInfo):
         runGameMenu(gameDescription, utils.joinPaths(tempDirPath, zipMembers))
     else:
         utils.openInDefaultApplication(config_extrasBaseDirPath + "/" + i_extraPath)
+
+def runMusic(i_musicPath, i_gameInfo):
+    #print('runMusic(' + pprint.pformat(i_musicPath) + ', ' + pprint.pformat(i_gameInfo) + ')')
+
+    utils.openInDefaultApplication(config_musicBaseDirPath + "/" + i_musicPath)
