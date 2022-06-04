@@ -2855,6 +2855,19 @@ class DbRecordDict(collections.UserDict):
         # Raise KeyError
         return self.data[i_key]
 
+    def __contains__(self, i_key):
+        # Try matching the key name as given
+        if i_key in self.data:
+            return True
+
+        # Try matching just the last name component
+        for realKey in self.data.keys():
+            if realKey.rsplit(".", 1)[-1] == i_key:
+                return True
+
+        #
+        return False
+
 class MyTableView(QTableView):
     def __init__(self, i_parent=None):
         QTableView.__init__(self, i_parent)

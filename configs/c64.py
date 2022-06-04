@@ -120,11 +120,11 @@ def runGame(i_gamePath, i_fileToRun = None, i_gameInfo = None):
 
     # Get game description
     gameDescription = i_gameInfo["Name"]
-    if i_gameInfo["Publisher"]:
+    if "Publisher" in i_gameInfo:
         gameDescription += " (" + i_gameInfo["Publisher"] + ")"
 
     #
-    runGameInVice(gameDescription, utils.joinPaths(tempDirPath, gameFiles))
+    #runGameInVice(gameDescription, utils.joinPaths(tempDirPath, gameFiles))
 
 def runExtra(i_extraPath, i_extraInfo, i_gameInfo):
     #print('runExtra(' + pprint.pformat(i_extraPath) + ', ' + pprint.pformat(i_extraInfo) + ', ' + pprint.pformat(i_gameInfo) + ')')
@@ -137,7 +137,7 @@ def runExtra(i_extraPath, i_extraInfo, i_gameInfo):
 
         # Get game description
         gameDescription = i_gameInfo["Name"]
-        if i_gameInfo["Publisher"]:
+        if "Publisher" in i_gameInfo:
             gameDescription += " (" + i_gameInfo["Publisher"] + ")"
 
         #

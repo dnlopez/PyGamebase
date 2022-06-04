@@ -115,7 +115,7 @@ def runGame(i_gamePath, i_fileToRun = None, i_gameInfo = None):
 
     # Get game description
     gameDescription = i_gameInfo["Name"]
-    if i_gameInfo["Publisher"]:
+    if "Publisher" in i_gameInfo:
         gameDescription += " (" + i_gameInfo["Publisher"] + ")"
 
     #
@@ -132,7 +132,7 @@ def runExtra(i_extraPath, i_extraInfo, i_gameInfo):
 
         # Get game description
         gameDescription = i_gameInfo["Name"]
-        if i_gameInfo["Publisher"]:
+        if "Publisher" in i_gameInfo:
             gameDescription += " (" + i_gameInfo["Publisher"] + ")"
 
         #
