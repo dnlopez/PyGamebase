@@ -3994,6 +3994,9 @@ viewMenu = menuBar.addMenu("&View")
 viewMenu_toolbar_action = viewMenu.addAction("&Toolbar")
 viewMenu_toolbar_action.setCheckable(True)
 viewMenu_toolbar_action.setChecked(True)
+def viewMenu_toolbar_onTriggered(i_checked):
+    toolbar.setVisible(i_checked)
+viewMenu_toolbar_action.triggered.connect(viewMenu_toolbar_onTriggered)
 
 viewMenu.addSeparator()
 
