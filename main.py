@@ -2610,6 +2610,60 @@ def danrectToQrect(i_danrect):
 
 # + + }}}
 
+def dbRow_getNumberedScreenshotFullPath(i_row, i_picNo):
+    """
+    Params:
+     i_row:
+      (sqlite3.Row)
+      A row from the 'Games' table
+
+     i_picNo:
+      (int)
+      0: first picture
+
+    Returns:
+     Either (str)
+      Absolute (resolved via the config's 'config_screenshotsBaseDirPath') path of image.
+     or (None)
+      There is no screenshot at this numeric position.
+    """
+    screenshotPath = None
+    if i_picNo == 0:
+        screenshotPath = dbRow_getScreenshotRelativePath(i_row)
+    else:
+        screenshotPaths = dbRow_getSupplementaryScreenshotPaths(i_row)
+        if i_picNo-1 < len(screenshotPaths):
+            screenshotPath = screenshotPaths[i_picNo-1]
+    if screenshotPath == None:
+        return None
+
+    if not hasattr(gamebase, "config_screenshotsBaseDirPath"):
+        return None
+
+    return normalizeDirPathFromConfig(gamebase.config_screenshotsBaseDirPath) + "/" + screenshotPath
+
+def dbRow_getPhotoFullPath(i_row):
+    """
+    Params:
+     i_row:
+      (sqlite3.Row)
+      A row from the 'Games' table
+
+    Returns:
+     Either (str)
+      Absolute (resolved via the config's 'config_photosBaseDirPath') path of image.
+     or (None)
+      There is no photo.
+    """
+    photoPath = dbRow_getPhotoRelativePath(i_row)
+    if photoPath == None:
+        return None
+
+    if not hasattr(gamebase, "config_photosBaseDirPath"):
+        return None
+
+    return normalizeDirPathFromConfig(gamebase.config_photosBaseDirPath + "/" + photoPath)
+
 class MyStyledItemDelegate(QStyledItemDelegate):
     def __init__(self, i_parent=None):
         QStyledItemDelegate.__init__(self, i_parent)
@@ -2631,39 +2685,32 @@ class MyStyledItemDelegate(QStyledItemDelegate):
 
         column = tableColumn_getByPos(i_index.column())
 
-        # Screenshot
+        # Screenshot (unnumbered, old)
         if column["id"] == "pic":
-            screenshotPath = dbRow_getScreenshotRelativePath(self.parent().dbRows[i_index.row()])
-            if screenshotPath != None:
-                if hasattr(gamebase, "config_screenshotsBaseDirPath"):
-                    pixmap = QPixmap(normalizeDirPathFromConfig(gamebase.config_screenshotsBaseDirPath) + "/" + screenshotPath)
-                    destRect = danrectToQrect(fitLetterboxed(qrectToDanrect(pixmap.rect()), qrectToDanrect(i_option.rect)))
-                    i_painter.drawPixmap(destRect, pixmap)
+            screenshotFullPath = dbRow_getNumberedScreenshotFullPath(self.parent().dbRows[i_index.row()], 0)
+            if screenshotFullPath != None:
+                pixmap = QPixmap(screenshotFullPath)
+                destRect = danrectToQrect(fitLetterboxed(qrectToDanrect(pixmap.rect()), qrectToDanrect(i_option.rect)))
+                i_painter.drawPixmap(destRect, pixmap)
 
+        # Screenshot
         elif column["id"].startswith("pic[") and column["id"].endswith("]"):
             picNo = int(column["id"][4:-1])
 
-            screenshotPath = None
-            if picNo == 0:
-                screenshotPath = dbRow_getScreenshotRelativePath(self.parent().dbRows[i_index.row()])
-            else:
-                screenshotPaths = dbRow_getSupplementaryScreenshotPaths(self.parent().dbRows[i_index.row()])
-                if picNo-1 < len(screenshotPaths):
-                    screenshotPath = screenshotPaths[picNo-1]
+            screenshotFullPath = dbRow_getNumberedScreenshotFullPath(self.parent().dbRows[i_index.row()], picNo)
+            if screenshotFullPath != None:
+                pixmap = QPixmap(screenshotFullPath)
+                destRect = danrectToQrect(fitLetterboxed(qrectToDanrect(pixmap.rect()), qrectToDanrect(i_option.rect)))
+                i_painter.drawPixmap(destRect, pixmap)
 
-            if screenshotPath != None:
-                if hasattr(gamebase, "config_screenshotsBaseDirPath"):
-                    pixmap = QPixmap(normalizeDirPathFromConfig(gamebase.config_screenshotsBaseDirPath) + "/" + screenshotPath)
-                    destRect = danrectToQrect(fitLetterboxed(qrectToDanrect(pixmap.rect()), qrectToDanrect(i_option.rect)))
-                    i_painter.drawPixmap(destRect, pixmap)
-
+        # Musician photo
         elif column["id"] == "musician_photo":
-            photoPath = dbRow_getPhotoRelativePath(self.parent().dbRows[i_index.row()])
-            if photoPath != None:
-                if hasattr(gamebase, "config_photosBaseDirPath"):
-                    pixmap = QPixmap(normalizeDirPathFromConfig(gamebase.config_photosBaseDirPath) + "/" + photoPath)
-                    destRect = danrectToQrect(fitLetterboxed(qrectToDanrect(pixmap.rect()), qrectToDanrect(i_option.rect)))
-                    i_painter.drawPixmap(destRect, pixmap)
+            photoFullPath = dbRow_getPhotoFullPath(self.parent().dbRows[i_index.row()])
+            if photoFullPath != None:
+                pixmap = QPixmap(photoFullPath)
+                destRect = danrectToQrect(fitLetterboxed(qrectToDanrect(pixmap.rect()), qrectToDanrect(i_option.rect)))
+                i_painter.drawPixmap(destRect, pixmap)
+
         else:
             QStyledItemDelegate.paint(self, i_painter, i_option, i_index)
 
@@ -3150,6 +3197,29 @@ class MyTableView(QTableView):
                 messageBox.setInformativeText(traceback.format_exc())
                 messageBox.resizeToContent()
                 messageBox.exec()
+
+        # Screenshot (unnumbered, old)
+        elif columnId == "pic":
+            rowNo = i_modelIndex.row()
+            screenshotFullPath = dbRow_getNumberedScreenshotFullPath(self.dbRows[rowNo], 0)
+            if screenshotFullPath != None:
+                openInDefaultApplication(screenshotFullPath)
+
+        # Screenshot
+        elif columnId == "pic" or (columnId.startswith("pic[") and columnId.endswith("]")):
+            picNo = int(columnId[4:-1])
+
+            rowNo = i_modelIndex.row()
+            screenshotFullPath = dbRow_getNumberedScreenshotFullPath(self.dbRows[rowNo], picNo)
+            if screenshotFullPath != None:
+                openInDefaultApplication(screenshotFullPath)
+
+        # Musician photo
+        elif columnId == "musician_photo":
+            rowNo = i_modelIndex.row()
+            photoFullPath = dbRow_getPhotoFullPath(self.dbRows[rowNo])
+            if photoFullPath != None:
+                openInDefaultApplication(photoFullPath)
 
         else:
             usableColumn = usableColumn_getById(columnId)
