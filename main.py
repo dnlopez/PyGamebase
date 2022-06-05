@@ -27,7 +27,7 @@ import utils
 
 # + Parse command line {{{
 
-COMMAND_NAME = "gamebase"
+COMMAND_NAME = "PyGamebase"
 
 def printUsage(i_outputStream):
     i_outputStream.write('''\
@@ -1814,9 +1814,12 @@ class ColumnNameBar(QWidget):
                 # and adjust for horizontal scroll amount
                 mousePos = i_watched.mapTo(self, i_event.pos())
                 mousePos.setX(mousePos.x() - self.scrollX)
+
                 #
                 leftColumn, rightColumn, edgeX = self._columnBoundaryNearPixelX(mousePos.x())
                 self.reorder_dropBeforeColumn = rightColumn
+
+                # Move drop indicator
                 if self.reorder_dropBeforeColumn == self.reorder_column:
                     self.reorderIndicator_widget.setGeometry(self._columnScreenX(self.reorder_column) + self.scrollX, 0, self.reorder_column["width"], ColumnNameBar.headingButtonHeight)
                 else:
