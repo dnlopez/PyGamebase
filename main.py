@@ -1126,23 +1126,6 @@ class ColumnFilterBar(QWidget):
 
             self.columnId = i_columnId
 
-            self.lineEdit.editingFinished.connect(self.lineEdit_onEditingFinished)
-
-        # + Internal event handling {{{
-
-        def lineEdit_onEditingFinished(self):
-            # If text was modified, requery,
-            # else focus the tableview
-            textWasModified = self.lineEdit.isModified()
-            self.lineEdit.setModified(False)
-            if textWasModified:
-                self.textChange.emit()
-            else:
-                tableView.setFocus()
-                tableView.selectCellInColumnWithId(self.columnId)
-
-        # + }}}
-
     def __init__(self, i_parent=None):
         QWidget.__init__(self, i_parent)
 
@@ -1215,7 +1198,7 @@ class ColumnFilterBar(QWidget):
                     widgetDict["filterEdits"].append(filterEdit)
                     # Set its fixed properties (apart from position)
                     filterEdit.setVisible(True)
-                    filterEdit.textChange.connect(self.lineEdit_onTextChange)
+                    filterEdit.editingFinished.connect(functools.partial(self.lineEdit_onEditingFinished, column["id"]))
                     #  Filter events to facilitate scroll to upon focus
                     filterEdit.lineEdit.installEventFilter(self)
 
@@ -1269,7 +1252,7 @@ class ColumnFilterBar(QWidget):
                 filterEdit = ColumnFilterBar.FilterEdit(column["id"], self)
                 # Set its fixed properties (apart from position)
                 filterEdit.setVisible(True)
-                filterEdit.textChange.connect(self.lineEdit_onTextChange)
+                filterEdit.editingFinished.connect(functools.partial(self.lineEdit_onEditingFinished, column["id"]))
                 #  Filter events to facilitate scroll to upon focus
                 filterEdit.lineEdit.installEventFilter(self)
                 # Save in member object
@@ -1384,8 +1367,14 @@ class ColumnFilterBar(QWidget):
         self.repositionFilterEdits()
         self.repositionTabOrder()
 
-    def lineEdit_onTextChange(self):
-        self.filterChange.emit()
+    def lineEdit_onEditingFinished(self, i_columnId, i_modified):
+        # If text was modified, requery,
+        # else focus the tableview
+        if i_modified:
+            self.filterChange.emit()
+        else:
+            tableView.setFocus()
+            tableView.selectCellInColumnWithId(i_columnId)
 
     def setFilterValues(self, i_oredRows):
         """

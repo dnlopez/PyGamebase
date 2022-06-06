@@ -9,8 +9,14 @@ from PySide2.QtWebEngineWidgets import *
 
 
 class LineEditWithClearButton(QFrame):
-    # Emitted after the text is changed
-    textChange = Signal()
+
+    editingFinished = Signal(bool)
+    # Emitted when the Return or Enter key is pressed, or the text has been modified and line edit loses focus, or the clear button is clicked
+    #
+    # Params:
+    #  i_modified:
+    #   (bool)
+    #   True: the text was modified
 
     def __init__(self, i_height, i_parent=None):
         """
@@ -48,6 +54,8 @@ class LineEditWithClearButton(QFrame):
 
         self.lineEdit.textEdited.connect(self.lineEdit_onTextEdited)
 
+        self.lineEdit.editingFinished.connect(self.onEditingFinished)
+
     # + Internal event handling {{{
 
     def lineEdit_onTextEdited(self, i_text):
@@ -55,9 +63,18 @@ class LineEditWithClearButton(QFrame):
         self.clearButton.setVisible(i_text != "")
 
     def clearButton_onClicked(self):
+        textWasModified = self.lineEdit.text != ""
+
         self.lineEdit.setText("")
         self.clearButton.setVisible(False)
-        self.textChange.emit()
+
+        self.lineEdit.setModified(False)
+        self.editingFinished.emit(textWasModified)
+
+    def onEditingFinished(self):
+        textWasModified = self.lineEdit.isModified()
+        self.lineEdit.setModified(False)
+        self.editingFinished.emit(textWasModified)
 
     # + }}}
 
