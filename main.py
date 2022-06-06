@@ -25,6 +25,7 @@ import columns
 import frontend_utils
 import frontend
 import utils
+import sql_filter_bar
 
 
 # + Parse command line {{{
@@ -1564,51 +1565,6 @@ class ColumnFilterBar(QWidget):
         if previousWidget != None:
             self.setTabOrder(previousWidget, nextWidget)
         previousWidget = nextWidget
-
-    # + }}}
-
-# + }}}
-
-# + SQL filter bar {{{
-
-class SqlFilterBar(qt_extras.LineEditWithClearButton):
-    # Emitted after the text in the filter text box is changed
-    textChange = Signal()
-
-    def __init__(self, i_parent=None):
-        qt_extras.LineEditWithClearButton.__init__(self, ColumnFilterBar.filterRowHeight, i_parent)
-
-        self.lineEdit.editingFinished.connect(self.lineEdit_onEditingFinished)
-
-    # + Internal event handling {{{
-
-    def lineEdit_onEditingFinished(self):
-        # If text was modified, requery,
-        # else focus the tableview
-        textWasModified = self.lineEdit.isModified()
-        self.lineEdit.setModified(False)
-        if textWasModified:
-            self.textChange.emit()
-        else:
-            tableView.setFocus()
-
-    # + }}}
-
-    def userSetText(self, i_text):
-        """
-        Params:
-         i_text:
-          (str)
-        """
-        textChanged = i_text != self.lineEdit.text()
-        self.lineEdit.setText(i_text)
-        if textChanged:
-            self.textChange.emit()
-
-    # + Focus {{{
-
-    def setFocus(self, i_reason):
-        self.lineEdit.setFocus(i_reason)
 
     # + }}}
 
@@ -3341,26 +3297,29 @@ columnFilterBar.filterChange.connect(columnFilterBar_onFilterChange)
 
 # + SQL filter bar {{{
 
-sqlFilterBar = SqlFilterBar()
+sqlFilterBar = sql_filter_bar.SqlFilterBar()
 sqlFilterBar.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 sqlFilterBar.setFixedHeight(30)
 sqlFilterBar.hide()
 gameTable_layout.addWidget(sqlFilterBar)
 
-def sqlFilterBar_onTextChange():
-    sqlWhereExpression = sqlFilterBar.text()
-    if not tableView.refilter(sqlWhereExpression):
-        return
+def sqlFilterBar_onEditingFinished(i_modified):
+    if not i_modified:
+        tableView.setFocus()
+    else:
+        sqlWhereExpression = sqlFilterBar.text()
+        if not tableView.refilter(sqlWhereExpression):
+            return
 
-    # If expression is different from the last history item at the current position,
-    # truncate history at current position and append new item
-    global g_filterHistory
-    global g_filterHistory_pos
-    if g_filterHistory[g_filterHistory_pos - 1] != sqlWhereExpression:
-        del(g_filterHistory[g_filterHistory_pos:])
-        g_filterHistory.append(sqlWhereExpression)
-        g_filterHistory_pos += 1
-sqlFilterBar.textChange.connect(sqlFilterBar_onTextChange)
+        # If expression is different from the last history item at the current position,
+        # truncate history at current position and append new item
+        global g_filterHistory
+        global g_filterHistory_pos
+        if g_filterHistory[g_filterHistory_pos - 1] != sqlWhereExpression:
+            del(g_filterHistory[g_filterHistory_pos:])
+            g_filterHistory.append(sqlWhereExpression)
+            g_filterHistory_pos += 1
+sqlFilterBar.editingFinished.connect(sqlFilterBar_onEditingFinished)
 
 # + }}}
 
