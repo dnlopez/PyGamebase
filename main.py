@@ -241,13 +241,6 @@ def closeDb():
     g_db.close()
     g_db = None
 
-def stringLooksLikeNumber(i_str):
-    try:
-        float(i_str)
-        return True
-    except ValueError:
-        return False
-
 def getJoinTermsToTable(i_tableName, io_tableConnections):
     """
     Params:
@@ -1111,14 +1104,34 @@ class ColumnNameBar(QWidget):
 
 # + Column filter bar {{{
 
+def stringLooksLikeNumber(i_str):
+    try:
+        float(i_str)
+        return True
+    except ValueError:
+        return False
+
 class ColumnFilterBar(QWidget):
     """
     One or more rows of text box controls for entering filter criteria per column.
     """
     filterRowHeight = 30
 
-    # Emitted after the text in one of the filter text boxes is changed, or a row is deleted
-    filterChange = Signal()
+    editingFinished = Signal(bool, str)
+    # Emitted when any of the following happen:
+    #  A line edit has focus and the Return or Enter key is pressed
+    #  A line edit loses focus after its text has been modified
+    #  The clear button is clicked
+    #
+    # Params:
+    #  i_modified:
+    #   (bool)
+    #   True: the text was modified
+    #  i_columnId:
+    #   (str)
+    #   If a line edit has focus and the Return or Enter key is pressed, the ID of the column that that line edit widget belongs to;
+    #   else if a line edit loses focus after its text has been modified, the ID of the column that that line edit widget belongs to;
+    #   else if the clear button is clicked, ""
 
     def __init__(self, i_parent=None):
         QWidget.__init__(self, i_parent)
@@ -1296,13 +1309,6 @@ class ColumnFilterBar(QWidget):
             if column["filterable"]:
                 self.columnWidgets[column["id"]]["filterEdits"][i_position].setText("")
 
-    # [not currently used]
-    def clearAllFilterRows(self):
-        for filterRowNo in range(0, len(self.filterRows)):
-            self.clearFilterRow(filterRowNo)
-
-        self.filterChange.emit()
-
     def resetFilterRowCount(self, i_rowCount, i_updateGui=True, i_requery=True):
         """
         Set count of filter rows and clear all their contents.
@@ -1344,7 +1350,7 @@ class ColumnFilterBar(QWidget):
 
         #
         if i_requery:
-            self.filterChange.emit()
+            self.editingFinished.emit(True, "")
 
     def deleteRow_pushButton_onClicked(self, i_filterRow):
         if len(self.filterRows) == 1:
@@ -1355,7 +1361,7 @@ class ColumnFilterBar(QWidget):
                     self.deleteFilterRow(filterRowNo)
                     self.repositionFilterEdits()
                     #self.repositionTabOrder()
-        self.filterChange.emit()
+        self.editingFinished.emit(True, "")
 
     def insertRow_pushButton_onClicked(self):
         self.appendFilterRow()
@@ -1364,13 +1370,7 @@ class ColumnFilterBar(QWidget):
         self.repositionTabOrder()
 
     def lineEdit_onEditingFinished(self, i_columnId, i_modified):
-        # If text was modified, requery,
-        # else focus the tableview
-        if i_modified:
-            self.filterChange.emit()
-        else:
-            tableView.setFocus()
-            tableView.selectCellInColumnWithId(i_columnId)
+        self.editingFinished.emit(i_modified, i_columnId)
 
     def setFilterValues(self, i_oredRows):
         """
@@ -1490,17 +1490,21 @@ class ColumnFilterBar(QWidget):
         self.scrollY += i_dy
         QWidget.scroll(self, i_dx, i_dy)
 
+    requestHorizontalScroll = Signal(int)
+    # Emitted when
+    #  The column filter bar wants to be horizontally scrolled, because a widget within it that is off the side of the window is getting focused
+
     def eventFilter(self, i_watched, i_event):
         #print(i_event.type())
 
         if i_event.type() == QEvent.FocusIn:
             # If this widget is off the side of the header bar / window,
-            # scroll horizontally
+            # ask for horizontal scroll
             positionOnBar = i_watched.mapTo(self, QPoint(0, 0))
             if positionOnBar.x() < 0:
-                tableView.scrollBy(positionOnBar.x(), 0)
+                self.requestHorizontalScroll.emit(positionOnBar.x())
             elif positionOnBar.x() + i_watched.geometry().width() > self.geometry().width():
-                tableView.scrollBy(positionOnBar.x() + i_watched.geometry().width() - self.geometry().width(), 0)
+                self.requestHorizontalScroll.emit(positionOnBar.x() + i_watched.geometry().width() - self.geometry().width())
 
         # Let event continue
         return False
@@ -2454,7 +2458,7 @@ class MyTableView(QTableView):
 
         columnId = columns.tableColumn_getByPos(selectedIndex.column())["id"]
         columnFilterBar.columnWidgets[columnId]["filterEdits"][-1].setText(formattedCriteria)
-        columnFilterBar.filterChange.emit()
+        columnFilterBar.editingFinished.emit(True, columnId)
 
     # + }}}
 
@@ -3045,7 +3049,7 @@ def filterFormat_perColumn():
 
     columnFilterBar.repositionFilterEdits()
     columnFilterBar.repositionTabOrder()
-    columnFilterBar.filterChange.emit()
+    columnFilterBar.editingFinished.emit(True, "")
 
 def filterFormat_sql():
     # Show SQL filter bar instead of column filter bar
@@ -3262,21 +3266,28 @@ columnFilterBar = ColumnFilterBar()
 columnFilterBar.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 gameTable_layout.addWidget(columnFilterBar)
 
-def columnFilterBar_onFilterChange():
-    sqlWhereExpression = columnFilterBar.getSqlWhereExpression()
-    if not tableView.refilter(sqlWhereExpression):
-        return
+def columnFilterBar_onEditingFinished(i_modified, i_columnId):
+    if not i_modified:
+        tableView.setFocus()
+        tableView.selectCellInColumnWithId(i_columnId)
+    else:
+        sqlWhereExpression = columnFilterBar.getSqlWhereExpression()
+        if not tableView.refilter(sqlWhereExpression):
+            return
 
-    # If expression is different from the last history item at the current position,
-    # truncate history at current position and append new item
-    global g_filterHistory
-    global g_filterHistory_pos
-    if g_filterHistory[g_filterHistory_pos - 1] != sqlWhereExpression:
-        del(g_filterHistory[g_filterHistory_pos:])
-        g_filterHistory.append(sqlWhereExpression)
-        g_filterHistory_pos += 1
+        # If expression is different from the last history item at the current position,
+        # truncate history at current position and append new item
+        global g_filterHistory
+        global g_filterHistory_pos
+        if g_filterHistory[g_filterHistory_pos - 1] != sqlWhereExpression:
+            del(g_filterHistory[g_filterHistory_pos:])
+            g_filterHistory.append(sqlWhereExpression)
+            g_filterHistory_pos += 1
+columnFilterBar.editingFinished.connect(columnFilterBar_onEditingFinished)
 
-columnFilterBar.filterChange.connect(columnFilterBar_onFilterChange)
+def columnFilterBar_onRequestHorizontalScroll(i_dx):
+    tableView.scrollBy(i_dx, 0)
+columnFilterBar.requestHorizontalScroll.connect(columnFilterBar_onRequestHorizontalScroll)
 
 # + }}}
 

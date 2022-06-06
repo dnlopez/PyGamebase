@@ -11,7 +11,10 @@ from PySide2.QtWebEngineWidgets import *
 class LineEditWithClearButton(QFrame):
 
     editingFinished = Signal(bool)
-    # Emitted when the Return or Enter key is pressed, or the text has been modified and line edit loses focus, or the clear button is clicked
+    # Emitted when any of the following happen:
+    #  The line edit has focus and the Return or Enter key is pressed
+    #  The line edit loses focus after its text has been modified
+    #  The clear button is clicked
     #
     # Params:
     #  i_modified:

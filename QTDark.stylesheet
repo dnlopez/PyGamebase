@@ -137,19 +137,19 @@ QPushButton:focus
     color: #fff;
 }
 
-FilterEdit
+LineEditWithClearButton
 {
 	background-color: rgb(34, 68, 34);
     border-width: 1px;
     border-color: #222;
     border-style: solid;
 }
-FilterEdit QPushButton
+LineEditWithClearButton QPushButton
 {
 	background-color: #722;
 }
 
-FilterEdit QLineEdit
+LineEditWithClearButton QLineEdit
 {
     border: none;
 	background-color: transparent;

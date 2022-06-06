@@ -13,10 +13,14 @@ import qt_extras
 
 class SqlFilterBar(qt_extras.LineEditWithClearButton):
     editingFinished = Signal(bool)
+    # Emitted when any of the following happen:
+    #  The line edit has focus and the Return or Enter key is pressed
+    #  The line edit loses focus after its text has been modified
+    #
     # Params:
     #  i_modified:
     #   (bool)
-    #   True: the text in the filter text box was changed
+    #   True: the text was modified
 
     filterRowHeight = 30
 
