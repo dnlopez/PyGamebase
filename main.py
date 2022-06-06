@@ -1120,12 +1120,6 @@ class ColumnFilterBar(QWidget):
     # Emitted after the text in one of the filter text boxes is changed, or a row is deleted
     filterChange = Signal()
 
-    class FilterEdit(qt_extras.LineEditWithClearButton):
-        def __init__(self, i_columnId, i_parent=None):
-            qt_extras.LineEditWithClearButton.__init__(self, ColumnFilterBar.filterRowHeight, i_parent)
-
-            self.columnId = i_columnId
-
     def __init__(self, i_parent=None):
         QWidget.__init__(self, i_parent)
 
@@ -1147,7 +1141,7 @@ class ColumnFilterBar(QWidget):
         #   (dict)
         #   Dictionary has specific key-value properties:
         #    filterEdits:
-        #     (list of FilterEdit)
+        #     (list of qt_extras.LineEditWithClearButton)
 
         self.filterRows = []
         # (list)
@@ -1194,13 +1188,15 @@ class ColumnFilterBar(QWidget):
                 # Create filter edits
                 widgetDict["filterEdits"] = []
                 for filterRowNo in range(0, len(self.filterRows)):
-                    filterEdit = ColumnFilterBar.FilterEdit(column["id"], self)
-                    widgetDict["filterEdits"].append(filterEdit)
+                    # Create special line edit widget
+                    filterEdit = qt_extras.LineEditWithClearButton(ColumnFilterBar.filterRowHeight, self)
                     # Set its fixed properties (apart from position)
                     filterEdit.setVisible(True)
                     filterEdit.editingFinished.connect(functools.partial(self.lineEdit_onEditingFinished, column["id"]))
                     #  Filter events to facilitate scroll to upon focus
                     filterEdit.lineEdit.installEventFilter(self)
+                    # Save in object
+                    widgetDict["filterEdits"].append(filterEdit)
 
                 # Save the object of header widgets
                 self.columnWidgets[column["id"]] = widgetDict
@@ -1248,8 +1244,8 @@ class ColumnFilterBar(QWidget):
         # Add per-column GUI widgets
         for columnNo, column in enumerate(columns.tableColumn_getBySlice()):
             if column["filterable"]:
-                # Create FilterEdit
-                filterEdit = ColumnFilterBar.FilterEdit(column["id"], self)
+                # Create special line edit widget
+                filterEdit = qt_extras.LineEditWithClearButton(ColumnFilterBar.filterRowHeight, self)
                 # Set its fixed properties (apart from position)
                 filterEdit.setVisible(True)
                 filterEdit.editingFinished.connect(functools.partial(self.lineEdit_onEditingFinished, column["id"]))
