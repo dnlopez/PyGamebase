@@ -22,6 +22,7 @@ from PySide2.QtWebEngineWidgets import *
 # This program
 import qt_extras
 import columns
+import frontend_utils
 import frontend
 import utils
 
@@ -2411,7 +2412,7 @@ class MyTableView(QTableView):
             rowNo = i_modelIndex.row()
             screenshotFullPath = dbRow_getNumberedScreenshotFullPath(self.dbRows[rowNo], 0)
             if screenshotFullPath != None:
-                openInDefaultApplication(screenshotFullPath)
+                frontend_utils.openInDefaultApplication(screenshotFullPath)
 
         # Screenshot
         elif columnId == "pic" or (columnId.startswith("pic[") and columnId.endswith("]")):
@@ -2420,14 +2421,14 @@ class MyTableView(QTableView):
             rowNo = i_modelIndex.row()
             screenshotFullPath = dbRow_getNumberedScreenshotFullPath(self.dbRows[rowNo], picNo)
             if screenshotFullPath != None:
-                openInDefaultApplication(screenshotFullPath)
+                frontend_utils.openInDefaultApplication(screenshotFullPath)
 
         # Musician photo
         elif columnId == "musician_photo":
             rowNo = i_modelIndex.row()
             photoFullPath = dbRow_getPhotoFullPath(self.dbRows[rowNo])
             if photoFullPath != None:
-                openInDefaultApplication(photoFullPath)
+                frontend_utils.openInDefaultApplication(photoFullPath)
 
         else:
             usableColumn = columns.usableColumn_getById(columnId)
@@ -2746,8 +2747,8 @@ if not QApplication.instance():
 else:
     application = QApplication.instance()
 
-# Create a top-level window by creating a widget with no parent
-mainWindow = QWidget()
+import main_window
+mainWindow = main_window.MainWindow(application)
 mainWindow.resize(800, 600)
 mainWindow.move(QApplication.desktop().rect().center() - mainWindow.rect().center())
 mainWindow.move(QApplication.desktop().rect().center() - mainWindow.rect().center())
@@ -2755,8 +2756,6 @@ if hasattr(gamebase, "config_title"):
     mainWindow.setWindowTitle(gamebase.config_title + " - GameBase")
 else:
     mainWindow.setWindowTitle(param_configModuleFilePath + " - GameBase")
-
-mainWindow.setProperty("class", "mainWindow")
 
 frontend.mainWindow = mainWindow
 
@@ -2822,12 +2821,6 @@ def f12Shortcut_onActivated():
         detailPane_hide()
 shortcut.activated.connect(f12Shortcut_onActivated)
 
-# Window layout
-mainWindow_layout = QVBoxLayout()
-mainWindow_layout.setSpacing(0)
-mainWindow_layout.setContentsMargins(0, 0, 0, 0)
-mainWindow.setLayout(mainWindow_layout)
-
 # Layout overview:
 #  mainWindow
 #   menuBar
@@ -2843,52 +2836,10 @@ mainWindow.setLayout(mainWindow_layout)
 # + Menu bar {{{
 
 menuBar = QMenuBar()
-mainWindow_layout.addWidget(menuBar)
+mainWindow.layout.addWidget(menuBar)
 
 def menu_file_openDatabaseInExternalProgram_onTriggered(i_checked):
-    openInDefaultApplication([gamebase.config_databaseFilePath])
-
-# [currently just for menu_file_openDatabaseInExternalProgram_onTriggered()]
-def openInDefaultApplication(i_filePaths):
-    """
-    Params:
-     i_filePaths:
-      Either (str)
-      or (list of str)
-    """
-    # Choose launcher command
-    import platform
-    #  If on macOS
-    if platform.system() == "Darwin":
-        executableAndArgs = ["open"]
-    #  Else if on Windows
-    elif platform.system() == "Windows":
-        executableAndArgs = ["start"]
-    #  Else assume a Linux variant
-    else:
-        executableAndArgs = ["xdg-open"]
-
-    # Append file paths
-    if type(i_filePaths) == str:
-        executableAndArgs.append(i_filePaths)
-    else:  # if an array
-        executableAndArgs.extend(i_filePaths)
-
-    # [shellExecList()]
-
-    # Quote arguments if necessary
-    import shlex
-    executableAndArgs = [shlex.quote(arg)  for arg in executableAndArgs]
-
-    # Convert to string
-    executableAndArgs = " ".join(executableAndArgs)
-
-    # [Use "...String()" function]
-    # Start program
-    import subprocess
-    popen = subprocess.Popen(executableAndArgs,
-                             shell=True,
-                             stdout=sys.stdout.fileno(), stderr=sys.stderr.fileno())
+    frontend_utils.openInDefaultApplication([gamebase.config_databaseFilePath])
 
 menu = QMenu(mainWindow)
 #menu.addAction("File")
@@ -3302,13 +3253,13 @@ toolbar_back_action = toolbar.addAction(QIcon(application.style().standardIcon(Q
 toolbar_back_action.triggered.connect(filterHistory_goBack)
 toolbar_forward_action = toolbar.addAction(QIcon(application.style().standardIcon(QStyle.SP_ArrowRight)), "Forward")
 toolbar_forward_action.triggered.connect(filterHistory_goForward)
-mainWindow_layout.addWidget(toolbar)
+mainWindow.layout.addWidget(toolbar)
 
 # + }}}
 
 # Create splitter
 splitter = QSplitter(Qt.Vertical)
-mainWindow_layout.addWidget(splitter)
+mainWindow.layout.addWidget(splitter)
 splitter.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 splitter_lastPosition = 200
 def splitter_onSplitterMoved(i_pos, i_index):
@@ -3724,8 +3675,8 @@ def detailPane_populate(i_gameId):
 # Create statusbar
 label_statusbar = QLabel()
 label_statusbar.setProperty("class", "statusbar")
-#mainWindow_layout.addSpacing(8)
-mainWindow_layout.addWidget(label_statusbar)
+#mainWindow.layout.addSpacing(8)
+mainWindow.layout.addWidget(label_statusbar)
 label_statusbar.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 label_statusbar.setContentsMargins(8, 8, 8, 8)
 
@@ -3755,7 +3706,7 @@ label_statusbar.setContentsMargins(8, 8, 8, 8)
 #
 #zzz = StyleTest()
 #zzz.setProperty("class", "zzz2")
-#mainWindow_layout.addWidget(zzz)
+#mainWindow.layout.addWidget(zzz)
 #zzz.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
 #zzz.setAutoFillBackground(True)
 #zzz.setFixedSize(300, 120)
