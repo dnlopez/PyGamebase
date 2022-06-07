@@ -42,12 +42,12 @@ GameBase frontend
 
 Usage:
 ======
-''' + COMMAND_NAME + ''' <config module file> [options...]
+''' + COMMAND_NAME + ''' <Gamebase adapter file> [options...]
 
 Params:
- config module file:
-  Path of Python config file.
-  eg. "configs/c64.py"
+ Gamebase adapter file:
+  Path of Gamebase adapter file.
+  eg. "adapters/c64.py"
 
 Options:
  --help
@@ -55,7 +55,7 @@ Options:
 ''')
 
 #
-param_configModuleFilePath = None
+param_gamebaseAdapterFilePath = None
 
 import sys
 argNo = 1
@@ -77,15 +77,15 @@ while argNo < len(sys.argv):
 
     else:
         # Collect command-line arguments
-        if param_configModuleFilePath == None:
-            param_configModuleFilePath = arg
+        if param_gamebaseAdapterFilePath == None:
+            param_gamebaseAdapterFilePath = arg
         else:
             print("ERROR: Too many arguments.")
             print("(Run with --help to show command usage.)")
             #sys.exit(-1)
 
-#param_configModuleFilePath = "/mnt/gear/dan/docs/code/c/gamebase/c64.py"
-if param_configModuleFilePath == None:
+#param_gamebaseAdapterFilePath = "/mnt/gear/dan/docs/code/c/gamebase/c64.py"
+if param_gamebaseAdapterFilePath == None:
     print("ERROR: Insufficient arguments.")
     print("(Run with --help to show command usage.)")
     sys.exit(-1)
@@ -93,14 +93,14 @@ if param_configModuleFilePath == None:
 # + }}}
 
 
-# Import specified module config file
-param_configModuleFilePath = os.path.abspath(param_configModuleFilePath)
-sys.path.append(os.path.dirname(param_configModuleFilePath))
+# Import specified adapter module
+param_gamebaseAdapterFilePath = os.path.abspath(param_gamebaseAdapterFilePath)
+sys.path.append(os.path.dirname(param_gamebaseAdapterFilePath))
 import importlib
-gamebase = importlib.import_module(os.path.splitext(os.path.basename(param_configModuleFilePath))[0])
+gamebase = importlib.import_module(os.path.splitext(os.path.basename(param_gamebaseAdapterFilePath))[0])
 
 
-# Load frontend config settings
+# Load frontend configuration settings
 g_frontendSettings = {}
 settingsFilePath = QStandardPaths.writableLocation(QStandardPaths.GenericConfigLocation) + os.sep + "pyGamebase.json"
 if os.path.exists(settingsFilePath):
@@ -113,7 +113,7 @@ if os.path.exists(settingsFilePath):
 
 # + Screenshot file/URL resolving {{{
 
-def normalizeDirPathFromConfig(i_dirPath):
+def normalizeDirPathFromAdapter(i_dirPath):
     """
     Strip trailing slash from a directory path, if present.
 
@@ -144,7 +144,7 @@ def getScreenshotAbsolutePath(i_relativePath):
     """
     if not hasattr(gamebase, "config_screenshotsBaseDirPath"):
         return None
-    return normalizeDirPathFromConfig(gamebase.config_screenshotsBaseDirPath) + "/" + i_relativePath
+    return normalizeDirPathFromAdapter(gamebase.config_screenshotsBaseDirPath) + "/" + i_relativePath
 
 def getScreenshotUrl(i_relativePath):
     """
@@ -1065,7 +1065,7 @@ def dbRow_getNumberedScreenshotFullPath(i_row, i_picNo):
 
     Returns:
      Either (str)
-      Absolute (resolved via the config's 'config_screenshotsBaseDirPath') path of image.
+      Absolute (resolved via the adapter's 'config_screenshotsBaseDirPath') path of image.
      or (None)
       There is no screenshot at this numeric position.
     """
@@ -1082,7 +1082,7 @@ def dbRow_getNumberedScreenshotFullPath(i_row, i_picNo):
     if not hasattr(gamebase, "config_screenshotsBaseDirPath"):
         return None
 
-    return normalizeDirPathFromConfig(gamebase.config_screenshotsBaseDirPath) + "/" + screenshotPath
+    return normalizeDirPathFromAdapter(gamebase.config_screenshotsBaseDirPath) + "/" + screenshotPath
 
 def dbRow_getPhotoFullPath(i_row):
     """
@@ -1093,7 +1093,7 @@ def dbRow_getPhotoFullPath(i_row):
 
     Returns:
      Either (str)
-      Absolute (resolved via the config's 'config_photosBaseDirPath') path of image.
+      Absolute (resolved via the adapter's 'config_photosBaseDirPath') path of image.
      or (None)
       There is no photo.
     """
@@ -1104,7 +1104,7 @@ def dbRow_getPhotoFullPath(i_row):
     if not hasattr(gamebase, "config_photosBaseDirPath"):
         return None
 
-    return normalizeDirPathFromConfig(gamebase.config_photosBaseDirPath + "/" + photoPath)
+    return normalizeDirPathFromAdapter(gamebase.config_photosBaseDirPath + "/" + photoPath)
 
 class MyStyledItemDelegate(QStyledItemDelegate):
     def __init__(self, i_parent=None):
@@ -1205,7 +1205,7 @@ class MyTableModel(QAbstractTableModel):
             # (Done via delegate)
             #if i_role == Qt.DecorationRole:
             #    screenshotPath = self.parent().dbRows[i_index.row()][self.parent().dbColumnNames.index("Games.ScrnshotFilename")]
-            #    pixmap = QPixmap(normalizeDirPathFromConfig(gamebase.config_screenshotsBaseDirPath) + "/" + screenshotPath)
+            #    pixmap = QPixmap(normalizeDirPathFromAdapter(gamebase.config_screenshotsBaseDirPath) + "/" + screenshotPath)
             #    return pixmap;
             pass
         #
@@ -2028,7 +2028,7 @@ mainWindow.move(QApplication.desktop().rect().center() - mainWindow.rect().cente
 if hasattr(gamebase, "config_title"):
     mainWindow.setWindowTitle(gamebase.config_title + " - GameBase")
 else:
-    mainWindow.setWindowTitle(param_configModuleFilePath + " - GameBase")
+    mainWindow.setWindowTitle(param_gamebaseAdapterFilePath + " - GameBase")
 
 frontend.mainWindow = mainWindow
 
@@ -2673,7 +2673,7 @@ def detailPane_populate(i_gameId):
 
             html += '<a href="extra:///' + imageRow["Path"] + '" style="display: inline-block; text-align: center;">'
             if hasattr(gamebase, "config_extrasBaseDirPath"):
-                html += '<img src="file://' + normalizeDirPathFromConfig(gamebase.config_extrasBaseDirPath) + "/" + imageRow["Path"] + '" style="height: 300px;">'
+                html += '<img src="file://' + normalizeDirPathFromAdapter(gamebase.config_extrasBaseDirPath) + "/" + imageRow["Path"] + '" style="height: 300px;">'
             #html += '<img src="https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_92x30dp.png" style="height: 300px;">'
             html += '<div>' + imageRow["Name"] + '</div>'
             html += '</a>'
@@ -2698,7 +2698,7 @@ def detailPane_populate(i_gameId):
                 #print(i_isMainFrame)
 
                 # If it's a link to an extra,
-                # pass it to the config file's runExtra()
+                # pass it to the adapter file's runExtra()
                 url = i_qUrl.toString()
                 if url.startswith("extra:///"):
                     extraPath = url[9:]
@@ -2801,14 +2801,14 @@ mainWindow.show()
 #
 if not hasattr(gamebase, "config_databaseFilePath"):
     messageBox = qt_extras.ResizableMessageBox(application.style().standardIcon(QStyle.SP_MessageBoxCritical), "Error", "")
-    messageBox.setText("<big><b>Missing config setting:</b></big>")
+    messageBox.setText("<big><b>Missing adapter setting:</b></big>")
     messageBox.setInformativeText("config_databaseFilePath")
     messageBox.resizeToContent()
     messageBox.exec()
     sys.exit(1)
 
 try:
-    db.openDb(normalizeDirPathFromConfig(gamebase.config_databaseFilePath))
+    db.openDb(normalizeDirPathFromAdapter(gamebase.config_databaseFilePath))
 except Exception as e:
     import traceback
     print(traceback.format_exc())
