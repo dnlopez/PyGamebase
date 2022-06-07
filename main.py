@@ -1194,6 +1194,15 @@ class MyTableView(QTableView):
 
         #self.verticalScrollBar().setSingleStep(30)
 
+    doneQuery = Signal(int)
+    # Emitted when
+    #  queryDb() has finished a DB query and updated the game list
+    #
+    # Params:
+    #  i_rowCount:
+    #   (int)
+    #   The new row/game count in the list
+
     def queryDb(self, i_whereExpression, i_sortOperations, i_whereExpressionMightUseNonVisibleColumns=True):
         """
         Params:
@@ -1278,7 +1287,7 @@ class MyTableView(QTableView):
         self.dbColumnNames = [column[0]  for column in cursor.description]
         self.dbRows = cursor.fetchall()
 
-        label_statusbar.setText("Showing " + str(len(self.dbRows)) + " games.")
+        self.doneQuery.emit(len(self.dbRows))
 
     def selectedGameId(self):
         """
@@ -2519,6 +2528,10 @@ label_statusbar.setProperty("class", "statusbar")
 mainWindow.layout.addWidget(label_statusbar)
 label_statusbar.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 label_statusbar.setContentsMargins(8, 8, 8, 8)
+
+def tableView_onDoneQuery(i_gameCount):
+    label_statusbar.setText("Showing " + str(i_gameCount) + " games.")
+tableView.doneQuery.connect(tableView_onDoneQuery)
 
 # + }}}
 
