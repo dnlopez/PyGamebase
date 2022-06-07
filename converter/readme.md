@@ -1,4 +1,4 @@
-_PyGamebase converter_ is a helper app for converting databases from their typical Microsoft Access (.mdb) format to the SQLite (version 3) format which PyGamebase understands. It can also create an initial config file for the Gamebase, as needed by the frontend.
+_PyGamebase converter_ is a helper app for converting databases from their typical Microsoft Access (.mdb) format to the SQLite (version 3) format which PyGamebase understands. It can also create an initial adapter file for the Gamebase, as needed by the frontend.
 
 # Usage
 
@@ -25,11 +25,11 @@ A Gamebase database contains many paths to external files - games, screenshots, 
 This tab page is a frontend for the Python script `utility_scripts/fix_path_case.py`, which you could run instead to do the same thing from the command line.
 
 
-## Step 3: Create frontend config file
+## Step 3: Create frontend adapter file
 
-The frontend needs to be run with a config file that points it to the new SQLite database to use and the external file directories (so it can show the screenshots, for example). This file is a Python code module that should also contain functions with particular names that do the actual launching of games, extras, music and the like. Naturally being a Python program the possibilities are vast and you should read the frontend guide to [Gamebase config files](../frontend/gamebase_config_files.html) to best set everything up for your purposes. However this tab page can create a template-like config file that might help just to get started.
+The frontend needs to be run with an 'adapter' file that points it to the new SQLite database to use and the external file directories (so it can show the screenshots, for example). This file is a Python code module that should also contain functions with particular names that do the actual launching of games, extras, music and the like. Naturally being a Python program the possibilities are vast and you should read the frontend guide to [Gamebase adapter files](../frontend/gamebase_adapter_files.html) to best set everything up for your purposes. However this tab page can create a template-like adapter file that might help just to get started.
 
-The "GameBase title" is just for display purposes (in the frontend window title bar). In "Emulator executable", locate the emulator used to launch a game. This will be launched via the system shell, so if it is on your PATH you only really need to provide the name, instead of an absolute path. It will be run with the game file path(s) immediately following the command name as arguments. If you need to specify emulator options or do any kind of argument processing, you should edit the Python script after it's been generated. If the Gamebase comes with music, enter a compatible player into "Music player executable", else leave it blank. In "Config file" enter the path of the file to be created (with extension '.py').
+The "GameBase title" is just for display purposes (in the frontend window title bar). In "Emulator executable", locate the emulator used to launch a game. This will be launched via the system shell, so if it is on your PATH you only really need to provide the name, instead of an absolute path. It will be run with the game file path(s) immediately following the command name as arguments. If you need to specify emulator options or do any kind of argument processing, you should edit the Python script after it's been generated. If the Gamebase comes with music, enter a compatible player into "Music player executable", else leave it blank. In "Adapter file" enter the path of the file to be created (with extension '.py').
 
 This step also uses the 'SQLite database file' setting from 'Step 1' and all of the paths from 'Step 2', so ensure those are also filled in before hitting 'Go'.
 

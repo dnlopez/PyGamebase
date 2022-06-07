@@ -51,7 +51,7 @@ def autoDetectByGamebaseFolderButton_onClicked():
         step2_extrasFolderPath_lineEdit.setText("")
         step3_gamebaseName_lineEdit.setText("")
         step3_emulatorExecutable_lineEdit.setText("")
-        step3_configFile_lineEdit.setText("")
+        step3_adapterFile_lineEdit.setText("")
 
         #
         dirEntries = os.listdir(dirPath)
@@ -62,7 +62,7 @@ def autoDetectByGamebaseFolderButton_onClicked():
             step1_accessDatabasePath_lineEdit.setText(os.path.join(dirPath, candidates[0]))
             step1_sqliteDatabasePath_lineEdit.setText(os.path.join(dirPath, candidates[0])[:-4] + ".sqlite")
             step3_gamebaseName_lineEdit.setText(candidates[0][:-4].replace("_", " "))
-            step3_configFile_lineEdit.setText(os.path.join(dirPath, candidates[0])[:-4] + ".py")
+            step3_adapterFile_lineEdit.setText(os.path.join(dirPath, candidates[0])[:-4] + ".py")
 
         candidates = [e  for e in dirEntries  if e.upper() == "GAMES"]
         if len(candidates) > 0:
@@ -378,7 +378,7 @@ step2_extrasFolderPath_lineEdit = makeLabelledEditField("Extras folder: ", i_bro
 #
 step2_vBoxLayout.addWidget(widget_group)
 
-step2_fromPreviousTabs_label = QLabel('("SQLite database file" from Step 1 tab will be modified)')
+step2_fromPreviousTabs_label = QLabel('("SQLite database file" from previous tab will be modified)')
 step2_labelDetail.setWordWrap(True)
 step2_vBoxLayout.addWidget(step2_fromPreviousTabs_label)
 
@@ -419,7 +419,7 @@ step2_vBoxLayout.addStretch()
 
 # + }}}
 
-# + Step 3: Create frontend config file {{{
+# + Step 3: Create frontend adapter file {{{
 
 step3_tabPage_widget = QWidget()
 tabWidget.addTab(step3_tabPage_widget, "Step 3")
@@ -427,15 +427,15 @@ tabWidget.addTab(step3_tabPage_widget, "Step 3")
 step3_vBoxLayout = QVBoxLayout()
 step3_tabPage_widget.setLayout(step3_vBoxLayout)
 
-step3_label = QLabel("Create frontend config file")
+step3_label = QLabel("Create frontend adapter file")
 step3_label.setStyleSheet("QLabel { background-color: black; color: white; padding: 4px; font-weight: bold; font-size: 16px;}");
 step3_vBoxLayout.addWidget(step3_label)
-step3_labelDetail = QLabel("Create a minimal Python file to launch the frontend with to use it with this database and set of file folders. Note: this will only be a very minimal template - see the 'examples' directory for more developed examples!")
+step3_labelDetail = QLabel("Create a Python file to launch the frontend with in order to use it with this database and set of file folders. Note: this will only be a very minimal template - see the 'examples' directory for more developed examples!")
 step3_labelDetail.setStyleSheet("QLabel { background-color: #666; color: white; padding: 4px; }");
 step3_labelDetail.setWordWrap(True)
 step3_vBoxLayout.addWidget(step3_labelDetail)
 
-step3_fromPreviousTabs_label = QLabel("(From previous tabs: SQLite database file, Games/Screenshots/Music/Photos/Extras folder)")
+step3_fromPreviousTabs_label = QLabel('(Settings also used from previous tabs: "SQLite database file", "Games/Screenshots/Music/Photos/Extras folder")')
 step3_labelDetail.setWordWrap(True)
 step3_vBoxLayout.addWidget(step3_fromPreviousTabs_label)
 
@@ -444,8 +444,8 @@ widget_group = QWidget()
 step3_gamebaseTitle_lineEdit = makeLabelledEditField("GameBase title: ", i_tooltip='Human-friendly Gamebase title.\neg. "Gamebase64 v17" or "Commodore 64"', i_shareWidget=widget_group)
 # Emulator executable
 step3_emulatorExecutable_lineEdit = makeLabelledEditField("Emulator executable: ", i_browseFor="file", i_browseCaption="Choose emulator executable", i_shareWidget=widget_group)
-# Config file path
-step3_configFile_lineEdit = makeLabelledEditField("Config file: ", i_comment="(if the above file exists, it will be overwritten)", i_browseFor="file", i_browseCaption="Choose config file path", i_shareWidget=widget_group)
+# Adapter file path
+step3_adapterFile_lineEdit = makeLabelledEditField("Adapter file: ", i_comment="(if the above file exists, it will be overwritten)", i_browseFor="file", i_browseCaption="Choose adapter file path", i_shareWidget=widget_group)
 #
 step3_vBoxLayout.addWidget(widget_group)
 
