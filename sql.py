@@ -286,3 +286,234 @@ def flattenOperator(i_node, i_operatorName):
 #flattened2 = flattenOperator(flattened2, "AND")
 
 # + }}}
+
+# + Reinterpret results {{{
+
+import columns
+
+def interpretColumnOperation(i_node):
+    """
+    Params:
+     i_node:
+      (dict)
+
+    Returns:
+     (tuple)
+     Tuple has elements:
+      0:
+       (str)
+       Operator name
+       eg.
+        "="
+        "LIKE"
+      1:
+       (str)
+       DB column identifier
+       eg.
+        "Games.Name"
+        "Name"
+      2:
+       (str)
+       Value
+       eg.
+        "Uridium"
+        "Uri%"
+    """
+    if type(i_node) != dict or "op" not in i_node:
+        return None, None, None
+    operator = i_node["op"][1]
+
+    # Scan operands,
+    # and attempt to pick out one and only one identifier token to be the column name,
+    # and one and only one token of another type to be the value
+    columnName = None
+    value = None
+    for child in i_node["children"]:
+        # If the operand is itself a child operator
+        if type(child) == dict:
+            # If it's an 'ESCAPE' operator (an adjunct to 'LIKE'),
+            # pull the actual value (as opposed to the escape character) from out of it
+            if "op" in child and child["op"] == ("operator", "ESCAPE"):
+                value = child["children"][0][1]  # TODO unescape?
+            # If it's an 'AND' operator beneath a 'BETWEEN',
+            # assemble the two values with a tilde between them
+            elif operator == "BETWEEN" and child["op"] == ("operator", "AND"):
+                value = child["children"][0][1] + "~" + child["children"][1][1]
+            # If it's some other child operator,
+            # don't know how to deal with this so far
+            else:
+                return None, None, None
+        #
+        elif type(child) == tuple:
+            # If it's an identifier,
+            # consider it the column name,
+            # but fail if we already have one
+            if child[0] == "identifier":
+                if columnName != None:
+                    return None, None, None
+                columnName = child[1]
+            # Else if it's not an identifier,
+            # consider it the value,
+            # but fail if we already have one
+            else:
+                if value != None:
+                    return None, None, None
+                value = child[1]
+
+    if operator == None or columnName == None or value == None:
+        return None, None, None
+    return operator, columnName, value
+
+def sqlWhereExpressionToColumnFilters(i_whereExpression, i_skipFailures=False):
+    """
+    Parse SQL WHERE expression
+    and get it as an equivalent set of column names and texts to enter into those boxes on the column filter bar.
+
+    Params:
+     i_whereExpression:
+      (str)
+     i_skipFailures:
+      (bool)
+
+    Returns:
+     Either (list)
+      An element for each 'row' of filter edits in the UI.
+      Each element is:
+       (dict with arbitrary key-value properties)
+       The filter UI text for a particular column.
+       Dict has:
+        Keys:
+         (str)
+         ID of column
+        Value:
+         (str)
+         Text for the filter box.
+     or (None)
+      Failed to get SQL expression into the simple column filter bar-compatible form.
+      Perhaps it is too complex for that UI, too complex for the simple SQL parser, etc.
+    """
+    # Tokenize, parse and postprocess it
+    tokenized = tokenizeWhereExpr(i_whereExpression)
+    if len(tokenized) == 0:
+        return []
+    initializeOperatorTable()
+    parsed = parseExpression(tokenized)
+    #print(parsed)
+    if parsed == None:
+        label_statusbar.setText("Failed to parse")
+        return None
+    parsed = flattenOperator(parsed, "AND")
+    parsed = flattenOperator(parsed, "OR")
+
+    # Get or simulate a top-level OR array from the input parse tree
+    if "op" in parsed and parsed["op"] == ("operator", "OR"):
+        orExpressions = parsed["children"]
+    else:
+        orExpressions = [parsed]
+
+    # Initialize an output top-level OR array,
+    # and then for every input OR expression
+    oredRows = []
+    for orExpressionNo, orExpression in enumerate(orExpressions):
+
+        # Get or simulate a second-level AND array from the input parse tree
+        if "op" in orExpression and orExpression["op"] == ("operator", "AND"):
+            andExpressions = orExpression["children"]
+        else:
+            andExpressions = [orExpression]
+
+        # Initialize an output second-level AND dict,
+        # and then for every input AND expression
+        andedFields = {}
+        for andExpression in andExpressions:
+            # Get important parts of term
+            operator, columnName, value = interpretColumnOperation(andExpression)
+            #print("operator, columnName, value: " + str((operator, columnName, value)))
+
+            # If that failed,
+            # either skip this term or fail the whole extraction
+            # [though maybe we should just skip over this andExpression as it could be just a useless term like "1=1"]
+            if operator == None and columnName == None and value == None:
+                if i_skipFailures:
+                    continue
+                else:
+                    label_statusbar.setText("Failed to interpret column")
+                    return None
+
+            # If the column name actually corresponds to a database field
+            usableColumn = columns.usableColumn_getByDbIdentifier(columnName)
+            if usableColumn != None:
+                widgetText = None
+                if operator == "LIKE":
+                    # If have percent sign at beginning and end and nowhere else
+                    if len(value) >= 2 and value[0] == "%" and value[-1] == "%" and value[1:-1].find("%") == -1:
+                        widgetText = value[1:-1]
+                    else:
+                        widgetText = value
+                elif operator == "REGEXP":
+                    widgetText = "/" + value + "/"
+                elif operator == "BETWEEN":
+                    widgetText = value
+                elif operator == "IS":
+                    widgetText = "=" + value
+                elif operator == "IS NOT":
+                    widgetText = "<>" + value
+                elif operator == "=" or operator == "==":
+                    widgetText = "=" + value
+                elif operator == "<":
+                    widgetText = "<" + value
+                elif operator == "<=":
+                    widgetText = "<=" + value
+                elif operator == ">":
+                    widgetText = ">" + value
+                elif operator == ">=":
+                    widgetText = ">=" + value
+                elif operator == "<>" or operator == "!=":
+                    widgetText = "<>" + value
+
+                # Save widget text in output dict
+                if widgetText != None:
+                    andedFields[usableColumn["id"]] = widgetText
+
+        #
+        oredRows.append(andedFields)
+
+    return oredRows
+
+def sqlWhereExpressionToTableNamesAndSelects(i_whereExpression):
+    """
+    Parse SQL WHERE expression
+    and get database table names and select terms needed to get the columns being referenced in it.
+
+    Params:
+     i_sqlWhereExpression:
+      (str)
+
+    Returns:
+     (tuple)
+     Tuple has elements:
+      0:
+       (set)
+       Table names
+      1:
+       (set)
+       Identifiers
+    """
+    try:
+        oredRows = sqlWhereExpressionToColumnFilters(i_whereExpression, True)
+    except:
+        return []
+    if oredRows == None:
+        return []
+
+    dbTableNames = set()
+    dbSelects = set()
+    for oredRow in oredRows:
+        for andedFieldId in oredRow.keys():
+            usableColumn = columns.usableColumn_getById(andedFieldId)
+            for dbTableName in usableColumn["dbTableNames"]:
+                dbTableNames.add(dbTableName)
+            dbSelects.add(usableColumn["dbSelect"])
+    return dbTableNames, dbSelects
+
+# + }}}
