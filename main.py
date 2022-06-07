@@ -934,6 +934,15 @@ class ColumnNameBar(QWidget):
 
         return None
 
+    requestHorizontalScroll = Signal(int)
+    # Emitted when
+    #  The column name bar wants to be horizontally scrolled, because a widget within it that is off the side of the window is getting focused
+    #
+    # Params:
+    #  i_dx:
+    #   (int)
+    #   The horizontal scroll amount in pixels
+
     def eventFilter(self, i_watched, i_event):
         #print(i_event.type())
 
@@ -1065,12 +1074,12 @@ class ColumnNameBar(QWidget):
 
         elif i_event.type() == QEvent.FocusIn:
             # If this widget is off the side of the header bar / window,
-            # scroll horizontally
+            # ask for horizontal scroll
             positionOnBar = i_watched.mapTo(self, QPoint(0, 0))
             if positionOnBar.x() < 0:
-                tableView.scrollBy(positionOnBar.x(), 0)
+                self.requestHorizontalScroll.emit(positionOnBar.x())
             elif positionOnBar.x() + i_watched.geometry().width() > self.geometry().width():
-                tableView.scrollBy(positionOnBar.x() + i_watched.geometry().width() - self.geometry().width(), 0)
+                self.requestHorizontalScroll.emit(positionOnBar.x() + i_watched.geometry().width() - self.geometry().width())
 
         # Let event continue
         return False
@@ -1130,7 +1139,7 @@ def filterHistory_goBack():
         columnFilterBar.setFilterValues(oredRows)
 
     # Refilter
-    tableView.refilter(sqlWhereExpression)
+    tableView.refilter(sqlWhereExpression, columnNameBar.sort_operations)
 
 def filterHistory_goForward():
     global g_filterHistory_pos
@@ -1154,7 +1163,7 @@ def filterHistory_goForward():
         columnFilterBar.setFilterValues(oredRows)
 
     # Refilter
-    tableView.refilter(sqlWhereExpression)
+    tableView.refilter(sqlWhereExpression, columnNameBar.sort_operations)
 
 # + }}}
 
@@ -1554,8 +1563,15 @@ class DbRecordDict(collections.UserDict):
         return False
 
 class MyTableView(QTableView):
-    def __init__(self, i_parent=None):
+    def __init__(self, i_extraHorizontalScrollSpaceNeeded, i_parent=None):
+        """
+        Params:
+         i_extraHorizontalScrollSpaceNeeded:
+          (int)
+        """
         QTableView.__init__(self, i_parent)
+
+        self.extraHorizontalScrollSpaceNeeded = i_extraHorizontalScrollSpaceNeeded
 
         # set font
         #font = QFont("Courier New", 14)
@@ -1672,11 +1688,14 @@ class MyTableView(QTableView):
 
         #self.verticalScrollBar().setSingleStep(30)
 
-    def queryDb(self, i_whereExpression, i_whereExpressionMightUseNonVisibleColumns=True):
+    def queryDb(self, i_whereExpression, i_sortOperations, i_whereExpressionMightUseNonVisibleColumns=True):
         """
         Params:
          i_whereExpression:
           (str)
+         i_sortOperations:
+          (list)
+          See ColumnNameBar.sort_operations
          i_whereExpressionMightUseNonVisibleColumns:
           (bool)
         """
@@ -1730,11 +1749,11 @@ class MyTableView(QTableView):
             sql += "\nWHERE " + i_whereExpression
 
         # ORDER BY
-        if len(columnNameBar.sort_operations) > 0:
+        if len(i_sortOperations) > 0:
             sql += "\nORDER BY "
 
             orderByTerms = []
-            for columnId, direction in columnNameBar.sort_operations:
+            for columnId, direction in i_sortOperations:
                 usableColumn = columns.usableColumn_getById(columnId)
                 term = usableColumn["dbIdentifiers"][0]
                 if direction == -1:
@@ -1763,11 +1782,14 @@ class MyTableView(QTableView):
         selectedIndex = self.selectionModel().currentIndex()
         return self.dbRows[selectedIndex.row()][self.dbColumnNames.index("Games.GA_Id")]
 
-    def refilter(self, i_sqlWhereExpression):
+    def refilter(self, i_sqlWhereExpression, i_sortOperations):
         """
         Params:
          i_sqlWhereExpression:
           (str)
+         i_sortOperations:
+          (list)
+          See ColumnNameBar.sort_operations
 
         Returns:
          (bool)
@@ -1783,7 +1805,7 @@ class MyTableView(QTableView):
         # Query database
         sqlValid = True
         try:
-            self.queryDb(i_sqlWhereExpression)
+            self.queryDb(i_sqlWhereExpression, i_sortOperations)
         except sqlite3.OperationalError as e:
             sqlValid = False
 
@@ -1935,15 +1957,14 @@ class MyTableView(QTableView):
                 return rowNo
         return None
 
+    requestClearFilter = Signal()
+
     def selectGameWithId(self, i_gameId):
         # Look for row in table,
         # and if not found then clear filter and look again
         rowNo = self.findGameWithId(i_gameId)
         if rowNo == None:
-            if sqlFilterBar.isVisible():
-                sqlFilterBar.userSetText("")
-            else:
-                columnFilterBar.resetFilterRowCount(1)
+            self.requestClearFilter.emit()
             rowNo = self.findGameWithId(i_gameId)
 
         # If found, select it
@@ -1982,6 +2003,18 @@ class MyTableView(QTableView):
         # Popup the menu
         contextMenu.popup(self.viewport().mapToGlobal(i_pos))
 
+    requestQuickFilter = Signal(str, str, str)
+    # Params:
+    #  i_combiner:
+    #   (str)
+    #   One of
+    #    "AND"
+    #    "OR"
+    #  i_columnId:
+    #   (str)
+    #  i_text:
+    #   (str)
+
     def contextMenu_filter_item_onTriggered(self, i_combiner, i_comparisonOperation): #, i_checked):
         selectedIndex = self.selectionModel().currentIndex()
         selectedValue = self.tableModel.data(selectedIndex, MyTableModel.FilterRole)
@@ -1994,19 +2027,22 @@ class MyTableView(QTableView):
         else:
             formattedCriteria = i_comparisonOperation + str(selectedValue)
 
-        if i_combiner == "OR":
-            columnNameBar.appendFilterRow()
-            columnNameBar.repositionTabOrder()
-            columnFilterBar.repositionFilterEdits()
-            columnFilterBar.repositionTabOrder()
-
         columnId = columns.tableColumn_getByPos(selectedIndex.column())["id"]
-        columnFilterBar.columnWidgets[columnId]["filterEdits"][-1].setText(formattedCriteria)
-        columnFilterBar.editingFinished.emit(True, columnId)
+
+        self.requestQuickFilter.emit(i_combiner, columnId, formattedCriteria)
 
     # + }}}
 
     # + Scrolling {{{
+
+    horizontalScroll = Signal(int)
+    # Emitted when
+    #  The column name bar is horizontally scrolled
+    #
+    # Params:
+    #  i_dx:
+    #   (int)
+    #   The horizontal scroll amount in pixels
 
     def scrollContentsBy(self, i_dx, i_dy):  # override from QAbstractScrollArea
         """
@@ -2014,9 +2050,9 @@ class MyTableView(QTableView):
         """
         # Call base class to scroll the actual table view
         QTableView.scrollContentsBy(self, i_dx, i_dy)
-        # Scroll external bars horizontally by the same amount
-        columnNameBar.scroll(i_dx, 0)
-        columnFilterBar.scroll(i_dx, 0)
+
+        # Notify main app so external bars can be scrolled horizontally by the same amount
+        self.horizontalScroll.emit(i_dx)
 
     def scrollBy(self, i_dx, i_dy):
         self.horizontalScrollBar().setValue(self.horizontalScrollBar().value() + i_dx)
@@ -2034,7 +2070,7 @@ class MyTableView(QTableView):
 
         # Calculate and set new scrollbar maximum
         allColumnsWidth = sum([column["width"]  for column in columns.tableColumn_getBySlice()])
-        newMaximum = allColumnsWidth - self.horizontalScrollBar().pageStep() + column_filter_bar.ColumnFilterBar.filterRowHeight*2 + self.verticalScrollBar().width()
+        newMaximum = allColumnsWidth - self.horizontalScrollBar().pageStep() + self.extraHorizontalScrollSpaceNeeded + self.verticalScrollBar().width()
         if newMaximum < 0:
             newMaximum = 0
         self.horizontalScrollBar().setMaximum(newMaximum)
@@ -2794,6 +2830,10 @@ columnNameBar.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 columnNameBar.setFixedHeight(30)
 gameTable_layout.addWidget(columnNameBar)
 
+def columnNameBar_onRequestHorizontalScroll(i_dx):
+    tableView.scrollBy(i_dx, 0)
+columnNameBar.requestHorizontalScroll.connect(columnNameBar_onRequestHorizontalScroll)
+
 # + }}}
 
 def refilterFromCurrentlyVisibleBar():
@@ -2802,7 +2842,7 @@ def refilterFromCurrentlyVisibleBar():
     else:
         sqlWhereExpression = columnFilterBar.getSqlWhereExpression()
 
-    tableView.refilter(sqlWhereExpression)
+    tableView.refilter(sqlWhereExpression, columnNameBar.sort_operations)
 
 # + Column filter bar {{{
 
@@ -2816,7 +2856,7 @@ def columnFilterBar_onEditingFinished(i_modified, i_columnId):
         tableView.selectCellInColumnWithId(i_columnId)
     else:
         sqlWhereExpression = columnFilterBar.getSqlWhereExpression()
-        if not tableView.refilter(sqlWhereExpression):
+        if not tableView.refilter(sqlWhereExpression, columnNameBar.sort_operations):
             return
 
         # If expression is different from the last history item at the current position,
@@ -2848,7 +2888,7 @@ def sqlFilterBar_onEditingFinished(i_modified):
         tableView.setFocus()
     else:
         sqlWhereExpression = sqlFilterBar.text()
-        if not tableView.refilter(sqlWhereExpression):
+        if not tableView.refilter(sqlWhereExpression, columnNameBar.sort_operations):
             return
 
         # If expression is different from the last history item at the current position,
@@ -2866,7 +2906,7 @@ sqlFilterBar.editingFinished.connect(sqlFilterBar_onEditingFinished)
 # + Table view {{{
 
 # Create table
-tableView = MyTableView()
+tableView = MyTableView(column_filter_bar.ColumnFilterBar.filterRowHeight*2)
 gameTable_layout.addWidget(tableView)
 # Set vertical size policy to 'Ignored' which lets widget shrink to zero
 #  https://stackoverflow.com/questions/18342590/setting-qlistwidget-minimum-height
@@ -2874,6 +2914,28 @@ tableView.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Ignored)
 
 #  Set initial column widths
 tableView.resizeAllColumns([column["width"]  for column in columns.tableColumn_getBySlice()])
+
+def tableView_onRequestClearFilter():
+    if sqlFilterBar.isVisible():
+        sqlFilterBar.userSetText("")
+    else:
+        columnFilterBar.resetFilterRowCount(1)
+tableView.requestClearFilter.connect(tableView_onRequestClearFilter)
+
+def tableView_onRequestQuickFilter(i_combiner, i_columnId, i_text):
+    if i_combiner == "OR":
+        columnFilterBar.appendFilterRow()
+        columnFilterBar.repositionFilterEdits()
+        columnFilterBar.repositionTabOrder()
+
+    columnFilterBar.columnWidgets[i_columnId]["filterEdits"][-1].setText(i_text)
+    columnFilterBar.editingFinished.emit(True, i_columnId)
+tableView.requestQuickFilter.connect(tableView_onRequestQuickFilter)
+
+def tableView_onHorizontalScroll(i_dx):
+    columnNameBar.scroll(i_dx, 0)
+    columnFilterBar.scroll(i_dx, 0)
+tableView.horizontalScroll.connect(tableView_onHorizontalScroll)
 
 # + }}}
 
