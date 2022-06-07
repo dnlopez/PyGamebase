@@ -94,10 +94,8 @@ if param_gamebaseAdapterFilePath == None:
 
 
 # Import specified adapter module
-param_gamebaseAdapterFilePath = os.path.abspath(param_gamebaseAdapterFilePath)
-sys.path.append(os.path.dirname(param_gamebaseAdapterFilePath))
-import importlib
-gamebase = importlib.import_module(os.path.splitext(os.path.basename(param_gamebaseAdapterFilePath))[0])
+import gamebase
+gamebase.importAdapter(param_gamebaseAdapterFilePath)
 
 
 # Load frontend configuration settings
@@ -111,192 +109,6 @@ if os.path.exists(settingsFilePath):
         import traceback
         print("Failed to read frontend settings file: " + "\n".join(traceback.format_exception_only(e)))
 
-# + Screenshot file/URL resolving {{{
-
-def normalizeDirPathFromAdapter(i_dirPath):
-    """
-    Strip trailing slash from a directory path, if present.
-
-    Params:
-     i_dirPath:
-      (str)
-      eg.
-       "/mnt/gamebase/games/"
-
-    Returns:
-     (str)
-     eg.
-      "/mnt/gamebase/games"
-    """
-    if i_dirPath.endswith("/") or i_dirPath.endswith("\\"):
-        i_dirPath = i_dirPath[:-1]
-    return i_dirPath
-
-def getScreenshotAbsolutePath(i_relativePath):
-    """
-    Params:
-     i_relativePath:
-      (str)
-
-    Returns:
-     Either (str)
-     or (None)
-    """
-    if not hasattr(gamebase, "config_screenshotsBaseDirPath"):
-        return None
-    return normalizeDirPathFromAdapter(gamebase.config_screenshotsBaseDirPath) + "/" + i_relativePath
-
-def getScreenshotUrl(i_relativePath):
-    """
-    Params:
-     i_relativePath:
-      (str)
-
-    Returns:
-     Either (str)
-     or (None)
-    """
-    i_relativePath = i_relativePath.replace(" ", "%20")
-    i_relativePath = i_relativePath.replace("#", "%23")
-    screenshotAbsolutePath = getScreenshotAbsolutePath(i_relativePath)
-    if screenshotAbsolutePath == None:
-        return None
-    return "file://" + getScreenshotAbsolutePath(i_relativePath)
-
-
-def dbRow_getScreenshotRelativePath(i_row):
-    """
-    Get the path of a game's first screenshot picture.
-    This comes from the 'ScrnshotFilename' database field.
-
-    Params:
-     i_row:
-      (sqlite3.Row)
-      A row from the 'Games' table
-
-    Returns:
-     Either (str)
-      Path of image, relative to the 'Screenshots' folder.
-     or (None)
-      The database didn't specify a screenshot file path.
-    """
-    # If there's not already a cached value,
-    # compute and cache it now
-    if True:#(!i_row.screenshotRelativePath)
-        #i_row.
-        screenshotRelativePath = i_row["Games.ScrnshotFilename"]
-        if screenshotRelativePath != None:
-            screenshotRelativePath = screenshotRelativePath.replace("\\", "/")
-
-    # Return it from cache
-    #return i_row.
-    return screenshotRelativePath
-
-def dbRow_getTitleshotRelativePath(i_row):
-    """
-    Get the path of a game's titleshot picture.
-    This is alternative, equivalent terminology to the first screenshot.
-    This comes from the 'ScrnshotFilename' database field.
-
-    Params:
-     i_row:
-      (sqlite3.Row)
-      A row from the 'Games' table
-
-    Returns:
-     Either (str)
-      Path of image, relative to the 'Screenshots' folder.
-     or (None)
-      The database didn't specify a titleshot file path.
-    """
-    # If there's not already a cached value,
-    # compute and cache it now
-    if True:#(!i_row.titleshotRelativePath)
-        #i_row.
-        titleshotRelativePath = dbRow_getScreenshotRelativePath(i_row);
-
-    # Return it from cache
-    #return i_row.
-    return titleshotRelativePath;
-
-def dbRow_getSupplementaryScreenshotPaths(i_row, i_simulateCount=None):
-    """
-    Params:
-     i_row:
-      (sqlite3.Row)
-     i_simulateCount:
-      Either (int)
-      or (None)
-
-    Returns:
-     (list of str)
-     Paths of images, relative to the 'Screenshots' folder.
-    """
-    # If there's not already a cached value,
-    # compute and cache it now
-    if True:#!i_row.supplementaryScreenshotPaths:
-        supplementaryScreenshotPaths = []
-
-        # Get titleshot relative path
-        titleshotRelativePath = dbRow_getTitleshotRelativePath(i_row)
-        if titleshotRelativePath != None:
-            # Search disk for further image files similarly-named but with a numeric suffix
-            screenshotStem, imageExtension = os.path.splitext(titleshotRelativePath)
-
-            if i_simulateCount == None:
-                screenshotNo = 1
-                while True:
-                    screenshotRelativePath = screenshotStem + "_" + str(screenshotNo) + imageExtension
-                    screenshotAbsolutePath = getScreenshotAbsolutePath(screenshotRelativePath)
-                    if screenshotAbsolutePath == None or not os.path.exists(screenshotAbsolutePath):
-                        break
-
-                    supplementaryScreenshotPaths.append(screenshotRelativePath)
-
-                    screenshotNo += 1
-
-                #i_row.supplementaryScreenshotPaths = supplementaryScreenshotPaths
-            else:
-                for screenshotNo in range(1, i_simulateCount + 1):
-                    screenshotRelativePath = screenshotStem + "_" + str(screenshotNo) + imageExtension
-
-                    supplementaryScreenshotPaths.append(screenshotRelativePath)
-
-                return supplementaryScreenshotPaths;
-
-    # Return it from cache
-    #return i_row.
-    return supplementaryScreenshotPaths
-
-def dbRow_getPhotoRelativePath(i_row):
-    """
-    Get the path of a game's (musician) photo.
-    This comes from the 'Photo' database field.
-
-    Params:
-     i_row:
-      (sqlite3.Row)
-      A row from the 'Games' table
-
-    Returns:
-     Either (str)
-      Path of image, relative to the 'Photos' folder.
-     or (None)
-      The database didn't specify a photo file path.
-    """
-    # If there's not already a cached value,
-    # compute and cache it now
-    if True:#(!i_row.photoRelativePath)
-        #i_row.
-        photoRelativePath = i_row["Musicians.Photo"]
-        if photoRelativePath != None:
-            photoRelativePath = photoRelativePath.replace("\\", "/")
-
-    # Return it from cache
-    #return i_row.
-    return photoRelativePath
-
-# + }}}
 
 # + Column name bar {{{
 
@@ -1052,60 +864,6 @@ def danrectToQrect(i_danrect):
 
 # + + }}}
 
-def dbRow_getNumberedScreenshotFullPath(i_row, i_picNo):
-    """
-    Params:
-     i_row:
-      (sqlite3.Row)
-      A row from the 'Games' table
-
-     i_picNo:
-      (int)
-      0: first picture
-
-    Returns:
-     Either (str)
-      Absolute (resolved via the adapter's 'config_screenshotsBaseDirPath') path of image.
-     or (None)
-      There is no screenshot at this numeric position.
-    """
-    screenshotPath = None
-    if i_picNo == 0:
-        screenshotPath = dbRow_getScreenshotRelativePath(i_row)
-    else:
-        screenshotPaths = dbRow_getSupplementaryScreenshotPaths(i_row)
-        if i_picNo-1 < len(screenshotPaths):
-            screenshotPath = screenshotPaths[i_picNo-1]
-    if screenshotPath == None:
-        return None
-
-    if not hasattr(gamebase, "config_screenshotsBaseDirPath"):
-        return None
-
-    return normalizeDirPathFromAdapter(gamebase.config_screenshotsBaseDirPath) + "/" + screenshotPath
-
-def dbRow_getPhotoFullPath(i_row):
-    """
-    Params:
-     i_row:
-      (sqlite3.Row)
-      A row from the 'Games' table
-
-    Returns:
-     Either (str)
-      Absolute (resolved via the adapter's 'config_photosBaseDirPath') path of image.
-     or (None)
-      There is no photo.
-    """
-    photoPath = dbRow_getPhotoRelativePath(i_row)
-    if photoPath == None:
-        return None
-
-    if not hasattr(gamebase, "config_photosBaseDirPath"):
-        return None
-
-    return normalizeDirPathFromAdapter(gamebase.config_photosBaseDirPath + "/" + photoPath)
-
 class MyStyledItemDelegate(QStyledItemDelegate):
     def __init__(self, i_parent=None):
         QStyledItemDelegate.__init__(self, i_parent)
@@ -1129,7 +887,7 @@ class MyStyledItemDelegate(QStyledItemDelegate):
 
         # Screenshot (unnumbered, old)
         if column["id"] == "pic":
-            screenshotFullPath = dbRow_getNumberedScreenshotFullPath(self.parent().dbRows[i_index.row()], 0)
+            screenshotFullPath = gamebase.dbRow_getNumberedScreenshotFullPath(self.parent().dbRows[i_index.row()], 0)
             if screenshotFullPath != None:
                 pixmap = QPixmap(screenshotFullPath)
                 destRect = danrectToQrect(fitLetterboxed(qrectToDanrect(pixmap.rect()), qrectToDanrect(i_option.rect)))
@@ -1139,7 +897,7 @@ class MyStyledItemDelegate(QStyledItemDelegate):
         elif column["id"].startswith("pic[") and column["id"].endswith("]"):
             picNo = int(column["id"][4:-1])
 
-            screenshotFullPath = dbRow_getNumberedScreenshotFullPath(self.parent().dbRows[i_index.row()], picNo)
+            screenshotFullPath = gamebase.dbRow_getNumberedScreenshotFullPath(self.parent().dbRows[i_index.row()], picNo)
             if screenshotFullPath != None:
                 pixmap = QPixmap(screenshotFullPath)
                 destRect = danrectToQrect(fitLetterboxed(qrectToDanrect(pixmap.rect()), qrectToDanrect(i_option.rect)))
@@ -1147,7 +905,7 @@ class MyStyledItemDelegate(QStyledItemDelegate):
 
         # Musician photo
         elif column["id"] == "musician_photo":
-            photoFullPath = dbRow_getPhotoFullPath(self.parent().dbRows[i_index.row()])
+            photoFullPath = gamebase.dbRow_getPhotoFullPath(self.parent().dbRows[i_index.row()])
             if photoFullPath != None:
                 pixmap = QPixmap(photoFullPath)
                 destRect = danrectToQrect(fitLetterboxed(qrectToDanrect(pixmap.rect()), qrectToDanrect(i_option.rect)))
@@ -1205,7 +963,7 @@ class MyTableModel(QAbstractTableModel):
             # (Done via delegate)
             #if i_role == Qt.DecorationRole:
             #    screenshotPath = self.parent().dbRows[i_index.row()][self.parent().dbColumnNames.index("Games.ScrnshotFilename")]
-            #    pixmap = QPixmap(normalizeDirPathFromAdapter(gamebase.config_screenshotsBaseDirPath) + "/" + screenshotPath)
+            #    pixmap = QPixmap(gamebase.normalizeDirPathFromAdapter(gamebase.adapter.config_screenshotsBaseDirPath) + "/" + screenshotPath)
             #    return pixmap;
             pass
         #
@@ -1639,7 +1397,7 @@ class MyTableView(QTableView):
             gameRecord = DbRecordDict(gameRecord)
 
             try:
-                gamebase.runGame(gameRecord["Games.Filename"], gameRecord["Games.FileToRun"], gameRecord)
+                gamebase.adapter.runGame(gameRecord["Games.Filename"], gameRecord["Games.FileToRun"], gameRecord)
             except Exception as e:
                 import traceback
                 print(traceback.format_exc())
@@ -1656,7 +1414,7 @@ class MyTableView(QTableView):
             gameRecord = DbRecordDict(gameRecord)
 
             try:
-                gamebase.runMusic(gameRecord["Games.SidFilename"], gameRecord)
+                gamebase.adapter.runMusic(gameRecord["Games.SidFilename"], gameRecord)
             except Exception as e:
                 import traceback
                 print(traceback.format_exc())
@@ -1669,7 +1427,7 @@ class MyTableView(QTableView):
         # Screenshot (unnumbered, old)
         elif columnId == "pic":
             rowNo = i_modelIndex.row()
-            screenshotFullPath = dbRow_getNumberedScreenshotFullPath(self.dbRows[rowNo], 0)
+            screenshotFullPath = gamebase.dbRow_getNumberedScreenshotFullPath(self.dbRows[rowNo], 0)
             if screenshotFullPath != None:
                 frontend_utils.openInDefaultApplication(screenshotFullPath)
 
@@ -1678,14 +1436,14 @@ class MyTableView(QTableView):
             picNo = int(columnId[4:-1])
 
             rowNo = i_modelIndex.row()
-            screenshotFullPath = dbRow_getNumberedScreenshotFullPath(self.dbRows[rowNo], picNo)
+            screenshotFullPath = gamebase.dbRow_getNumberedScreenshotFullPath(self.dbRows[rowNo], picNo)
             if screenshotFullPath != None:
                 frontend_utils.openInDefaultApplication(screenshotFullPath)
 
         # Musician photo
         elif columnId == "musician_photo":
             rowNo = i_modelIndex.row()
-            photoFullPath = dbRow_getPhotoFullPath(self.dbRows[rowNo])
+            photoFullPath = gamebase.dbRow_getPhotoFullPath(self.dbRows[rowNo])
             if photoFullPath != None:
                 frontend_utils.openInDefaultApplication(photoFullPath)
 
@@ -2025,8 +1783,8 @@ mainWindow = main_window.MainWindow(application)
 mainWindow.resize(800, 600)
 mainWindow.move(QApplication.desktop().rect().center() - mainWindow.rect().center())
 mainWindow.move(QApplication.desktop().rect().center() - mainWindow.rect().center())
-if hasattr(gamebase, "config_title"):
-    mainWindow.setWindowTitle(gamebase.config_title + " - GameBase")
+if hasattr(gamebase.adapter, "config_title"):
+    mainWindow.setWindowTitle(gamebase.adapter.config_title + " - GameBase")
 else:
     mainWindow.setWindowTitle(param_gamebaseAdapterFilePath + " - GameBase")
 
@@ -2112,7 +1870,7 @@ menuBar = QMenuBar()
 mainWindow.layout.addWidget(menuBar)
 
 def menu_file_openDatabaseInExternalProgram_onTriggered(i_checked):
-    frontend_utils.openInDefaultApplication([gamebase.config_databaseFilePath])
+    frontend_utils.openInDefaultApplication([gamebase.adapter.config_databaseFilePath])
 
 menu = QMenu(mainWindow)
 #menu.addAction("File")
@@ -2550,9 +2308,9 @@ def detailPane_populate(i_gameId):
     html += '<link rel="stylesheet" type="text/css" href="file://' + os.path.dirname(os.path.realpath(__file__)).replace("\\", "/") + '/detail_pane.css">'
 
     # Insert screenshots after the first one
-    supplementaryScreenshotRelativePaths = dbRow_getSupplementaryScreenshotPaths(gameRow)
+    supplementaryScreenshotRelativePaths = gamebase.dbRow_getSupplementaryScreenshotPaths(gameRow)
     for relativePath in supplementaryScreenshotRelativePaths:
-        screenshotUrl = getScreenshotUrl(relativePath)
+        screenshotUrl = gamebase.getScreenshotUrl(relativePath)
         if screenshotUrl != None:
             html += '<img src="' + screenshotUrl + '">'
 
@@ -2672,8 +2430,8 @@ def detailPane_populate(i_gameId):
             #var cell = document.createElement("div");
 
             html += '<a href="extra:///' + imageRow["Path"] + '" style="display: inline-block; text-align: center;">'
-            if hasattr(gamebase, "config_extrasBaseDirPath"):
-                html += '<img src="file://' + normalizeDirPathFromAdapter(gamebase.config_extrasBaseDirPath) + "/" + imageRow["Path"] + '" style="height: 300px;">'
+            if hasattr(gamebase.adapter, "config_extrasBaseDirPath"):
+                html += '<img src="file://' + gamebase.normalizeDirPathFromAdapter(gamebase.adapter.config_extrasBaseDirPath) + "/" + imageRow["Path"] + '" style="height: 300px;">'
             #html += '<img src="https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_92x30dp.png" style="height: 300px;">'
             html += '<div>' + imageRow["Name"] + '</div>'
             html += '</a>'
@@ -2708,7 +2466,7 @@ def detailPane_populate(i_gameId):
                     gameInfo = DbRecordDict(gameInfo)
 
                     try:
-                        gamebase.runExtra(extraPath, extraInfo, gameInfo)
+                        gamebase.adapter.runExtra(extraPath, extraInfo, gameInfo)
                     except Exception as e:
                         import traceback
                         print(traceback.format_exc())
@@ -2799,7 +2557,7 @@ detailPane_hide()
 mainWindow.show()
 
 #
-if not hasattr(gamebase, "config_databaseFilePath"):
+if not hasattr(gamebase.adapter, "config_databaseFilePath"):
     messageBox = qt_extras.ResizableMessageBox(application.style().standardIcon(QStyle.SP_MessageBoxCritical), "Error", "")
     messageBox.setText("<big><b>Missing adapter setting:</b></big>")
     messageBox.setInformativeText("config_databaseFilePath")
@@ -2808,13 +2566,13 @@ if not hasattr(gamebase, "config_databaseFilePath"):
     sys.exit(1)
 
 try:
-    db.openDb(normalizeDirPathFromAdapter(gamebase.config_databaseFilePath))
+    db.openDb(gamebase.normalizeDirPathFromAdapter(gamebase.adapter.config_databaseFilePath))
 except Exception as e:
     import traceback
     print(traceback.format_exc())
     messageBox = qt_extras.ResizableMessageBox(application.style().standardIcon(QStyle.SP_MessageBoxCritical), "Error", "")
     messageBox.setText("<big><b>When opening database file:</b></big>")
-    messageBox.setInformativeText("With path:\n" + gamebase.config_databaseFilePath + "\n\nAn error occurred:\n" + "\n".join(traceback.format_exception_only(e)))
+    messageBox.setInformativeText("With path:\n" + gamebase.adapter.config_databaseFilePath + "\n\nAn error occurred:\n" + "\n".join(traceback.format_exception_only(e)))
     messageBox.resizeToContent()
     messageBox.exec()
     sys.exit(1)
