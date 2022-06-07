@@ -29,7 +29,7 @@ myWindow = QWidget()
 myWindow.resize(800, 400)
 myWindow.move(QApplication.desktop().rect().center() - myWindow.rect().center())
 myWindow.move(QApplication.desktop().rect().center() - myWindow.rect().center())
-myWindow.setWindowTitle("GameBase converter")
+myWindow.setWindowTitle("PyGamebase converter")
 
 main_vBoxLayout = QVBoxLayout()
 main_vBoxLayout.setSpacing(0)
@@ -440,8 +440,8 @@ step3_labelDetail.setWordWrap(True)
 step3_vBoxLayout.addWidget(step3_fromPreviousTabs_label)
 
 widget_group = QWidget()
-# GameBase name
-step3_gamebaseName_lineEdit = makeLabelledEditField("GameBase name: ", i_tooltip='Human-friendly Gamebase title.\neg. "Gamebase64 v17" or "Commodore 64"', i_shareWidget=widget_group)
+# GameBase title
+step3_gamebaseTitle_lineEdit = makeLabelledEditField("GameBase title: ", i_tooltip='Human-friendly Gamebase title.\neg. "Gamebase64 v17" or "Commodore 64"', i_shareWidget=widget_group)
 # Emulator executable
 step3_emulatorExecutable_lineEdit = makeLabelledEditField("Emulator executable: ", i_browseFor="file", i_browseCaption="Choose emulator executable", i_shareWidget=widget_group)
 # Config file path
