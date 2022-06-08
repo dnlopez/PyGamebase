@@ -253,7 +253,9 @@ def extractZip(i_zipFilePath, i_destDirPath):
 
 # + }}}
 
-# + Quoting arguments for different shells {{{
+# + Quoting for different shells {{{
+
+# + + Single argument {{{
 
 import shlex
 if hasattr(shlex, "quote"):
@@ -280,9 +282,51 @@ if platform.system() == "Windows":
 else:
     quoteArgumentForNativeShell = quoteArgumentForBash
 
+# + + }}}
+
+# + + A whole command {{{
+
+def commandListToStringForBash(i_executableAndArguments):
+    """
+    Convert an executable name and arguments in list form
+    to a single string for execution by Bash
+    (the individual list elements quoted as necessary).
+
+    Params:
+     i_executableAndArguments:
+      (list of str)
+
+    Returns:
+     (str)
+    """
+    return " ".join([quoteArgumentForBash(arg)  for arg in flattenList(i_executableAndArguments)])
+
+def commandListToStringForWindowsCmd(i_executableAndArguments):
+    """
+    Convert an executable name and arguments in list form
+    to a single string for execution by Windows cmd.exe
+    (the individual list elements quoted as necessary).
+
+    Params:
+     i_executableAndArguments:
+      (list of str)
+
+    Returns:
+     (str)
+    """
+    return " ".join([quoteArgumentForWindowsCmd(arg)  for arg in flattenList(i_executableAndArguments)])
+
+import platform
+if platform.system() == "Windows":
+    commandListToStringForNativeShell = commandListToStringForWindowsCmd
+else:
+    commandListToStringForNativeShell = commandListToStringForBash
+
+# + + }}}
+
 # + }}}
 
-# + Running {{{
+# + Running subprocesses {{{
 
 # For processes that you don't need to see logged in the GUI's "Subprocess output" window
 # (eg. simply unarchiving or copying some files - though Python does also have internal libraries for those things):
@@ -345,7 +389,7 @@ def startProcess(i_viaShell, i_executableAndArguments):
         # If we have a string then nothing to do,
         # else if we have a list then flatten it, then quote and join the arguments
         if not isinstance(i_executableAndArguments, str):
-            i_executableAndArguments = " ".join([quoteArgumentForNativeShell(arg)  for arg in flattenList(i_executableAndArguments)])
+            i_executableAndArguments = commandListToStringForNativeShell(i_executableAndArguments)
 
     # Start program with stderr merged into stdout and stdout readable through a pipe
     import subprocess
@@ -674,6 +718,8 @@ def allocateGameFilesToMameMediaSlots(i_gameFilePaths, io_availableDevices):
 
 def popupMenu(i_itemTexts):
     """
+    Popup a menu at the mouse pointer with a selection of text items.
+
     Params:
      i_itemTexts:
       (list of str)
