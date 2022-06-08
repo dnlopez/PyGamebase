@@ -318,6 +318,10 @@ class ColumnNameBar(QWidget):
     def headingButton_onClicked(self, i_columnId):
         self.sort(i_columnId, application.queryKeyboardModifiers() == Qt.ControlModifier)
 
+    sortChanged = Signal()
+    # Emitted when
+    #  The sort order/columns change
+
     def sort(self, i_columnId, i_appendOrModify):
         """
         Params:
@@ -352,9 +356,7 @@ class ColumnNameBar(QWidget):
         #
         self.sort_updateGui()
 
-        # Requery DB in new order
-        refilterFromCurrentlyVisibleBar()
-        tableView.requery()
+        self.sortChanged.emit()
 
     def sort_updateGui(self):
         # Update header button texts with arrows
@@ -503,6 +505,21 @@ class ColumnNameBar(QWidget):
     #   (int)
     #   The horizontal scroll amount in pixels
 
+    columnResized = Signal(str, int)
+    # Emitted when
+    #  A column is resized
+    #
+    # Params:
+    #  i_columnId:
+    #   (str)
+    #  i_newWidth:
+    #   (int)
+    #   The new column width in pixels
+
+    columnReordered = Signal()
+    # Emitted when
+    #  A column is moved to a different place in the order
+
     def eventFilter(self, i_watched, i_event):
         #print(i_event.type())
 
@@ -558,9 +575,9 @@ class ColumnNameBar(QWidget):
 
                 # Move/resize buttons and lineedits
                 self.repositionHeadingButtons()
-                columnFilterBar.repositionFilterEdits()
+
                 #
-                tableView.horizontalHeader().resizeSection(columns.tableColumn_idToPos(self.resize_column["id"]), newWidth)
+                self.columnResized.emit(self.resize_column["id"], newWidth)
 
                 return True
 
@@ -619,12 +636,9 @@ class ColumnNameBar(QWidget):
                 # Move/resize buttons and lineedits
                 self.repositionHeadingButtons()
                 self.repositionTabOrder()
-                columnFilterBar.repositionFilterEdits()
-                columnFilterBar.repositionTabOrder()
+
                 #
-                tableView.requery()
-                #
-                tableView.resizeAllColumns([column["width"]  for column in columns.tableColumn_getBySlice()])
+                self.columnReordered.emit()
                 #self.reorderIndicator_widget.setFrameRect(QRect(edgeX - 2, 0, 4, 20))
                 #self.reorderIndicator_widget.setFrameRect(QRect(2, 2, 50, 10))
                 #print(leftColumn["id"], rightColumn["id"], edgeX)
@@ -2071,6 +2085,27 @@ gameTable_layout.addWidget(columnNameBar)
 def columnNameBar_onRequestHorizontalScroll(i_dx):
     tableView.scrollBy(i_dx, 0)
 columnNameBar.requestHorizontalScroll.connect(columnNameBar_onRequestHorizontalScroll)
+
+def columnNameBar_onColumnResized(i_columnId, i_newWidth):
+    columnFilterBar.repositionFilterEdits()
+    tableView.horizontalHeader().resizeSection(columns.tableColumn_idToPos(i_columnId), i_newWidth)
+    #tableView.selectionModel().setCurrentIndex(self.selectionModel().model().index(rowNo, selectedIndex.column()), QItemSelectionModel.ClearAndSelect)
+columnNameBar.columnResized.connect(columnNameBar_onColumnResized)
+
+def columnNameBar_onColumnReordered():
+    columnFilterBar.repositionFilterEdits()
+    columnFilterBar.repositionTabOrder()
+    #
+    tableView.requery()
+    #
+    tableView.resizeAllColumns([column["width"]  for column in columns.tableColumn_getBySlice()])
+columnNameBar.columnReordered.connect(columnNameBar_onColumnReordered)
+
+def columnNameBar_onSortChanged():
+    # Requery DB in new order
+    refilterFromCurrentlyVisibleBar()
+    tableView.requery()
+columnNameBar.sortChanged.connect(columnNameBar_onSortChanged)
 
 # + }}}
 
