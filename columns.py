@@ -543,6 +543,47 @@ g_usableColumns = [
         "filterable": True,
         "textAlignment": "left"
     },
+
+    {
+        "id": "comment",
+        "screenName": "Comment",
+        "dbColumnNames": ["Games.Comment"],
+        "dbTableNames": ["Games"],
+        "dbSelect": "Games.Comment AS [Games.Comment]",
+        "dbIdentifiers": ["Games.Comment", "Comment"],
+        "defaultWidth": 250,
+        "sortable": True,
+        "filterable": True,
+        "textAlignment": "left",
+        "dbType": "Text (510)",
+    },
+    {
+        "id": "v_comment",
+        "screenName": "V Comment",
+        "dbColumnNames": ["Games.V_Comment"],
+        "dbTableNames": ["Games"],
+        "dbSelect": "Games.V_Comment AS [Games.V_Comment]",
+        "dbIdentifiers": ["Games.V_Comment", "V_Comment"],
+        "defaultWidth": 250,
+        "sortable": True,
+        "filterable": True,
+        "textAlignment": "left",
+        "dbType": "Text (510)",
+    },
+    {
+        "id": "memo_text",
+        "screenName": "Memo text",
+        "dbColumnNames": ["Games.MemoText"],
+        "dbTableNames": ["Games"],
+        "dbSelect": "Games.MemoText AS [Games.MemoText]",
+        "dbIdentifiers": ["Games.MemoText", "MemoText"],
+        "dbType": "Memo/Hyperlink (255)",
+        "defaultWidth": 250,
+        "sortable": True,
+        "filterable": True,
+        "textAlignment": "left",
+        "comment": "User Notes field"
+    },
 ]
 
 def usableColumn_getBySlice(i_startPos=None, i_endPos=None):
