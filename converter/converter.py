@@ -51,7 +51,7 @@ def autoDetectByGamebaseFolderButton_onClicked():
         step2_musicFolderPath_lineEdit.setText("")
         step2_photosFolderPath_lineEdit.setText("")
         step2_extrasFolderPath_lineEdit.setText("")
-        step3_gamebaseName_lineEdit.setText("")
+        step3_gamebaseTitle_lineEdit.setText("")
         step3_emulatorExecutable_lineEdit.setText("")
         step3_adapterFile_lineEdit.setText("")
 
@@ -63,7 +63,7 @@ def autoDetectByGamebaseFolderButton_onClicked():
         if len(candidates) > 0:
             step1_accessDatabasePath_lineEdit.setText(os.path.join(dirPath, candidates[0]))
             step1_sqliteDatabasePath_lineEdit.setText(os.path.join(dirPath, candidates[0])[:-4] + ".sqlite")
-            step3_gamebaseName_lineEdit.setText(candidates[0][:-4].replace("_", " "))
+            step3_gamebaseTitle_lineEdit.setText(candidates[0][:-4].replace("_", " "))
             step3_adapterFile_lineEdit.setText(os.path.join(dirPath, candidates[0])[:-4] + ".py")
 
         candidates = [e  for e in dirEntries  if e.upper() == "GAMES"]
