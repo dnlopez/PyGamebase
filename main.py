@@ -1331,7 +1331,12 @@ class MyTableView(QTableView):
             selectedIndex = self.selectionModel().model().index(0, 0)
             self.selectionModel().setCurrentIndex(selectedIndex, QItemSelectionModel.ClearAndSelect)
         # Scroll to the selected cell
-        self.scrollTo(selectedIndex)
+        # [Disabled for now because for some reason can also get here when starting to use the scroll bar
+        #  and may cause a disorienting jump]
+        #self.scrollTo(selectedIndex)
+
+    def scrollToSelection(self):
+        self.scrollTo(self.selectionModel().currentIndex())
 
     def selectCellInColumnWithId(self, i_id):
         """
@@ -1806,6 +1811,8 @@ def escShortcut_onActivated():
     # focus it
     if not tableView.hasFocus():
         tableView.setFocus(Qt.ShortcutFocusReason)
+        tableView.scrollToSelection()
+
     # Else if table view is not already focused,
     # close the detail pane
     else:
@@ -2168,6 +2175,7 @@ gameTable_layout.addWidget(sqlFilterBar)
 def sqlFilterBar_onEditingFinished(i_modified):
     if not i_modified:
         tableView.setFocus()
+        tableView.scrollToSelection()
     else:
         sqlWhereExpression = sqlFilterBar.text()
         if not tableView.refilter(sqlWhereExpression, columnNameBar.sort_operations):
