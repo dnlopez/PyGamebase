@@ -5,9 +5,9 @@
 # Python std
 import sys
 import os
+import os.path
 #import sqlite3
 #import functools
-#import os.path
 import glob
 
 # Qt
@@ -15,6 +15,8 @@ from PySide2.QtCore import *
 from PySide2.QtWidgets import *
 from PySide2.QtGui import *
 
+
+scriptDirPath = os.path.dirname(os.path.realpath(__file__))
 
 # Create a Qt application
 # (or reuse old one if it already exists; ie. when re-running in REPL during development)
@@ -301,7 +303,7 @@ def step1_go_button_onClicked():
         global currentSubprocess
         currentSubprocess = None
     global currentSubprocess
-    currentSubprocess = AsyncQTimerSubprocess(["/home/daniel/docs/code/python/mdb_to_sqlite.py", step1_accessDatabasePath_lineEdit.text(), step1_sqliteDatabasePath_lineEdit.text()], onOutput, onDone)
+    currentSubprocess = AsyncQTimerSubprocess([scriptDirPath + "/utility_scripts/mdb_to_sqlite.py", step1_accessDatabasePath_lineEdit.text(), step1_sqliteDatabasePath_lineEdit.text()], onOutput, onDone)
 
 """
 import dan.streams
@@ -397,7 +399,7 @@ def step2_go_button_onClicked():
         global currentSubprocess
         currentSubprocess = None
 
-    command = ["/home/daniel/docs/code/python/gamebase/utility_scripts/fix_path_case.py", step1_sqliteDatabasePath_lineEdit.text()]
+    command = [scriptDirPath + "/utility_scripts/fix_path_case.py", step1_sqliteDatabasePath_lineEdit.text()]
     if step2_gamesFolderPath_lineEdit.text() != "":
         command += ["--games", step2_gamesFolderPath_lineEdit.text()]
     if step2_screenshotsFolderPath_lineEdit.text() != "":
