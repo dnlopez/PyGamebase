@@ -1586,8 +1586,17 @@ class MyTableView(QTableView):
 
     def keyPressEvent(self, i_event):  # override from QWidget
         # If pressed Ctrl+C
-        if i_event.key() == Qt.Key_C and (i_event.modifiers() & Qt.ControlModifier):
+        if (i_event.modifiers() & Qt.ControlModifier) and i_event.key() == Qt.Key_C:
             self.clipboardCopy()
+        # Else if pressed Ctrl+Home or Ctrl+End
+        # workaround QTableView sort of but not fully visibly moving the selection, by calling setCurrentIndex() ourselves
+        elif (i_event.modifiers() & Qt.ControlModifier) and i_event.key() == Qt.Key_Home:
+            selectedIndex = self.selectionModel().model().index(0, 0)
+            self.selectionModel().setCurrentIndex(selectedIndex, QItemSelectionModel.ClearAndSelect)
+        elif (i_event.modifiers() & Qt.ControlModifier) and i_event.key() == Qt.Key_End:
+            selectedIndex = self.selectionModel().model().index(self.tableModel.rowCount(None) - 1, self.tableModel.columnCount(None) - 1)
+            self.selectionModel().setCurrentIndex(selectedIndex, QItemSelectionModel.ClearAndSelect)
+        #
         else:
             super().keyPressEvent(i_event)
 
