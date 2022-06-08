@@ -11,8 +11,6 @@ import qt_extras
 import columns
 
 
-# + DB {{{
-
 def sqliteRowToDict(i_row):
     """
     Convert a sqlite3.Row object to a plain dict for easier viewing.
@@ -251,4 +249,35 @@ def getExtrasRecords(i_gameId):
     rows = [sqliteRowToDict(row)  for row in rows]
     return rows
 
-# + }}}
+
+import collections
+class DbRecordDict(collections.UserDict):
+    """
+    A dictionary intended to hold keys which are fully qualified '<table name>.<column name>' names,
+    and overrides __getitem__ so that you can get items by either that full name or just '<column name>'.
+    """
+    def __getitem__(self, i_key):
+        # Try matching the key name as given
+        if i_key in self.data:
+            return self.data[i_key]
+
+        # Try matching just the last name component
+        for realKey, value in self.data.items():
+            if realKey.rsplit(".", 1)[-1] == i_key:
+                return value
+
+        # Raise KeyError
+        return self.data[i_key]
+
+    def __contains__(self, i_key):
+        # Try matching the key name as given
+        if i_key in self.data:
+            return True
+
+        # Try matching just the last name component
+        for realKey in self.data.keys():
+            if realKey.rsplit(".", 1)[-1] == i_key:
+                return True
+
+        #
+        return False

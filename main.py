@@ -1017,57 +1017,6 @@ class MyTableModel(QAbstractTableModel):
 
         return None
 
-# [No longer used]
-def dbRowToDict(i_row, i_columnNames):
-    """
-    Params:
-     i_row:
-      (list)
-     i_columnNames:
-      (list of str)
-
-    Returns:
-     (dict)
-    """
-    rv = {}
-
-    for columnNo, columnName in enumerate(i_columnNames):
-        rv[columnName] = i_row[columnNo]
-
-    return rv
-
-import collections
-class DbRecordDict(collections.UserDict):
-    """
-    A dictionary intended to hold keys which are fully qualified '<table name>.<column name>' names,
-    and overrides __getitem__ so that you can get items by either that full name or just '<column name>'.
-    """
-    def __getitem__(self, i_key):
-        # Try matching the key name as given
-        if i_key in self.data:
-            return self.data[i_key]
-
-        # Try matching just the last name component
-        for realKey, value in self.data.items():
-            if realKey.rsplit(".", 1)[-1] == i_key:
-                return value
-
-        # Raise KeyError
-        return self.data[i_key]
-
-    def __contains__(self, i_key):
-        # Try matching the key name as given
-        if i_key in self.data:
-            return True
-
-        # Try matching just the last name component
-        for realKey in self.data.keys():
-            if realKey.rsplit(".", 1)[-1] == i_key:
-                return True
-
-        #
-        return False
-
 class MyTableView(QTableView):
     def __init__(self, i_extraHorizontalScrollSpaceNeeded, i_parent=None):
         """
@@ -1404,7 +1353,7 @@ class MyTableView(QTableView):
             rowNo = i_modelIndex.row()
             gameId = self.dbRows[rowNo][self.dbColumnNames.index("Games.GA_Id")]
             gameRecord = db.getGameRecord(gameId)
-            gameRecord = DbRecordDict(gameRecord)
+            gameRecord = db.DbRecordDict(gameRecord)
 
             try:
                 gamebase.adapter.runGame(gameRecord["Games.Filename"], gameRecord["Games.FileToRun"], gameRecord)
@@ -1421,7 +1370,7 @@ class MyTableView(QTableView):
             rowNo = i_modelIndex.row()
             gameId = self.dbRows[rowNo][self.dbColumnNames.index("Games.GA_Id")]
             gameRecord = db.getGameRecord(gameId)
-            gameRecord = DbRecordDict(gameRecord)
+            gameRecord = db.DbRecordDict(gameRecord)
 
             try:
                 gamebase.adapter.runMusic(gameRecord["Games.SidFilename"], gameRecord)

@@ -239,7 +239,7 @@ class DetailPane(QWidget):
                         extraPath = urllib.parse.unquote(extraPath)
                         extraInfo = [row  for row in self.extrasRows  if row["Path"] == extraPath][0]
                         gameInfo = self.gameRow
-                        gameInfo = DbRecordDict(gameInfo)
+                        gameInfo = db.DbRecordDict(gameInfo)
 
                         try:
                             gamebase.adapter.runExtra(extraPath, extraInfo, gameInfo)
