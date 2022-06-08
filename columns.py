@@ -674,22 +674,32 @@ def tableColumn_remove(i_id):
     if foundColumnNo != None:
         del(g_tableColumns[foundColumnNo])
 
-    #
-    foundSortOperationNo = None
-    for sortOperationNo, sortOperation in enumerate(columnNameBar.sort_operations):
-        if sortOperation[0] == i_id:
-            foundSortOperationNo = sortOperationNo
-            break
-    if foundSortOperationNo != None:
-        del(columnNameBar.sort_operations[foundSortOperationNo])
-        columnNameBar.sort_updateGui()
-
 def tableColumn_toggle(i_id, i_addBeforeColumnId=None):
+    """
+    Params:
+     i_id:
+      (str)
+      ID of column to toggle the visibility of.
+      Details of it should exist in g_usableColumns.
+     i_addBeforeColumnId:
+      If the column is to be shown
+      Either (str)
+       ID of column already present in the table view to insert this column before.
+      or (None)
+       Add the new column as the last one.
+
+    Returns:
+     (bool)
+     True: the column is now visible
+     False: the column is now hidden
+    """
     present = tableColumn_getById(i_id)
     if not present:
         tableColumn_add(i_id, None, i_addBeforeColumnId)
+        return True
     else:
         tableColumn_remove(i_id)
+        return False
 
 def tableColumn_move(i_moveColumn, i_beforeColumn):
     """
