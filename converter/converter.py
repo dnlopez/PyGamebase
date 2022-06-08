@@ -184,6 +184,8 @@ step1_labelDetail.setWordWrap(True)
 step1_vBoxLayout.addWidget(step1_labelDetail)
 
 widget_group = QWidget()
+# MDB tools location
+step1_mdbToolsExeDirPath_lineEdit = makeLabelledEditField("MDB Tools location: ", i_comment="(Folder containing mdb-schema, mdb-tables and mdb-export;\nLeave blank if already in system PATH)", i_browseFor="directory", i_browseCaption="Choose directory with MDB Tools executables", i_shareWidget=widget_group)
 # Access MDB database path
 step1_accessDatabasePath_lineEdit = makeLabelledEditField("Access database file: ", i_browseFor="file", i_browseCaption="Choose Access database file", i_shareWidget=widget_group)
 # SQLite database path
@@ -303,7 +305,10 @@ def step1_go_button_onClicked():
         global currentSubprocess
         currentSubprocess = None
     global currentSubprocess
-    currentSubprocess = AsyncQTimerSubprocess([scriptDirPath + "/utility_scripts/mdb_to_sqlite.py", step1_accessDatabasePath_lineEdit.text(), step1_sqliteDatabasePath_lineEdit.text()], onOutput, onDone)
+    executableAndArgs = [scriptDirPath + "/utility_scripts/mdb_to_sqlite.py", step1_accessDatabasePath_lineEdit.text(), step1_sqliteDatabasePath_lineEdit.text()]
+    if step1_mdbToolsExeDirPath_lineEdit.text() != "":
+        executableAndArgs += ["--mdbtools-exe-dir", step1_mdbToolsExeDirPath_lineEdit.text()]
+    currentSubprocess = AsyncQTimerSubprocess(executableAndArgs, onOutput, onDone)
 
 """
 import dan.streams
@@ -455,7 +460,85 @@ step3_vBoxLayout.addWidget(widget_group)
 step3_go_button = QPushButton("Go")
 step3_vBoxLayout.addWidget(step3_go_button, 0, Qt.AlignHCenter)
 def step3_go_button_onClicked():
-    pass
+    log_plainTextEdit.clear()
+    log_plainTextEdit.appendPlainText("*** Filling template...")
+
+    script = '''\
+# Python std
+import os.path
+import shutil
+import tempfile
+import pprint
+
+# This program
+import utils
+
+
+# Frontend configuration
+'''
+    if step3_gamebaseTitle_lineEdit.text() != "":
+        script += 'config_title = "' + step3_gamebaseTitle_lineEdit.text().replace('"', r'\"') + '"\n'
+    if step1_sqliteDatabasePath_lineEdit.text() != "":
+        script += 'config_databaseFilePath = "' + step1_sqliteDatabasePath_lineEdit.text().replace('"', r'\"') + '"\n'
+    if step2_screenshotsFolderPath_lineEdit.text() != "":
+        script += 'config_screenshotsBaseDirPath = "' + step2_screenshotsFolderPath_lineEdit.text().replace('"', r'\"') + '"\n'
+    if step2_photosFolderPath_lineEdit.text() != "":
+        script += 'config_photosBaseDirPath = "' + step2_photosFolderPath_lineEdit.text().replace('"', r'\"') + '"\n'
+    if step2_musicFolderPath_lineEdit.text() != "":
+        script += 'config_musicBaseDirPath = "' + step2_musicFolderPath_lineEdit.text().replace('"', r'\"') + '"\n'
+    if step2_extrasFolderPath_lineEdit.text() != "":
+        script += 'config_extrasBaseDirPath = "' + step2_extrasFolderPath_lineEdit.text().replace('"', r'\"') + '"\n'
+    script += '''\
+
+
+def runGame(i_gamePath, i_fileToRun = None, i_gameInfo = None):
+    #print('runGame(' + pprint.pformat(i_gamePath) + ', ' + pprint.pformat(i_fileToRun) + ', ' + pprint.pformat(i_gameInfo) + ')')
+
+    gamesBaseDirPath = "''' + step2_gamesFolderPath_lineEdit.text().replace('"', r'\"') + '''"
+    tempDirPath = tempfile.gettempdir() + "/gamebase"
+
+    # If file is a zip
+    if utils.pathHasExtension(i_gamePath, ".ZIP"):
+        # Extract it
+        zipMembers = utils.extractZip(gamesBaseDirPath + "/" + i_gamePath, tempDirPath)
+        gameFiles = zipMembers
+    # Else if file is not a zip
+    else:
+        # Copy it
+        shutil.copyfile(gamesBaseDirPath + i_gamePath, tempDirPath + "/" + os.path.basename(i_gamePath))
+        gameFiles = [os.path.basename(i_gamePath)]
+
+    #
+    if i_fileToRun == None:
+        gameFiles = utils.moveElementToFront(gameFiles, i_fileToRun)
+
+    #
+    command = ["''' + step3_emulatorExecutable_lineEdit.text().replace('"', r'\"') + '''"]
+    command.extend(utils.joinPaths(tempDirPath, gameFiles))
+    utils.shellStartTask(command)
+
+
+def runExtra(i_extraPath, i_extraInfo, i_gameInfo):
+    #print('runExtra(' + pprint.pformat(i_extraPath) + ', ' + pprint.pformat(i_extraInfo) + ', ' + pprint.pformat(i_gameInfo) + ')')
+
+    # If file is a zip
+    if utils.pathHasExtension(i_extraPath, ".ZIP"):
+        # Extract it
+        tempDirPath = tempfile.gettempdir() + "/gamebase"
+        zipMembers = utils.extractZip(config_extrasBaseDirPath + "/" + i_extraPath, tempDirPath)
+
+        #
+        utils.openInDefaultApplication(zipMembers)
+    else:
+        utils.openInDefaultApplication(config_extrasBaseDirPath + "/" + i_extraPath)
+'''
+
+    log_plainTextEdit.appendPlainText("*** Writing to " + step3_adapterFile_lineEdit.text())
+    with open(step3_adapterFile_lineEdit.text(), "w") as f:
+        f.write(script)
+
+    log_plainTextEdit.appendPlainText("*** Done.")
+
 step3_go_button.clicked.connect(step3_go_button_onClicked)
 
 step3_vBoxLayout.addStretch()

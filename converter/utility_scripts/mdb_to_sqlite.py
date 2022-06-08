@@ -13,9 +13,11 @@ import sys
 import subprocess
 import os
 import os.path
+import shlex
+import sqlite3
 
 
-def convertMdbToSqlite(i_mdbFilePath, i_sqliteFilePath, i_mdbToolsExeDirPath, i_sqliteExeFilePath):
+def convertMdbToSqlite(i_mdbFilePath, i_sqliteFilePath, i_mdbToolsExeDirPath):
     """
     Params:
      i_mdbFilePath:
@@ -27,16 +29,10 @@ def convertMdbToSqlite(i_mdbFilePath, i_sqliteFilePath, i_mdbToolsExeDirPath, i_
       If this file already exists, it will be overwritten.
      i_mdbToolsExeDirPath:
       Either (str)
-       Directory that contains the mdbtools executables
+       Directory that contains the mdbtools executables.
       or (None)
        Assume they are on the system PATH.
-     i_sqliteExeFilePath:
-      Either (str)
-       SQLite shell executable file
-      or (None)
-       Assume it is on the system PATH.
     """
-    print("start of convertMdbToSqlite()")
     # If SQLite file already exists, delete it
     if os.path.exists(i_sqliteFilePath):
         os.remove(i_sqliteFilePath)
@@ -49,14 +45,18 @@ def convertMdbToSqlite(i_mdbFilePath, i_sqliteFilePath, i_mdbToolsExeDirPath, i_
             i_mdbToolsExeDirPath += os.sep
 
     # Get SQL to create the schema
-    schema = subprocess.Popen([i_mdbToolsExeDirPath + "mdb-schema", i_mdbFilePath, "sqlite"],
-                              stdout=subprocess.PIPE).communicate()[0]
+    commandAndArgs = [i_mdbToolsExeDirPath + "mdb-schema", i_mdbFilePath, "sqlite"]
+    print("# " + " ".join(shlex.quote(arg)  for arg in commandAndArgs))
+    sys.stdout.flush()
+    schema = subprocess.Popen(commandAndArgs, stdout=subprocess.PIPE).communicate()[0]
     #print(schema)
     sql = schema.decode("utf-8")
 
     # Get the list of table names
-    tableNames = subprocess.Popen([i_mdbToolsExeDirPath + "mdb-tables", "-1", i_mdbFilePath],
-                                   stdout=subprocess.PIPE).communicate()[0]
+    commandAndArgs = [i_mdbToolsExeDirPath + "mdb-tables", "-1", i_mdbFilePath]
+    print("# " + " ".join(shlex.quote(arg)  for arg in commandAndArgs))
+    sys.stdout.flush()
+    tableNames = subprocess.Popen(commandAndArgs, stdout=subprocess.PIPE).communicate()[0]
     tableNames = tableNames.splitlines()
     #print(tableNames)
 
@@ -68,8 +68,10 @@ def convertMdbToSqlite(i_mdbFilePath, i_sqliteFilePath, i_mdbToolsExeDirPath, i_
     # append sqlite insert statements for the data
     allInserts = ""
     for tableName in tableNames:
-        inserts = subprocess.Popen([i_mdbToolsExeDirPath + "mdb-export", "-I", "sqlite", i_mdbFilePath, tableName],
-                                   stdout=subprocess.PIPE).communicate()[0]
+        commandAndArgs = [i_mdbToolsExeDirPath + "mdb-export", "-I", "sqlite", i_mdbFilePath, tableName.decode()]
+        print("# " + " ".join(shlex.quote(arg)  for arg in commandAndArgs))
+        sys.stdout.flush()
+        inserts = subprocess.Popen(commandAndArgs, stdout=subprocess.PIPE).communicate()[0]
         # Investigating Python text encoding
         # This picks Unicode 0x2018 '‘' out of CBM_PET.mdb conversion
         #print type(inserts)
@@ -82,14 +84,16 @@ def convertMdbToSqlite(i_mdbFilePath, i_sqliteFilePath, i_mdbToolsExeDirPath, i_
     sql += "\n"
     sql += "COMMIT;"
 
-    # Run SQL in sqlite
-    if i_sqliteExeFilePath == None:
-        i_sqliteExeFilePath = "sqlite3"
-    sqliteProcess = subprocess.Popen([i_sqliteExeFilePath, i_sqliteFilePath],
-                                     stdin=subprocess.PIPE)
+    #print(sql)
 
-    sqliteProcess.communicate(sql.encode("utf-8"))
-    print("end of convertMdbToSqlite()")
+    # Run SQL in sqlite
+    print("Creating SQLite database...")
+    sys.stdout.flush()
+    db = sqlite3.connect("file:" + i_sqliteFilePath + "?mode=rwc", uri=True)
+    db.executescript(sql)
+    db.close()
+    print("Done.")
+    sys.stdout.flush()
 
 
 if __name__ == "__main__":
@@ -117,23 +121,19 @@ Params:
    If this file already exists, it will be overwritten.
 
 Options:
- --help
-  Show this help.
-
  --mdbtools-exe-dir <directory path>
   Specify the directory that contains the mdbtools executables
   (mdb-schema, mdb-tables and mdb-export, which may have an ".exe" extension on Windows),
   if they are not already in your PATH.
- --sqlite3-exe <file path>
-  Specify the SQLite shell executable file (sqlite3/sqlite3.exe),
-  if it is not already in your PATH.
+
+ --help
+  Show this help.
 ''')
 
     # Parameters, with their default values
     param_mdbFilePath = None
     param_sqliteFilePath = None
     param_mdbToolsExeDirPath = None
-    param_sqliteExeFilePath = None
 
     # For each argument
     import sys
@@ -149,22 +149,13 @@ Options:
                 sys.exit(0)
 
             elif arg == "--mdbtools-exe-dir":
-                argNo += 1
                 if argNo >= len(sys.argv):
                     print("ERROR: --mdbtools-exe-dir requires a value")
                     print("(Run with --help to show command usage.)")
                     sys.exit(0)
 
                 param_mdbToolsExeDirPath = sys.argv[argNo]
-
-            elif arg == "--sqlite3-exe":
                 argNo += 1
-                if argNo >= len(sys.argv):
-                    print("ERROR: --sqlite3-exe requires a value")
-                    print("(Run with --help to show command usage.)")
-                    sys.exit(0)
-
-                param_sqliteExeFilePath = sys.argv[argNo]
 
             else:
                 print("ERROR: Unrecognised option: " + arg)
@@ -189,5 +180,4 @@ Options:
 
     # + }}}
 
-    convertMdbToSqlite(param_mdbFilePath, param_sqliteFilePath, param_mdbToolsExeDirPath, param_sqliteExeFilePath)
-    print("end")
+    convertMdbToSqlite(param_mdbFilePath, param_sqliteFilePath, param_mdbToolsExeDirPath)

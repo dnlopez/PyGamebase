@@ -11,9 +11,7 @@ The application has three tab pages corresponding to common Gamebase setup steps
 
 The conversion process relies upon the [MDB Tools](https://github.com/mdbtools/mdbtools) suite of programs. Specifically, the `mdb-schema`, `mdb-tables` and `mdb-export` tools must be present on your system. The aforementioned link outlines installation instructions for Linux (on Debian, `apt install mdbtools`; on Arch, search the AUR for `mdbtools`) and MacOS (via Homebrew or MacPorts, in both cases also called `mdbtools`). For Windows users, binary versions of these tools can currently be downloaded from [mdbtools-win Releases page](https://github.com/lsgunth/mdbtools-win) (note that although the download link says "Source code", there are executables inside).
 
-The conversion also relies on the SQLite command-line program, `sqlite3`. Again, on Linux you are likely to find these in your distro's standard packaging repositories (on Debian, `apt install sqlite3`; on Arch, `pacman -S sqlite`), and on MacOS via Homebrew (`sqlite`) or MacPorts (`sqlite3`). On Windows, download the 'sqlite-tools-win32' zip from SQLite's own [download page](https://www.sqlite.org/download.html).
-
-Locate the Access (.mdb) database file to be read, and enter a name for the new SQLite database file to be created. Then click 'Go'.
+On the form, fill in the location of the MDB Tools (unless they're already in your system's PATH), locate the Access (.mdb) database file to be read, and enter a name for the new SQLite database file to be created. Then click 'Go'.
 
 This tab page is a frontend for the Python script `utility_scripts/mdb_to_sqlite.py`, which you could run instead to do the same thing from the command line.
 
