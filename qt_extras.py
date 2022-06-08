@@ -118,7 +118,7 @@ class ResizableMessageBox(QDialog):
          i_icon:
           Either (QMessageBox.Icon)
            eg.
-            self.style().standardIcon(QStyle.SP_MessageBoxCritical)
+            QApplication.style().standardIcon(QStyle.SP_MessageBoxCritical)
           or (None)
          i_title:
           (str)

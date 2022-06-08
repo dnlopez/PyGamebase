@@ -1277,7 +1277,7 @@ class MyTableView(QTableView):
             import traceback
             print(traceback.format_exc())
 
-            messageBox = qt_extras.ResizableMessageBox(application.style().standardIcon(QStyle.SP_MessageBoxCritical), "Error", "")
+            messageBox = qt_extras.ResizableMessageBox(QApplication.style().standardIcon(QStyle.SP_MessageBoxCritical), "Error", "")
             messageBox.setText("<big><b>In SQL WHERE expression:</b></big>")
             messageBox.setInformativeText("\n".join(traceback.format_exception_only(e)))
             messageBox.resizeToContent()
@@ -1360,7 +1360,7 @@ class MyTableView(QTableView):
             except Exception as e:
                 import traceback
                 print(traceback.format_exc())
-                messageBox = qt_extras.ResizableMessageBox(application.style().standardIcon(QStyle.SP_MessageBoxCritical), "Error", "")
+                messageBox = qt_extras.ResizableMessageBox(QApplication.style().standardIcon(QStyle.SP_MessageBoxCritical), "Error", "")
                 messageBox.setText("<big><b>In runGame():</b></big>")
                 messageBox.setInformativeText(traceback.format_exc())
                 messageBox.resizeToContent()
@@ -1377,7 +1377,7 @@ class MyTableView(QTableView):
             except Exception as e:
                 import traceback
                 print(traceback.format_exc())
-                messageBox = qt_extras.ResizableMessageBox(application.style().standardIcon(QStyle.SP_MessageBoxCritical), "Error", "")
+                messageBox = qt_extras.ResizableMessageBox(QApplication.style().standardIcon(QStyle.SP_MessageBoxCritical), "Error", "")
                 messageBox.setText("<big><b>In runMusic():</b></big>")
                 messageBox.setInformativeText(traceback.format_exc())
                 messageBox.resizeToContent()
@@ -2280,7 +2280,7 @@ mainWindow.show()
 
 #
 if not hasattr(gamebase.adapter, "config_databaseFilePath"):
-    messageBox = qt_extras.ResizableMessageBox(application.style().standardIcon(QStyle.SP_MessageBoxCritical), "Error", "")
+    messageBox = qt_extras.ResizableMessageBox(QApplication.style().standardIcon(QStyle.SP_MessageBoxCritical), "Error", "")
     messageBox.setText("<big><b>Missing adapter setting:</b></big>")
     messageBox.setInformativeText("config_databaseFilePath")
     messageBox.resizeToContent()
@@ -2292,7 +2292,7 @@ try:
 except Exception as e:
     import traceback
     print(traceback.format_exc())
-    messageBox = qt_extras.ResizableMessageBox(application.style().standardIcon(QStyle.SP_MessageBoxCritical), "Error", "")
+    messageBox = qt_extras.ResizableMessageBox(QApplication.style().standardIcon(QStyle.SP_MessageBoxCritical), "Error", "")
     messageBox.setText("<big><b>When opening database file:</b></big>")
     messageBox.setInformativeText("With path:\n" + gamebase.adapter.config_databaseFilePath + "\n\nAn error occurred:\n" + "\n".join(traceback.format_exception_only(e)))
     messageBox.resizeToContent()
