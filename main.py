@@ -33,6 +33,15 @@ import column_name_bar
 import game_table_view
 
 
+# Create a Qt application
+# (or reuse old one if it already exists; ie. when re-running in REPL during development)
+# and do this before parsing the command line in order for it to filter Qt-specific arguments out
+if not QApplication.instance():
+    application = QApplication(sys.argv)
+else:
+    application = QApplication.instance()
+filteredArgv = application.arguments()
+
 # + Parse command line {{{
 
 COMMAND_NAME = "PyGamebase"
@@ -61,8 +70,8 @@ param_gamebaseAdapterFilePath = None
 
 import sys
 argNo = 1
-while argNo < len(sys.argv):
-    arg = sys.argv[argNo]
+while argNo < len(filteredArgv):
+    arg = filteredArgv[argNo]
     argNo += 1
 
     if arg[0] == "-":
@@ -168,12 +177,6 @@ def filterHistory_goForward():
 # + }}}
 
 
-# Create a Qt application
-# (or reuse old one if it already exists; ie. when re-running in REPL during development)
-if not QApplication.instance():
-    application = QApplication(sys.argv)
-else:
-    application = QApplication.instance()
 
 import main_window
 mainWindow = main_window.MainWindow(application)
