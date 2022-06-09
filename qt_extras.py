@@ -272,3 +272,53 @@ class StayOpenMenu(QMenu):
 
         #
         QMenu.keyPressEvent(self, i_event)
+
+
+class PlainTextViewer(QWidget):
+    def __init__(self, i_parent=None):
+        QWidget.__init__(self, i_parent)
+
+        #self.setWindowTitle("Subprocess Output")
+        #self.setGeometry(50, 75, 600, 400)
+
+        self.layout = QVBoxLayout(self)
+
+        # + Toolbar {{{
+
+        self.toolbar = QWidget()
+        self.toolbar_layout = QHBoxLayout(self.toolbar)
+        self.toolbar_layout.setContentsMargins(0, 0, 0, 0)
+
+        self.toolbar_layout.addWidget(QLabel("Wrap text:"))
+        wrapTextCheckBox = QCheckBox(self.toolbar)
+        wrapTextCheckBox.stateChanged.connect(self.wrapTextCheckBox_onStateChanged)
+        self.toolbar_layout.addWidget(wrapTextCheckBox)
+        self.toolbar_layout.addStretch()
+        self.layout.addWidget(self.toolbar)
+
+        # + }}}
+
+        self.plainTextEdit = QPlainTextEdit(self)
+        self.layout.addWidget(self.plainTextEdit)
+
+        self.plainTextEdit.setWordWrapMode(QTextOption.NoWrap)
+        #self.plainTextEdit.setUndoRedoEnabled(False)
+
+        font = QFont("monospace")
+        font.setStyleHint(QFont.Monospace)
+        self.plainTextEdit.setFont(font)
+        #self.plainTextEdit.document().setDefaultFont(QFont("monospace", 10, QFont.Normal))
+
+    def wrapTextCheckBox_onStateChanged(self, i_state):
+        if i_state == Qt.Checked:
+            self.plainTextEdit.setWordWrapMode(QTextOption.WrapAnywhere)
+        else:
+            self.plainTextEdit.setWordWrapMode(QTextOption.NoWrap)
+
+    def setText(self, i_text):
+        """
+        Params:
+         i_text:
+          (str)
+        """
+        self.plainTextEdit.setPlainText(i_text)

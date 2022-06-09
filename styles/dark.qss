@@ -333,11 +333,13 @@ QScrollBar::add-page, QScrollBar::sub-page {
 }
 */
 
+/*
 Log
 {
 	background: #191919;
 	color: #DDDDDD;
 }
+*/
 
 /*
 QPushButton

@@ -47,7 +47,43 @@ class DetailPane(QWidget):
         #self.margin.setFixedWidth(columns.tableColumn_getByPos(0)["width"])
         self.margin.setFixedWidth(columns.usableColumn_getById("detail")["defaultWidth"])
 
-        self.webEngineView = QWebEngineView()
+        class MyWebEngineView(QWebEngineView):
+            def __init__(self, i_parent=None):
+                QWebEngineView.__init__(self, i_parent)
+
+                self.plainTextViewer = None
+
+            def contextMenuEvent(self, i_event):  # override from QWidget
+                # Start a menu
+                newMenu = QMenu(self)
+
+                # Copy only items we want from the standard context menu
+                menu = self.page().createStandardContextMenu()
+                actions = menu.actions()
+                for action in actions:
+                    if action.text() in ["Copy", "Copy link address", "Copy image", "Copy image address"]: #, "View page source"]:
+                        newMenu.addAction(action)
+
+                # Add 'View page source' item
+                if len(newMenu.actions()) > 0:
+                    newMenu.addSeparator()
+                viewPageSourceAction = newMenu.addAction("View page source")
+                viewPageSourceAction.triggered.connect(self.viewPageSourceAction_onTriggered)
+
+                # Show menu
+                newMenu.exec_(i_event.globalPos())
+
+            def viewPageSourceAction_onTriggered(self):
+                self.page().toHtml(self.viewPageSourceAction_getHtml)
+            def viewPageSourceAction_getHtml(self, i_html):
+                if self.plainTextViewer == None:
+                    self.plainTextViewer = qt_extras.PlainTextViewer()
+                    self.plainTextViewer.setGeometry(50, 75, 600, 400)
+                self.plainTextViewer.setWindowTitle("view-source: " + self.parent().gameName)
+                self.plainTextViewer.setText(i_html)
+                self.plainTextViewer.show()
+
+        self.webEngineView = MyWebEngineView(self)
         self.webEngineView.setProperty("class", "webEngineView")
         self.layout.addWidget(self.webEngineView)
 
@@ -76,9 +112,14 @@ class DetailPane(QWidget):
         """
         gameRow = db.getGameRecord(i_gameId, True)
 
+        #
         global detailPane_currentGameId
         detailPane_currentGameId = gameRow["Games.GA_Id"]
 
+        # Save name for the titlebar of the view source window
+        self.gameName = gameRow["Games.Name"]
+
+        #
         html = ""
 
         html += '<link rel="stylesheet" type="text/css" href="file://' + os.path.dirname(os.path.realpath(__file__)).replace("\\", "/") + '/styles/dark.css">'

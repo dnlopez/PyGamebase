@@ -870,18 +870,12 @@ tableView.selectionModel().setCurrentIndex(tableView.selectionModel().model().in
 
 # + Subprocess output {{{
 
-class Log(QPlainTextEdit):
+class SubprocessOutput(qt_extras.PlainTextViewer):
     def __init__(self, i_parent=None):
-        QPlainTextEdit.__init__(self, i_parent)
+        qt_extras.PlainTextViewer.__init__(self, i_parent)
 
         self.setWindowTitle("Subprocess Output")
         self.setGeometry(50, 75, 600, 400)
-        #self.setWordWrapMode(QtGui.QTextOption.WrapAnywhere)
-        #self.setUndoRedoEnabled(False)
-        font = QFont("monospace")
-        font.setStyleHint(QFont.Monospace)
-        self.setFont(font)
-        #self.document().setDefaultFont(QFont("monospace", 10, QFont.Normal))
 
         self.refresh_timer = QTimer(self)
         self.refresh_timer.setInterval(500)
@@ -898,8 +892,8 @@ class Log(QPlainTextEdit):
 
     def updateText(self):
         if len(utils.tasks) > 0:
-            selectionStartPos = self.textCursor().selectionStart()
-            selectionEndPos = self.textCursor().selectionEnd()
+            selectionStartPos = self.plainTextEdit.textCursor().selectionStart()
+            selectionEndPos = self.plainTextEdit.textCursor().selectionEnd()
 
             # For AsyncSubprocess
             #print(utils.tasks[-1].getState())
@@ -916,22 +910,22 @@ class Log(QPlainTextEdit):
             if task.returncode != None:
                 text += "\n---\nProcess exited with code " + str(task.returncode)
 
-            self.setPlainText(text)
+            self.setText(text)
 
-            textCursor = self.textCursor()
+            textCursor = self.plainTextEdit.textCursor()
             textCursor.setPosition(selectionStartPos)
             textCursor.setPosition(selectionEndPos, QTextCursor.KeepAnchor)
-            self.setTextCursor(textCursor)
+            self.plainTextEdit.setTextCursor(textCursor)
         else:
-            self.setPlainText("")
+            self.setText("")
 
-subprocessOutput_log = None
+subprocessOutput = None
 def menu_file_showSubprocessOutput_onTriggered(i_checked):
-    global subprocessOutput_log
-    if subprocessOutput_log == None:
-        subprocessOutput_log = Log()
+    global subprocessOutput
+    if subprocessOutput == None:
+        subprocessOutput = SubprocessOutput()
 
-    subprocessOutput_log.show()
+    subprocessOutput.show()
 
 action = fileMenu.addAction("Show subprocess &output")
 action.triggered.connect(menu_file_showSubprocessOutput_onTriggered)
