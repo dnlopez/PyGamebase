@@ -2,6 +2,7 @@
 # Python std
 import os.path
 import urllib.parse
+import math
 
 # Qt
 from PySide2.QtCore import *
@@ -19,6 +20,16 @@ import columns
 
 detailPane_currentGameId = None
 
+g_detailPaneItems = [
+    { "name": "gameName", "visible": True },
+    { "name": "screenshots", "visible": True },
+    { "name": "related", "visible": True },
+    { "name": "memoText", "visible": True },
+    { "name": "comment", "visible": True },
+    { "name": "weblinks", "visible": True },
+    { "name": "nonImageExtras", "visible": True },
+    { "name": "imageExtras", "visible": True }
+]
 
 class DetailPane(QWidget):
 
@@ -124,138 +135,164 @@ class DetailPane(QWidget):
 
         html += '<link rel="stylesheet" type="text/css" href="file://' + os.path.dirname(os.path.realpath(__file__)).replace("\\", "/") + '/styles/dark.css">'
 
-        # Insert screenshots after the first one
-        supplementaryScreenshotRelativePaths = gamebase.dbRow_getSupplementaryScreenshotPaths(gameRow)
-        for relativePath in supplementaryScreenshotRelativePaths:
-            screenshotUrl = gamebase.getScreenshotUrl(relativePath)
-            if screenshotUrl != None:
-                html += '<img src="' + screenshotUrl + '">'
+        for layoutItem in g_detailPaneItems:
+            if layoutItem["visible"]:
 
-        # If there are related games,
-        # insert links to the originals
-        if "Games.CloneOf_Name" in gameRow and gameRow["Games.CloneOf_Name"] != None:
-            html += '<p style="white-space: pre-wrap;">'
-            html += 'Clone of: '
-            html += '<a href="game:///' + str(gameRow["Games.CloneOf"]) + '">' + gameRow["Games.CloneOf_Name"] + '</a>'
-            html += '</p>'
+                if layoutItem["name"] == "screenshots":
+                    # Insert screenshots after the first one
+                    supplementaryScreenshotRelativePaths = gamebase.dbRow_getSupplementaryScreenshotPaths(gameRow)
+                    for relativePath in supplementaryScreenshotRelativePaths:
+                        screenshotUrl = gamebase.getScreenshotUrl(relativePath)
+                        if screenshotUrl != None:
+                            html += '<img src="' + screenshotUrl + '">'
 
-        if "Games.Prequel_Name" in gameRow and gameRow["Games.Prequel_Name"] != None:
-            html += '<p style="white-space: pre-wrap;">'
-            html += 'Prequel: '
-            html += '<a href="game:///' + str(gameRow["Games.Prequel"]) + '">' + gameRow["Games.Prequel_Name"] + '</a>'
-            html += '</p>'
+                elif layoutItem["name"] == "gameName":
+                    html += '<div class="game_name">' + gameRow["Games.Name"] + '</div>'
 
-        if "Games.Sequel_Name" in gameRow and gameRow["Games.Sequel_Name"] != None:
-            html += '<p style="white-space: pre-wrap;">'
-            html += 'Sequel: '
-            html += '<a href="game:///' + str(gameRow["Games.Sequel"]) + '">' + gameRow["Games.Sequel_Name"] + '</a>'
-            html += '</p>'
+                elif layoutItem["name"] == "related":
+                    # If there are related games,
+                    # insert links to the originals
+                    if "Games.CloneOf_Name" in gameRow and gameRow["Games.CloneOf_Name"] != None:
+                        html += '<p style="white-space: pre-wrap;">'
+                        html += 'Clone of: '
+                        html += '<a href="game:///' + str(gameRow["Games.CloneOf"]) + '">' + gameRow["Games.CloneOf_Name"] + '</a>'
+                        html += '</p>'
 
-        if "Games.Related_Name" in gameRow and gameRow["Games.Related_Name"] != None:
-            html += '<p style="white-space: pre-wrap;">'
-            html += 'Related: '
-            html += '<a href="game:///' + str(gameRow["Games.Related"]) + '">' + gameRow["Games.Related_Name"] + '</a>'
-            html += '</p>'
+                    if "Games.Prequel_Name" in gameRow and gameRow["Games.Prequel_Name"] != None:
+                        html += '<p style="white-space: pre-wrap;">'
+                        html += 'Prequel: '
+                        html += '<a href="game:///' + str(gameRow["Games.Prequel"]) + '">' + gameRow["Games.Prequel_Name"] + '</a>'
+                        html += '</p>'
 
-        # Insert memo text
-        if gameRow["Games.MemoText"] != None:
-            html += '<p style="white-space: pre-wrap;">'
-            html += gameRow["Games.MemoText"]
-            html += '</p>'
+                    if "Games.Sequel_Name" in gameRow and gameRow["Games.Sequel_Name"] != None:
+                        html += '<p style="white-space: pre-wrap;">'
+                        html += 'Sequel: '
+                        html += '<a href="game:///' + str(gameRow["Games.Sequel"]) + '">' + gameRow["Games.Sequel_Name"] + '</a>'
+                        html += '</p>'
 
-        # Insert comment
-        if gameRow["Games.Comment"] != None:
-            html += '<p style="white-space: pre-wrap;">'
-            html += gameRow["Games.Comment"]
-            html += '</p>'
+                    if "Games.Related_Name" in gameRow and gameRow["Games.Related_Name"] != None:
+                        html += '<p style="white-space: pre-wrap;">'
+                        html += 'Related: '
+                        html += '<a href="game:///' + str(gameRow["Games.Related"]) + '">' + gameRow["Games.Related_Name"] + '</a>'
+                        html += '</p>'
 
-        # Insert weblink(s)
-        if "Games.WebLink_Name" in gameRow and gameRow["Games.WebLink_Name"] != None:
-            html += '<p style="white-space: pre-wrap;">'
+                elif layoutItem["name"] == "memoText":
+                    # Insert memo text
+                    if gameRow["Games.MemoText"] != None:
+                        html += '<p style="white-space: pre-wrap;">'
+                        html += gameRow["Games.MemoText"]
+                        html += '</p>'
 
-            html += gameRow["Games.WebLink_Name"] + ": "
-            url = gameRow["Games.WebLink_URL"]
-            html += '<a href="' + url + '">'
-            html += url
-            html += '</a>'
-            #link.addEventListener("click", function (i_event) {
-            #    i_event.preventDefault();
-            #    electron.shell.openExternal(this.href);
-            #});
+                elif layoutItem["name"] == "comment":
+                    # Insert comment
+                    if gameRow["Games.Comment"] != None:
+                        html += '<p style="white-space: pre-wrap;">'
+                        html += gameRow["Games.Comment"]
+                        html += '</p>'
 
-            # If it's a World Of Spectrum link then insert a corresponding Spectrum Computing link
-            if gameRow["Games.WebLink_Name"] == "WOS":
-                # Separator
-                html += '<span style="margin-left: 8px; margin-right: 8px; border-left: 1px dotted #666;"></span>'
-                # Label
-                html += 'Spectrum Computing: '
-                # Link
-                url = url.replace("http://www.worldofspectrum.org/infoseekid.cgi?id=", "https://spectrumcomputing.co.uk/entry/")
-                html += '<a href="' + url + '">'
-                html += url
-                html += '</a>'
-                html += '</span>'
-                #link.addEventListener("click", function (i_event) {
-                #    i_event.preventDefault();
-                #    electron.shell.openExternal(this.href);
-                #});
+                elif layoutItem["name"] == "weblinks":
+                    # Insert weblink(s)
+                    if "Games.WebLink_Name" in gameRow and gameRow["Games.WebLink_Name"] != None:
+                        html += '<p style="white-space: pre-wrap;">'
 
-            html += '</p>'
+                        html += gameRow["Games.WebLink_Name"] + ": "
+                        url = gameRow["Games.WebLink_URL"]
+                        html += '<a href="' + url + '">'
+                        html += url
+                        html += '</a>'
+                        #link.addEventListener("click", function (i_event) {
+                        #    i_event.preventDefault();
+                        #    electron.shell.openExternal(this.href);
+                        #});
 
-        # Get extras
-        extrasRows = db.getExtrasRecords(str(gameRow["Games.GA_Id"]))
+                        # If it's a World Of Spectrum link then insert a corresponding Spectrum Computing link
+                        if gameRow["Games.WebLink_Name"] == "WOS":
+                            # Separator
+                            html += '<span style="margin-left: 8px; margin-right: 8px; border-left: 1px dotted #666;"></span>'
+                            # Label
+                            html += 'Spectrum Computing: '
+                            # Link
+                            url = url.replace("http://www.worldofspectrum.org/infoseekid.cgi?id=", "https://spectrumcomputing.co.uk/entry/")
+                            html += '<a href="' + url + '">'
+                            html += url
+                            html += '</a>'
+                            html += '</span>'
+                            #link.addEventListener("click", function (i_event) {
+                            #    i_event.preventDefault();
+                            #    electron.shell.openExternal(this.href);
+                            #});
 
-        # Seperate extras which are and aren't images
-        imageRows = []
-        nonImageRows = []
-        for extrasRow in extrasRows:
-            path = extrasRow["Path"]
-            if path != None and (path.lower().endswith(".jpg") or path.lower().endswith(".jpeg") or path.lower().endswith(".gif") or path.lower().endswith(".png")):
-                imageRows.append(extrasRow)
-            else:
-                nonImageRows.append(extrasRow)
+                        html += '</p>'
 
-        # For each non-image, insert a link
-        if len(nonImageRows) > 0:
-            html += '<div id="nonImageExtras">'
+                elif layoutItem["name"] == "nonImageExtras":
+                    # Get extras
+                    extrasRows = db.getExtrasRecords(str(gameRow["Games.GA_Id"]))
 
-            for nonImageRowNo, nonImageRow in enumerate(nonImageRows):
-                #var label = nonImageRow.Name + " (" + nonImageRow.Path + ")";
-                #container.appendChild(document.createTextNode(label));
+                    # Seperate extras which are and aren't images
+                    imageRows = []
+                    nonImageRows = []
+                    for extrasRow in extrasRows:
+                        path = extrasRow["Path"]
+                        if path != None and (path.lower().endswith(".jpg") or path.lower().endswith(".jpeg") or path.lower().endswith(".gif") or path.lower().endswith(".png")):
+                            imageRows.append(extrasRow)
+                        else:
+                            nonImageRows.append(extrasRow)
 
-                if nonImageRowNo > 0:
-                    #container.appendChild(document.createTextNode(" | "));
-                    html += '<span style="margin-left: 8px; margin-right: 8px; border-left: 1px dotted #666;"></span>'
+                    # For each non-image, insert a link
+                    if len(nonImageRows) > 0:
+                        html += '<div id="nonImageExtras">'
 
-                html += '<a'
-                path = nonImageRow["Path"]
-                if path != None:
-                    html += ' href="extra:///' + path + '"'
-                html += '>'
-                html += nonImageRow["Name"]
-                html += '</a>'
+                        for nonImageRowNo, nonImageRow in enumerate(nonImageRows):
+                            #var label = nonImageRow.Name + " (" + nonImageRow.Path + ")";
+                            #container.appendChild(document.createTextNode(label));
 
-            html += "</div>"
+                            if nonImageRowNo > 0:
+                                #container.appendChild(document.createTextNode(" | "));
+                                html += '<span style="margin-left: 8px; margin-right: 8px; border-left: 1px dotted #666;"></span>'
 
+                            html += '<a'
+                            path = nonImageRow["Path"]
+                            if path != None:
+                                html += ' href="extra:///' + path + '"'
+                            html += '>'
+                            html += nonImageRow["Name"]
+                            html += '</a>'
 
-        # For each image, insert an image
-        if len(imageRows) > 0:
-            html += '<div id="imageExtras">'
+                        html += "</div>"
 
-            for imageRowNo, imageRow in enumerate(imageRows):
-                #print("imageRow: " + str(imageRow))
-                #var cell = document.createElement("div");
+                elif layoutItem["name"] == "imageExtras":
+                    # Get extras
+                    extrasRows = db.getExtrasRecords(str(gameRow["Games.GA_Id"]))
 
-                html += '<a href="extra:///' + imageRow["Path"] + '" style="display: inline-block; text-align: center;">'
-                if hasattr(gamebase.adapter, "config_extrasBaseDirPath"):
-                    html += '<img src="file://' + gamebase.normalizeDirPathFromAdapter(gamebase.adapter.config_extrasBaseDirPath) + "/" + imageRow["Path"] + '" style="height: 300px;">'
-                #html += '<img src="https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_92x30dp.png" style="height: 300px;">'
-                html += '<div>' + imageRow["Name"] + '</div>'
-                html += '</a>'
+                    # Seperate extras which are and aren't images
+                    imageRows = []
+                    nonImageRows = []
+                    for extrasRow in extrasRows:
+                        path = extrasRow["Path"]
+                        if path != None and (path.lower().endswith(".jpg") or path.lower().endswith(".jpeg") or path.lower().endswith(".gif") or path.lower().endswith(".png")):
+                            imageRows.append(extrasRow)
+                        else:
+                            nonImageRows.append(extrasRow)
 
-                #cell.appendChild(link);
+                    # For each image, insert an image
+                    if len(imageRows) > 0:
+                        html += '<div id="imageExtras">'
 
-            html += "</div>"
+                        for imageRowNo, imageRow in enumerate(imageRows):
+                            #print("imageRow: " + str(imageRow))
+                            #var cell = document.createElement("div");
+
+                            html += '<a href="extra:///' + imageRow["Path"] + '" style="display: inline-block; text-align: center;">'
+                            if hasattr(gamebase.adapter, "config_extrasBaseDirPath"):
+                                html += '<img src="file://' + gamebase.normalizeDirPathFromAdapter(gamebase.adapter.config_extrasBaseDirPath) + "/" + imageRow["Path"] + '" style="height: 300px;">'
+                            #html += '<img src="https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_92x30dp.png" style="height: 300px;">'
+                            html += '<div>' + imageRow["Name"] + '</div>'
+                            html += '</a>'
+
+                            #cell.appendChild(link);
+
+                        html += "</div>"
+
 
         #print(html)
 
@@ -324,3 +361,243 @@ class DetailPane(QWidget):
 
     def setFocus(self, i_focusReason):
         self.webEngineView.setFocus(i_focusReason)
+
+
+# + Layout editor {{{
+
+def detailPaneItems_move(i_rowNo, i_toBeforeRowNo):
+    """
+    Params:
+     i_rowNo:
+      (int)
+     i_toBeforeRowNo:
+      (int)
+
+    Returns:
+     (int)
+     The new position of the row.
+     -1: The row wasn't moved
+    """
+    if i_rowNo == i_toBeforeRowNo or i_rowNo + 1 == i_toBeforeRowNo:
+        return -1
+
+    item = g_detailPaneItems.pop(i_rowNo)
+    if i_rowNo < i_toBeforeRowNo:
+        i_toBeforeRowNo -= 1
+    g_detailPaneItems.insert(i_toBeforeRowNo, item)
+    return i_toBeforeRowNo
+
+class DetailPaneItemsTableModel(QAbstractTableModel):
+    def __init__(self, i_parent, *args):
+        QAbstractTableModel.__init__(self, i_parent, *args)
+
+    def rowCount(self, i_parent):  # override from QAbstractTableModel
+        return len(g_detailPaneItems)
+
+    def columnCount(self, i_parent):  # override from QAbstractTableModel
+        return 2
+
+    def data(self, i_index, i_role):  # override from QAbstractTableModel
+        if not i_index.isValid():
+            return None
+
+        if i_index.column() == 0:
+            if i_role == Qt.DisplayRole:
+                if g_detailPaneItems[i_index.row()]["visible"]:
+                    return "x"
+                else:
+                    return ""
+            elif i_role == Qt.TextAlignmentRole:
+                return Qt.AlignCenter
+        elif i_index.column() == 1:
+            if i_role == Qt.DisplayRole:
+                return g_detailPaneItems[i_index.row()]["name"]
+            elif i_role == Qt.TextAlignmentRole:
+                return int(Qt.AlignLeft | Qt.AlignVCenter)
+        return None
+
+    def headerData(self, i_columnNo, i_orientation, i_role):
+        if i_orientation == Qt.Horizontal and i_role == Qt.DisplayRole:
+            if i_columnNo == 0:
+                return "Visible"
+            elif i_columnNo == 1:
+                return "Data"
+
+        return None
+
+class DetailPaneItemsTableView(QTableView):
+    def __init__(self, i_parent=None):
+        QTableView.__init__(self, i_parent)
+
+        # Create model and set it in the table view
+        self.tableModel = DetailPaneItemsTableModel(self)
+        self.setModel(self.tableModel)
+
+        #self.setItemDelegate(MyStyledItemDelegate(self))
+
+        self.setSelectionBehavior(QAbstractItemView.SelectRows)
+        #self.setSelectionMode(QAbstractItemView.NoSelection)
+        self.setSelectionMode(QAbstractItemView.SingleSelection)
+
+        #self.verticalHeader().setSectionsMovable(True)
+        self.verticalHeader().hide()
+        #self.horizontalHeader().hide()
+        #self.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        #self.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
+        self.horizontalHeader().setStretchLastSection(True)
+
+        self.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel)
+        self.setHorizontalScrollMode(QAbstractItemView.ScrollPerPixel)
+
+        #self.setDragDropMode(QAbstractItemView.InternalMove)
+        #self.setDragEnabled(True)
+        #self.setDropIndicatorShown(True)
+        #self.setDragDropOverwriteMode(False)
+        #self.setDefaultDropAction(Qt.MoveAction)
+        #
+        self.clicked.connect(self.onClicked)
+        #self.activated.connect(functools.partial(self.onActivatedOrClicked, True))
+
+        #https://stackoverflow.com/questions/69076597/how-can-i-remove-the-outside-gridlines-of-qtablewidget-and-qheaderview
+
+        # Have no border on the table view so the scrollbar is right at the edge
+        #self.setStyleSheet("""
+        #     QTableView { padding-left: 0px; border: 0px; margin: 0px; /*border-top: 1px solid grey;*/ }
+        #""")
+
+        # + Mouse drag to reorder rows {{{
+
+        self.viewport().installEventFilter(self)
+
+        ## Receive mouse move events even if button isn't held down
+        #self.setMouseTracking(True)
+
+        # State used while reordering
+        self.reorder_rowNo = None
+        #  Either (int)
+        #  or (None)
+
+        self.reorderIndicator_widget = QFrame(self)
+        #self.reorderIndicator_widget.setAutoFillBackground(True)
+        self.reorderIndicator_widget.setGeometry(10, 10, 100, 20)
+        pal = QPalette()
+        #pal.setColor(QPalette.Window, Qt.red)
+        pal.setColor(QPalette.WindowText, Qt.red)
+        self.reorderIndicator_widget.setPalette(pal)
+        self.reorderIndicator_widget.hide()
+
+        self.reorderIndicator_widget.setFrameStyle(QFrame.Box)
+        self.reorderIndicator_widget.setLineWidth(2)
+
+        # + }}}
+
+    def onClicked(self, i_modelIndex):
+        """
+        Params:
+         i_modelIndex:
+          (QModelIndex)
+        """
+        if i_modelIndex.column() == 0:
+            print(i_modelIndex.row())
+
+    # + Mouse drag to reorder rows {{{
+
+    def eventFilter(self, i_watched, i_event):
+        if i_watched != self.viewport():
+            return False
+        #print(i_event.type())
+
+        if i_event.type() == QEvent.MouseButtonPress:
+            # If pressed the left button
+            if i_event.button() == Qt.MouseButton.LeftButton:
+                # Get mouse pos relative to the ColumnNameBar
+                # and adjust for vertical scroll amount
+                mousePos = i_watched.mapTo(self.viewport(), i_event.pos())
+                mousePos.setY(mousePos.y() + self.verticalScrollBar().value())
+
+                self.reorder_rowNo = math.floor(mousePos.y() / self.verticalHeader().defaultSectionSize())
+                if self.reorder_rowNo >= len(g_detailPaneItems):
+                    self.reorder_rowNo = None
+                else:
+                    self.selectionModel().setCurrentIndex(self.selectionModel().model().index(self.reorder_rowNo, 1), QItemSelectionModel.ClearAndSelect | QItemSelectionModel.Rows)
+
+                    self.reorder_dropBeforeRowNo = self.reorder_rowNo
+
+                    # Show drop indicator
+                    dropIndicatorWidth = self.horizontalHeader().sectionSize(0) + self.horizontalHeader().sectionSize(1)
+                    self.reorderIndicator_widget.setGeometry(0, self.horizontalHeader().height() + self.reorder_rowNo * self.verticalHeader().defaultSectionSize() - self.verticalScrollBar().value(), dropIndicatorWidth, self.verticalHeader().defaultSectionSize())
+                    self.reorderIndicator_widget.show()
+                    self.reorderIndicator_widget.raise_()
+
+                    return True
+
+        elif i_event.type() == QEvent.MouseMove:
+            #print(i_event.type())
+            # If currently reordering,
+            # draw line at nearest horizontal edge
+            if self.reorder_rowNo != None:
+                # Get mouse pos relative to the ColumnNameBar
+                # and adjust for vertical scroll amount
+                mousePos = i_watched.mapTo(self.viewport(), i_event.pos())
+                mousePos.setY(mousePos.y() + self.verticalScrollBar().value())
+
+                #
+                self.reorder_dropBeforeRowNo = math.floor(mousePos.y() / self.verticalHeader().defaultSectionSize() + 0.5)
+                if self.reorder_dropBeforeRowNo > len(g_detailPaneItems):
+                    self.reorder_dropBeforeRowNo = len(g_detailPaneItems)
+                if self.reorder_dropBeforeRowNo < 0:
+                    self.reorder_dropBeforeRowNo = 0
+
+                # Move drop indicator
+                dropIndicatorWidth = self.horizontalHeader().sectionSize(0) + self.horizontalHeader().sectionSize(1)
+                if self.reorder_dropBeforeRowNo == self.reorder_rowNo or self.reorder_dropBeforeRowNo == self.reorder_rowNo + 1:
+                    self.reorderIndicator_widget.setGeometry(0, self.horizontalHeader().height() + self.reorder_rowNo * self.verticalHeader().defaultSectionSize() - self.verticalScrollBar().value(), dropIndicatorWidth, self.verticalHeader().defaultSectionSize())
+                else:
+                    self.reorderIndicator_widget.setGeometry(0, self.horizontalHeader().height() + self.reorder_dropBeforeRowNo * self.verticalHeader().defaultSectionSize() - self.verticalScrollBar().value() - 2, dropIndicatorWidth, 6)
+
+                return True
+
+        elif i_event.type() == QEvent.MouseButtonRelease:
+            # If currently reordering and released the left button
+            if self.reorder_rowNo != None and i_event.button() == Qt.MouseButton.LeftButton:
+                newPosition = detailPaneItems_move(self.reorder_rowNo, self.reorder_dropBeforeRowNo)
+
+                # Stop reordering
+                self.reorder_rowNo = None
+
+                #
+                self.reorderIndicator_widget.hide()
+                self.repaint()
+
+                #
+                if newPosition != -1:
+                    self.selectionModel().setCurrentIndex(self.selectionModel().model().index(newPosition, 1), QItemSelectionModel.ClearAndSelect | QItemSelectionModel.Rows)
+                    self.parent().change.emit()
+
+                #
+                return True
+
+        # Let event continue
+        return False
+
+    # + }}}
+
+class DetailPaneItems(QWidget):
+    change = Signal()
+
+    def __init__(self):
+        QWidget.__init__(self)
+
+        self.setWindowTitle("Detail pane items")
+        self.setProperty("class", "detailPaneItems")
+
+        # Window layout
+        self.layout = QHBoxLayout()
+        #self.layout.setSpacing(0)
+        #self.layout.setContentsMargins(0, 0, 0, 0)
+        self.setLayout(self.layout)
+
+        self.tableView = DetailPaneItemsTableView()
+        self.layout.addWidget(self.tableView)
+
+# + }}}

@@ -281,11 +281,11 @@ menu = QMenu(mainWindow)
 fileMenu = menuBar.addMenu("&File")
 action = fileMenu.addAction("Open &database in external program")
 action.triggered.connect(menu_file_openDatabaseInExternalProgram_onTriggered)
-fileMenu.addAction("New")
-fileMenu.addAction("Open")
-fileMenu.addAction("Save")
-fileMenu.addSeparator()
-fileMenu.addAction("Quit")
+#fileMenu.addAction("New")
+#fileMenu.addAction("Open")
+#fileMenu.addAction("Save")
+#fileMenu.addSeparator()
+#fileMenu.addAction("Quit")
 
 editMenu = menuBar.addMenu("&Edit")
 editMenu.addAction("Copy")
@@ -438,6 +438,8 @@ viewMenu_tableColumnsMenu_action = viewMenu.addMenu(viewMenu_tableColumnsMenu)
 def viewMenu_tableColumnsMenu_action_onHovered():
     viewMenu_tableColumnsMenu.context = None
 viewMenu_tableColumnsMenu_action.hovered.connect(viewMenu_tableColumnsMenu_action_onHovered)
+
+viewMenu_detailPaneItems_action = viewMenu.addAction("&Detail pane items")
 
 viewMenu.addSeparator()
 
@@ -740,6 +742,28 @@ def detailPane_onLinkHovered(i_url):
     else:
         label_statusbar.setText(i_url)
 detailPane.linkHovered.connect(detailPane_onLinkHovered)
+
+# + + Layout {{{
+
+g_detailPaneItems = None
+def viewMenu_detailPaneItems_action_onTriggered():
+    global g_detailPaneItems
+    if g_detailPaneItems == None:
+        g_detailPaneItems = detail_pane.DetailPaneItems()
+        g_detailPaneItems.change.connect(detailPaneItems_onChange)
+        g_detailPaneItems.resize(400, 600)
+        g_detailPaneItems.move(QApplication.desktop().rect().center() - g_detailPaneItems.rect().center())
+    g_detailPaneItems.show()
+    g_detailPaneItems.activateWindow()
+viewMenu_detailPaneItems_action.triggered.connect(viewMenu_detailPaneItems_action_onTriggered)
+
+def detailPaneItems_onChange():
+    # If detail pane is open,
+    # repopulate it
+    if detailPane_height() > 0:
+        detailPane.populate(detail_pane.detailPane_currentGameId)
+
+# + + }}}
 
 # + }}}
 
