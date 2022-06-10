@@ -405,8 +405,7 @@ class DetailPane(QWidget):
 
                     # Else if it's a link to a screenshot,
                     # open it with the default application
-                    url = i_qUrl.toString()
-                    if url.startswith("screenshot:///"):
+                    elif url.startswith("screenshot:///"):
                         screenshotPath = url[14:]
                         screenshotPath = urllib.parse.unquote(screenshotPath)
                         frontend_utils.openInDefaultApplication(gamebase.screenshotPath_relativeToAbsolute(screenshotPath))
