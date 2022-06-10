@@ -440,7 +440,7 @@ def viewMenu_tableColumnsMenu_action_onHovered():
     viewMenu_tableColumnsMenu.context = None
 viewMenu_tableColumnsMenu_action.hovered.connect(viewMenu_tableColumnsMenu_action_onHovered)
 
-viewMenu_detailPaneItems_action = viewMenu.addAction("&Detail pane items")
+viewMenu_detailPaneItems_action = viewMenu.addAction("&Detail pane items...")
 
 viewMenu.addSeparator()
 
@@ -752,7 +752,7 @@ def viewMenu_detailPaneItems_action_onTriggered():
     if g_detailPaneItems == None:
         g_detailPaneItems = detail_pane.DetailPaneItems()
         g_detailPaneItems.change.connect(detailPaneItems_onChange)
-        g_detailPaneItems.resize(400, 600)
+        g_detailPaneItems.resize(600, 600)
         g_detailPaneItems.move(QApplication.desktop().rect().center() - g_detailPaneItems.rect().center())
     g_detailPaneItems.show()
     g_detailPaneItems.activateWindow()
@@ -853,7 +853,7 @@ else:
         { "id": "play",
           "width": 35,
         },
-        { "id": "pic",
+        { "id": "pic[0]",
           "width": 320,
         },
         { "id": "id",

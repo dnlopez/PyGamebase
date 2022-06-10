@@ -20,7 +20,7 @@ def importAdapter(i_adapterFilePath):
     adapter = importlib.import_module(os.path.splitext(os.path.basename(i_adapterFilePath))[0])
 
 
-# + Screenshot file/URL resolving {{{
+# + Screenshot/photo file/URL resolving {{{
 
 def normalizeDirPathFromAdapter(i_dirPath):
     """
@@ -41,7 +41,8 @@ def normalizeDirPathFromAdapter(i_dirPath):
         i_dirPath = i_dirPath[:-1]
     return i_dirPath
 
-def getScreenshotAbsolutePath(i_relativePath):
+# [was getScreenshotAbsolutePath()]
+def screenshotPath_relativeToAbsolute(i_relativePath):
     """
     Params:
      i_relativePath:
@@ -55,7 +56,22 @@ def getScreenshotAbsolutePath(i_relativePath):
         return None
     return normalizeDirPathFromAdapter(adapter.config_screenshotsBaseDirPath) + "/" + i_relativePath
 
-def getScreenshotUrl(i_relativePath):
+def photoPath_relativeToAbsolute(i_relativePath):
+    """
+    Params:
+     i_relativePath:
+      (str)
+
+    Returns:
+     Either (str)
+     or (None)
+    """
+    if not hasattr(adapter, "config_photosBaseDirPath"):
+        return None
+    return normalizeDirPathFromAdapter(adapter.config_screenshotsBaseDirPath) + "/" + i_relativePath
+
+# [was getScreenshotUrl()]
+def screenshotPath_relativeToUrl(i_relativePath):
     """
     Params:
      i_relativePath:
@@ -67,13 +83,19 @@ def getScreenshotUrl(i_relativePath):
     """
     i_relativePath = i_relativePath.replace(" ", "%20")
     i_relativePath = i_relativePath.replace("#", "%23")
-    screenshotAbsolutePath = getScreenshotAbsolutePath(i_relativePath)
+    screenshotAbsolutePath = screenshotPath_relativeToAbsolute(i_relativePath)
     if screenshotAbsolutePath == None:
         return None
-    return "file://" + getScreenshotAbsolutePath(i_relativePath)
+    return "file://" + screenshotPath_relativeToAbsolute(i_relativePath)
 
+# + }}}
 
-def dbRow_getScreenshotRelativePath(i_row):
+# + Get image paths {{{
+
+# + + Screenshots {{{
+
+# [was dbRow_getScreenshotRelativePath()
+def dbRow_firstScreenshotRelativePath(i_row):
     """
     Get the path of a game's first screenshot picture.
     This comes from the 'ScrnshotFilename' database field.
@@ -101,34 +123,8 @@ def dbRow_getScreenshotRelativePath(i_row):
     #return i_row.
     return screenshotRelativePath
 
-def dbRow_getTitleshotRelativePath(i_row):
-    """
-    Get the path of a game's titleshot picture.
-    This is alternative, equivalent terminology to the first screenshot.
-    This comes from the 'ScrnshotFilename' database field.
-
-    Params:
-     i_row:
-      (sqlite3.Row)
-      A row from the 'Games' table
-
-    Returns:
-     Either (str)
-      Path of image, relative to the 'Screenshots' folder.
-     or (None)
-      The database didn't specify a titleshot file path.
-    """
-    # If there's not already a cached value,
-    # compute and cache it now
-    if True:#(!i_row.titleshotRelativePath)
-        #i_row.
-        titleshotRelativePath = dbRow_getScreenshotRelativePath(i_row);
-
-    # Return it from cache
-    #return i_row.
-    return titleshotRelativePath;
-
-def dbRow_getSupplementaryScreenshotPaths(i_row, i_simulateCount=None):
+# [was dbRow_getSupplementaryScreenshotPaths()]
+def dbRow_supplementaryScreenshotRelativePaths(i_row, i_simulateCount=None):
     """
     Params:
      i_row:
@@ -147,7 +143,7 @@ def dbRow_getSupplementaryScreenshotPaths(i_row, i_simulateCount=None):
         supplementaryScreenshotPaths = []
 
         # Get titleshot relative path
-        titleshotRelativePath = dbRow_getTitleshotRelativePath(i_row)
+        titleshotRelativePath = dbRow_firstScreenshotRelativePath(i_row)
         if titleshotRelativePath != None:
             # Search disk for further image files similarly-named but with a numeric suffix
             screenshotStem, imageExtension = os.path.splitext(titleshotRelativePath)
@@ -156,7 +152,7 @@ def dbRow_getSupplementaryScreenshotPaths(i_row, i_simulateCount=None):
                 screenshotNo = 1
                 while True:
                     screenshotRelativePath = screenshotStem + "_" + str(screenshotNo) + imageExtension
-                    screenshotAbsolutePath = getScreenshotAbsolutePath(screenshotRelativePath)
+                    screenshotAbsolutePath = screenshotPath_relativeToAbsolute(screenshotRelativePath)
                     if screenshotAbsolutePath == None or not os.path.exists(screenshotAbsolutePath):
                         break
 
@@ -177,7 +173,77 @@ def dbRow_getSupplementaryScreenshotPaths(i_row, i_simulateCount=None):
     #return i_row.
     return supplementaryScreenshotPaths
 
-def dbRow_getPhotoRelativePath(i_row):
+def dbRow_allScreenshotRelativePaths(i_row):
+    """
+    Params:
+     i_row:
+      (sqlite3.Row)
+      A row from the 'Games' table
+
+    Returns:
+     (list of str)
+     Paths of images, relative to the 'Screenshots' folder.
+    """
+    rv = []
+    rv.append(dbRow_firstScreenshotRelativePath(i_row))
+    rv.extend(dbRow_supplementaryScreenshotRelativePaths(i_row))
+    return rv
+
+def dbRow_nthScreenshotRelativePath(i_row, i_picNo):
+    """
+    Params:
+     i_row:
+      (sqlite3.Row)
+      A row from the 'Games' table
+
+     i_picNo:
+      (int)
+      0: first picture
+
+    Returns:
+     Either (str)
+      Path of image, relative to the 'Screenshots' folder.
+     or (None)
+      There is no screenshot at this numeric position.
+    """
+    screenshotPath = None
+    if i_picNo == 0:
+        screenshotPath = dbRow_firstScreenshotRelativePath(i_row)
+    else:
+        screenshotPaths = dbRow_supplementaryScreenshotRelativePaths(i_row)
+        if i_picNo-1 < len(screenshotPaths):
+            screenshotPath = screenshotPaths[i_picNo-1]
+    return screenshotPath
+
+# [was dbRow_getNumberedScreenshotFullPath()]
+def dbRow_nthScreenshotFullPath(i_row, i_picNo):
+    """
+    Params:
+     i_row:
+      (sqlite3.Row)
+      A row from the 'Games' table
+
+     i_picNo:
+      (int)
+      0: first picture
+
+    Returns:
+     Either (str)
+      Absolute (resolved via the adapter's 'config_screenshotsBaseDirPath') path of image.
+     or (None)
+      There is no screenshot at this numeric position.
+    """
+    path = dbRow_nthScreenshotRelativePath(i_row, i_picNo)
+    if path != None:
+        path = screenshotPath_relativeToAbsolute(path)
+    return path
+
+# + + }}}
+
+# + + Photo {{{
+
+# [was dbRow_getPhotoRelativePath()]
+def dbRow_photoRelativePath(i_row):
     """
     Get the path of a game's (musician) photo.
     This comes from the 'Photo' database field.
@@ -205,39 +271,8 @@ def dbRow_getPhotoRelativePath(i_row):
     #return i_row.
     return photoRelativePath
 
-def dbRow_getNumberedScreenshotFullPath(i_row, i_picNo):
-    """
-    Params:
-     i_row:
-      (sqlite3.Row)
-      A row from the 'Games' table
-
-     i_picNo:
-      (int)
-      0: first picture
-
-    Returns:
-     Either (str)
-      Absolute (resolved via the adapter's 'config_screenshotsBaseDirPath') path of image.
-     or (None)
-      There is no screenshot at this numeric position.
-    """
-    screenshotPath = None
-    if i_picNo == 0:
-        screenshotPath = dbRow_getScreenshotRelativePath(i_row)
-    else:
-        screenshotPaths = dbRow_getSupplementaryScreenshotPaths(i_row)
-        if i_picNo-1 < len(screenshotPaths):
-            screenshotPath = screenshotPaths[i_picNo-1]
-    if screenshotPath == None:
-        return None
-
-    if not hasattr(adapter, "config_screenshotsBaseDirPath"):
-        return None
-
-    return normalizeDirPathFromAdapter(adapter.config_screenshotsBaseDirPath) + "/" + screenshotPath
-
-def dbRow_getPhotoFullPath(i_row):
+# [was dbRow_getPhotoFullPath()]
+def dbRow_photoFullPath(i_row):
     """
     Params:
      i_row:
@@ -250,13 +285,11 @@ def dbRow_getPhotoFullPath(i_row):
      or (None)
       There is no photo.
     """
-    photoPath = dbRow_getPhotoRelativePath(i_row)
-    if photoPath == None:
-        return None
+    path = dbRow_photoRelativePath(i_row)
+    if path != None:
+        path = photoPath_relativeToAbsolute(path)
+    return path
 
-    if not hasattr(adapter, "config_photosBaseDirPath"):
-        return None
-
-    return normalizeDirPathFromAdapter(adapter.config_photosBaseDirPath + "/" + photoPath)
+# + + }}}
 
 # + }}}

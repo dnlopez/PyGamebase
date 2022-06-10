@@ -22,7 +22,7 @@ detailPane_currentGameId = None
 
 g_detailPaneItems = [
     "gameName",
-    "screenshots",
+    "Screenshots (which aren't in table)",
     "related",
     "memoText",
     "comment",
@@ -33,7 +33,8 @@ g_detailPaneItems = [
 
 g_detailPaneItemsAvailable = set([
     "gameName",
-    "screenshots",
+    "Screenshots (all)",
+    "Screenshots (which aren't in table)",
     "related",
     "memoText",
     "comment",
@@ -151,15 +152,27 @@ class DetailPane(QWidget):
         html += '  <link rel="stylesheet" type="text/css" href="file://' + os.path.dirname(os.path.realpath(__file__)).replace("\\", "/") + '/styles/dark.css">\n'
 
         for item in g_detailPaneItems:
-            if item == "screenshots":
+            if item == "Screenshots (all)":
                 html += '  <div id="screenshots">\n'
 
-                # Insert screenshots after the first one
-                supplementaryScreenshotRelativePaths = gamebase.dbRow_getSupplementaryScreenshotPaths(gameRow)
-                for relativePath in supplementaryScreenshotRelativePaths:
-                    screenshotUrl = gamebase.getScreenshotUrl(relativePath)
+                allScreenshotRelativePaths = gamebase.dbRow_allScreenshotRelativePaths(gameRow)
+                for relativePath in allScreenshotRelativePaths:
+                    screenshotUrl = gamebase.screenshotPath_relativeToUrl(relativePath)
                     if screenshotUrl != None:
                         html += '    <a href="screenshot:///' + relativePath + '"><img src="' + screenshotUrl + '"></a>\n'
+
+                html += '  </div>'
+                html += '\n\n'
+
+            elif item == "Screenshots (which aren't in table)":
+                html += '  <div id="screenshots">\n'
+
+                allScreenshotRelativePaths = gamebase.dbRow_allScreenshotRelativePaths(gameRow)
+                for screenshotNo, relativePath in enumerate(allScreenshotRelativePaths):
+                    if columns.tableColumn_getById("pic[" + str(screenshotNo) + "]") == None:
+                        screenshotUrl = gamebase.screenshotPath_relativeToUrl(relativePath)
+                        if screenshotUrl != None:
+                            html += '    <a href="screenshot:///' + relativePath + '"><img src="' + screenshotUrl + '"></a>\n'
 
                 html += '  </div>'
                 html += '\n\n'
@@ -363,7 +376,7 @@ class DetailPane(QWidget):
                     if url.startswith("screenshot:///"):
                         screenshotPath = url[14:]
                         screenshotPath = urllib.parse.unquote(screenshotPath)
-                        frontend_utils.openInDefaultApplication(gamebase.getScreenshotAbsolutePath(screenshotPath))
+                        frontend_utils.openInDefaultApplication(gamebase.screenshotPath_relativeToAbsolute(screenshotPath))
 
                     # If it's a link to a game,
                     # select it in the table view

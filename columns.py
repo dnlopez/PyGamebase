@@ -75,7 +75,7 @@ g_usableColumns = [
         "textAlignment": "center",
     },
     {
-        "id": "pic",
+        "id": "pic[0]",
         "screenName": "Picture",
         "dbColumnNames": ["Games.ScrnshotFilename"],
         "dbTableNames": ["Games"],

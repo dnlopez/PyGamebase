@@ -177,19 +177,11 @@ class MyStyledItemDelegate(QStyledItemDelegate):
 
         column = columns.tableColumn_getByPos(i_index.column())
 
-        # Screenshot (unnumbered, old)
-        if column["id"] == "pic":
-            screenshotFullPath = gamebase.dbRow_getNumberedScreenshotFullPath(self.parent().dbRows[i_index.row()], 0)
-            if screenshotFullPath != None:
-                pixmap = QPixmap(screenshotFullPath)
-                destRect = danrectToQrect(fitLetterboxed(qrectToDanrect(pixmap.rect()), qrectToDanrect(i_option.rect)))
-                i_painter.drawPixmap(destRect, pixmap)
-
         # Screenshot
-        elif column["id"].startswith("pic[") and column["id"].endswith("]"):
+        if column["id"].startswith("pic[") and column["id"].endswith("]"):
             picNo = int(column["id"][4:-1])
 
-            screenshotFullPath = gamebase.dbRow_getNumberedScreenshotFullPath(self.parent().dbRows[i_index.row()], picNo)
+            screenshotFullPath = gamebase.dbRow_nthScreenshotFullPath(self.parent().dbRows[i_index.row()], picNo)
             if screenshotFullPath != None:
                 pixmap = QPixmap(screenshotFullPath)
                 destRect = danrectToQrect(fitLetterboxed(qrectToDanrect(pixmap.rect()), qrectToDanrect(i_option.rect)))
@@ -197,7 +189,7 @@ class MyStyledItemDelegate(QStyledItemDelegate):
 
         # Musician photo
         elif column["id"] == "musician_photo":
-            photoFullPath = gamebase.dbRow_getPhotoFullPath(self.parent().dbRows[i_index.row()])
+            photoFullPath = gamebase.dbRow_photoFullPath(self.parent().dbRows[i_index.row()])
             if photoFullPath != None:
                 pixmap = QPixmap(photoFullPath)
                 destRect = danrectToQrect(fitLetterboxed(qrectToDanrect(pixmap.rect()), qrectToDanrect(i_option.rect)))
@@ -251,7 +243,7 @@ class MyTableModel(QAbstractTableModel):
             elif i_role == Qt.TextAlignmentRole:
                 return Qt.AlignCenter
         # Screenshot
-        elif column["id"] == "pic" or (column["id"].startswith("pic[") and column["id"].endswith("]")):
+        elif column["id"].startswith("pic[") and column["id"].endswith("]"):
             # (Done via delegate)
             #if i_role == Qt.DecorationRole:
             #    screenshotPath = self.parent().dbRows[i_index.row()][self.parent().dbColumnNames.index("Games.ScrnshotFilename")]
@@ -680,26 +672,19 @@ class GameTableView(QTableView):
                 messageBox.resizeToContent()
                 messageBox.exec()
 
-        # Screenshot (unnumbered, old)
-        elif columnId == "pic":
-            rowNo = i_modelIndex.row()
-            screenshotFullPath = gamebase.dbRow_getNumberedScreenshotFullPath(self.dbRows[rowNo], 0)
-            if screenshotFullPath != None:
-                frontend_utils.openInDefaultApplication(screenshotFullPath)
-
         # Screenshot
-        elif columnId == "pic" or (columnId.startswith("pic[") and columnId.endswith("]")):
+        elif columnId.startswith("pic[") and columnId.endswith("]"):
             picNo = int(columnId[4:-1])
 
             rowNo = i_modelIndex.row()
-            screenshotFullPath = gamebase.dbRow_getNumberedScreenshotFullPath(self.dbRows[rowNo], picNo)
+            screenshotFullPath = gamebase.dbRow_nthScreenshotFullPath(self.dbRows[rowNo], picNo)
             if screenshotFullPath != None:
                 frontend_utils.openInDefaultApplication(screenshotFullPath)
 
         # Musician photo
         elif columnId == "musician_photo":
             rowNo = i_modelIndex.row()
-            photoFullPath = gamebase.dbRow_getPhotoFullPath(self.dbRows[rowNo])
+            photoFullPath = gamebase.dbRow_photoFullPath(self.dbRows[rowNo])
             if photoFullPath != None:
                 frontend_utils.openInDefaultApplication(photoFullPath)
 
