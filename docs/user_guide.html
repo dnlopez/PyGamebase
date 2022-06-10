@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<head>
+
+  <title>User guide | PyGamebase</title>
+
+  <style type="text/css">
+    body {
+        margin: 1em;
+        line-height: 1.3;
+    }
+
+    .code_identifier {
+        font-weight: bold;
+        font-family: Courier, monospace;
+    }
+    .code_type {
+        font-style: italic;
+        font-family: monospace;
+    }
+    .api_entry {
+        margin-left: 1em;
+        margin-top: 1em;
+        margin-bottom: 1em;
+    }
+    .api_entry .name {
+        background-color: #ccc;
+        padding: 4px;
+    }
+    .api_entry .name .code_identifier {
+        font-size: 150%;
+    }
+    .api_entry .description {
+        margin-left: 1em;
+    }
+    .api_function_params {
+        white-space: pre-wrap;
+    }
+  </style>
+
+</head>
+<body>
+
+<h2>Databases</h2>
+This program works with Gamebase databases in SQLite format. Since Gamebase databases are normally distributed in Microsoft Access (.mdb) format, you'll need to convert it. The script utility_scripts/mdb_to_sqlite.py is provided to help do this.
+
+
+<h2>Gamebase adapter files</h2>
+
+<p>A Gamebase adapter file is a Python module that connects the frontend up to a particular Gamebase database and its associated media files.
+
+<p>The frontend requires such a file to function. You may pass its path on the command line as an argument, [else you will be shown a file selector to locate one].
+
+<p>For a description of what the frontend expects to find in this module, helper facilities that are available for use in such modules and other details/[help for writing one], see <a href="gamebase_adapter_files.html">Gamebase adapter files</a>.
+
+<h2>Startup</h2>
+
+<h2>The game table</h2>
+
+<h3>Filtering</h3>
+<p>Beneath each column heading you can type some text in order to show only those games that contain the given text somewhere in that column.
+
+<p>The capabilities of these filter boxes are based on <a href="https://github.com/sqlitebrowser/sqlitebrowser/wiki/Using-the-Filters">sqlitebrowser</a>. You can use all of the same "Supported operators" and "Range Operators" described there. You can also use regular expressions.
+
+<p>If filter boxes are filled in for multiple columns on the row, all of the given conditions must be true together for the resulting games (AND logic). Click the "+" button beyond the last column to add another row of filter boxes on which to specify an alternative set of conditions that may themselves be true together to show additional games (OR logic).
+
+<p>Right-click a table cell and follow "Use in filter" for shortcuts to add the cell text to a filter.
+
+<p>Select the menu command "Filter -> Edit as SQL" to edit the SQL 'WHERE' expression directly.
+
+<p>Filters are remembered in a web browser-like history during a session. Click the back/forward toolbar buttons or "Filter -> Go back / Go forward" options to navigate it.
+
+<h3>Showing and hiding columns</h3>
+<p>Right-click on a column heading or open the menu "View -> Table columns" to select which columns to show.
+
+<h3>Sorting columns</h3>
+<p>Click on a column heading to sort by that column. Click again to reverse the sort order. Ctrl+click on other columns to sort successively by those columns after the first.
+
+<h3>Resizing columns and rows</h3>
+<p>Drag the right-hand vertical edge of a column heading to resize that column. This also works for columns which do not have visible headings - just point the mouse at where the heading's edge would be and commence dragging anyway.
+
+<p>The table rows also can be resized by dragging a horizontal row boundary.
+
+<h3>Reordering columns</h3>
+<p>Shift+drag a column heading sideways to move it to a different place in the column order.
+
+<h3>Special columns</h3>
+<p>The "Start game (▶)" column, which appears as a right-pointing triangle, starts a game (ie. it runs the runGame() function in the adapter file).
+
+<p>The "Start music (M)" column, which appears as a letter 'M', starts a game's music (ie. it runs the runMusic() function in the adapter file).
+
+<p>The "Show detail (+)" column, which appears as a plus sign, opens up the detail pane. Double-click the cell, or press Return/Enter a second time, to give keyboard focus to the detail pane.
+
+
+<h2>The detail pane</h2>
+<p>Clicking an extra will start it up (ie. will run the runExtra() function in the adapter file).
+
+<p>If the detail pane has keyboard focus, press Esc to move keyboard focus to the game table. Press Esc again to close the detail pane. F12 will also toggle the detail pane open and closed.
+
+<p>Select the menu command "View -> Detail pane items" for a panel to select what information to show and in what order.
+
+<h2>Appearance</h2>
+<p>Like most Qt applications, the frontend's appearance can be customized with <a href="https://doc.qt.io/qt-5/stylesheet-reference.html">Qt Style Sheets</a>. Specify your .qss file upon startup using the --stylesheet command-line option, or make it the default in the preferences (menu command "Edit -> Preferences", tab "Style"). 
+
+<p>The game detail pane is a Qt WebEngine view, ie. an embedded Chromium instance, and so is styled with ordinary CSS. The .css file used can be set in the preferences. The items in the detail pane have 'id' attributes for use in styling. Right-click the page and select "View page source" to find out what they are.
+
+<p>A 'dark mode' stylesheet pair is supplied in the 'styles' folder, named 'dark.qss' and 'dark.css'. 
+
+</body>
+</html>

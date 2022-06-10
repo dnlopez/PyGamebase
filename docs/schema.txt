@@ -1,0 +1,602 @@
+Extracted from GBC_v18.mdb with mdb-schema
+
+tables
+ Artists
+  fields
+   [AR_Id]
+    type
+     Long Integer
+   [Artist]
+    type
+     Text (510)
+
+ Config
+  fields
+   [MajorVersion]
+    type
+     Long Integer NOT NULL
+    comment
+     Database Major Version
+   [MinorVersion]
+    type
+     Long Integer
+    comment
+     Database Minor Version
+   [OfficialUpdate]
+    type
+     Long Integer NOT NULL
+    comment
+     Official Database Update Number
+   [FirstLoadMessage]
+    type
+     Memo/Hyperlink (255)
+   [FirstLoadGemusAsk]
+    type
+     Long Integer
+   [DatabaseName]
+    type
+     Text (510)
+   [GameBaseWindowTitle]
+    type
+     Text (510)
+
+ Crackers
+  fields
+   [CR_Id]
+    type
+     Long Integer
+    comment
+     Unique ID
+   [Cracker]
+    type
+     Text (510)
+
+ Developers
+  fields
+   [DE_Id]
+    type
+     Long Integer
+   [Developer]
+    type
+     Text (510)
+
+ Difficulty
+  fields
+   [DI_Id]
+    type
+     Long Integer
+    comment
+     Unique ID
+   [Difficulty]
+    type
+     Text (510)
+
+ Extras
+  fields
+   [EX_Id]
+    type
+     Long Integer
+   [GA_Id]
+    type
+     Long Integer NOT NULL
+   [DisplayOrder]
+    type
+     Long Integer NOT NULL
+   [Type]
+    type
+     Long Integer NOT NULL
+   [Name]
+    type
+     Text (510) NOT NULL
+   [Path]
+    type
+     Memo/Hyperlink (255) NOT NULL
+   [EA]
+    type
+     Boolean NOT NULL
+   [Data]
+    type
+     Memo/Hyperlink (255)
+   [FileToRun]
+    type
+     Memo/Hyperlink (255)
+
+ Games
+  fields
+   [GA_Id]
+    type
+     Long Integer
+    comment
+     Unique ID
+   [Name]
+    type
+     Text (510)
+    comment
+     Game Name
+   [YE_Id]
+    type
+     Integer
+    comment
+     Year ID (Link to Years table)
+   [Filename]
+    type
+     Memo/Hyperlink (255)
+    comment
+     Game Filename within Game Paths
+   [FileToRun]
+    type
+     Memo/Hyperlink (255)
+    comment
+     File to Run within Filename if Filename is an archive containing more than one compatible emulator file
+   [FilenameIndex]
+    type
+     Long Integer
+    comment
+     Image Index inside Game file
+   [ScrnshotFilename]
+    type
+     Memo/Hyperlink (255)
+    comment
+     Screenshot Filename (1st screenshot) within Screenshot Paths
+   [MU_Id]
+    type
+     Long Integer
+    comment
+     Musician ID (Link to Musicians table)
+   [GE_Id]
+    type
+     Long Integer
+    comment
+     Genre ID (Link to Genres table)
+   [PU_Id]
+    type
+     Long Integer
+    comment
+     Publisher ID (Link to Publishers table)
+   [DI_Id]
+    type
+     Byte
+    comment
+     Difficulty ID (Link to Dificulty table)
+   [CR_Id]
+    type
+     Long Integer
+    comment
+     Cracker ID (Link to Crackers table)
+   [SidFilename]
+    type
+     Memo/Hyperlink (255)
+    comment
+     Music Filename within Music Path
+   [DateLastPlayed]
+    type
+     Text (100)
+    comment
+     Date the game was last run through GB64 (in dd-mm-yyyy format)
+   [TimesPlayed]
+    type
+     Long Integer NOT NULL
+    comment
+     Number of times the game was played through GB64
+   [CCode]
+    type
+     Long Integer
+    comment
+     Determines the Icon used in the GB64 list (1=GameAndSid, 2=JustGame, 3=JustSid, 4=NoGameOrSid)
+   [HighScore]
+    type
+     Text (60)
+    comment
+     Personal user high-score
+   [FA]
+    type
+     Boolean NOT NULL
+    comment
+     Game File exists in Game Paths flag
+   [SA]
+    type
+     Boolean NOT NULL
+    comment
+     Music File exists in Music Path flag
+   [Fav]
+    type
+     Boolean NOT NULL
+    comment
+     Game is a Favourite flag
+   [PR_Id]
+    type
+     Long Integer
+    comment
+     Programmer ID (Link to Programmers table)
+   [LA_Id]
+    type
+     Long Integer
+    comment
+     Language ID (Link to Languages table)
+   [Extras]
+    type
+     Boolean NOT NULL
+    comment
+     Game has Extra(s) flag
+   [Classic]
+    type
+     Boolean NOT NULL
+    comment
+     Game is a classic flag
+   [Rating]
+    type
+     Long Integer
+    comment
+     Personal User Rating for Game (0=Unknown, 1=Terrible, 2=Poor, 3=Average, 4=Quite Good, 5=Very Good)
+   [V_PalNTSC]
+    type
+     Long Integer
+    comment
+     Game version is PAL, NTSC or BOTH (0=PAL, 1=BOTH, 2=NTSC, 3=PAL[+NTSC?])
+   [V_Length]
+    type
+     Long Integer
+    comment
+     Length of Game version (in blocks or disks  - a minus value indicates disks)
+   [V_Trainers]
+    type
+     Long Integer
+    comment
+     Game version's number of trainers (-1=Unknown)
+   [PlayersFrom]
+    type
+     Long Integer
+    comment
+     Minimum number of players the game supports (-1=Unknown)
+   [PlayersTo]
+    type
+     Long Integer
+    comment
+     Maximum number of players the game supports (-1=Unknown)
+   [PlayersSim]
+    type
+     Boolean NOT NULL
+    comment
+     The Game can be played by more than one player simultaneously
+   [Adult]
+    type
+     Boolean NOT NULL
+    comment
+     The game has adult content
+   [MemoText]
+    type
+     Memo/Hyperlink (255)
+    comment
+     User Notes field
+   [Prequel]
+    type
+     Long Integer NOT NULL
+    comment
+     Link to GA_ID of prequel game (0 if no prequel)
+   [Sequel]
+    type
+     Long Integer NOT NULL
+    comment
+     Link to GA_ID of sequel game (0 if no sequel)
+   [Related]
+    type
+     Long Integer NOT NULL
+    comment
+     Link to GA_ID of related game (0 if no related game)
+   [Control]
+    type
+     Long Integer
+    comment
+     Game's control method (0=JoyPort2, 1=JoyPort1, 2=Keyboard, 3=PaddlePort2, 4=PaddlePort1, 5=Mouse, 6=LightPen, 7=KoalaPad, 8=LightGun
+   [CRC]
+    type
+     Text (64)
+    comment
+     The Game File's CRC-32 value
+   [Filesize]
+    type
+     Long Integer
+    comment
+     The Game File's Size in Bytes
+   [Version]
+    type
+     Long Integer
+   [Gemus]
+    type
+     Memo/Hyperlink (255)
+   [V_LengthType]
+    type
+     Long Integer
+   [Comment]
+    type
+     Text (510)
+   [V_Comment]
+    type
+     Text (510)
+   [V_LoadingScreen]
+    type
+     Long Integer
+   [V_HighScoreSaver]
+    type
+     Long Integer
+   [V_IncludedDocs]
+    type
+     Long Integer
+   [V_TrueDriveEmu]
+    type
+     Long Integer
+   [AR_Id]
+    type
+     Long Integer
+   [DE_Id]
+    type
+     Long Integer
+   [LI_Id]
+    type
+     Long Integer
+   [RA_Id]
+    type
+     Long Integer
+   [WebLink_Name]
+    type
+     Text (510)
+   [WebLink_URL]
+    type
+     Memo/Hyperlink (255)
+   [V_WebLink_Name]
+    type
+     Text (510)
+   [V_WebLink_URL]
+    type
+     Memo/Hyperlink (255)
+   [V_TitleScreen]
+    type
+     Long Integer
+   [V_Playable]
+    type
+     Long Integer
+   [V_Original]
+    type
+     Long Integer
+   [CloneOf]
+    type
+     Long Integer
+   [ReviewRating]
+    type
+     Long Integer
+
+ Genres
+  fields
+   [GE_Id]
+    type
+     Long Integer
+    comment
+     Unique ID
+   [PG_Id]
+    type
+     Long Integer NOT NULL
+    comment
+     Parent Genre ID (Link to PGenres table)
+   [Genre]
+    type
+     Text (510)
+
+ Languages
+  fields
+   [LA_Id]
+    type
+     Long Integer
+    comment
+     Unique ID
+   [Language]
+    type
+     Text (510)
+
+ Licenses
+  fields
+   [LI_Id]
+    type
+     Long Integer
+   [License]
+    type
+     Text (510)
+
+ Music
+  comment
+   Music with no games
+  fields
+   [GA_Id]
+    type
+     Long Integer
+   [Name]
+    type
+     Text (510)
+   [Filename]
+    type
+     Memo/Hyperlink (255)
+   [MU_Id]
+    type
+     Long Integer
+   [SFav]
+    type
+     Boolean NOT NULL
+   [SA]
+    type
+     Boolean NOT NULL
+   [Adult]
+    type
+     Boolean NOT NULL
+
+ Musicians
+  fields
+   [MU_Id]
+    type
+     Long Integer
+    comment
+     Unique ID
+   [Photo]
+    type
+     Text (510)
+    comment
+     Musician Photo within Photo Path
+   [Musician]
+    type
+     Text (510)
+   [Grp]
+    type
+     Text (510)
+   [Nick]
+    type
+     Text (510)
+
+ Programmers
+  fields
+   [PR_Id]
+    type
+     Long Integer
+    comment
+     Unique ID
+   [Programmer]
+    type
+     Text (510)
+
+ Publishers
+  fields
+   [PU_Id]
+    type
+     Long Integer
+    comment
+     Unique ID
+   [Publisher]
+    type
+     Text (510)
+
+ Rarities
+  fields
+   [RA_Id]
+    type
+     Long Integer
+   [Rarity]
+    type
+     Text (510)
+
+ ViewData
+  fields
+   [ID]
+    type
+     Long Integer
+    comment
+     Unique ID
+   [FilterMode]
+    type
+     Long Integer
+    comment
+     0=AND, 1=OR
+   [Title]
+    type
+     Text (256)
+    comment
+     The View's Title
+   [FilterCount]
+    type
+     Long Integer
+    comment
+     Number of filters in the [View Filters] table for this View
+   [IncludeMusicTable]
+    type
+     Long Integer
+    comment
+     Tables to include in View (0=Games Table Only, 1=Music Table Only, 2=Both Tables)
+   [ListViewType]
+    type
+     Long Integer
+    comment
+     View type of the Game/Sid List (2=List [h-scrolling], 3=Details [v-scrolling with possible 2nd column])
+   [SortColumn]
+    type
+     Long Integer
+    comment
+     The column in the view to sort by
+   [SortOrder]
+    type
+     Long Integer
+    comment
+     The order (asc/desc) to sort by
+   [SelectedItem]
+    type
+     Text (32)
+    comment
+     Key of the selected item (format is "G" + game's GA_ID... e.g. "G1234" --- if none selected this is set to "INVALID"
+   [ExtraColumns]
+    type
+     Text (510)
+   [Ordinal]
+    type
+     Long Integer
+
+ ViewFilters
+  fields
+   [ID]
+    type
+     Long Integer
+    comment
+     View ID (Link to the ViewData table's ID field) that the filter corresponds to
+   [FieldTable]
+    type
+     Text (256)
+    comment
+     Table of Filter-Field
+   [FieldName]
+    type
+     Text (256)
+    comment
+     Filter-Field name
+   [Operator]
+    type
+     Long Integer
+    comment
+     Comparison operator for filter
+   [ClauseType]
+    type
+     Long Integer
+    comment
+     Type of comparison for filter
+   [ClauseData]
+    type
+     Text (128)
+    comment
+     data for comparison
+   [MusicFieldName]
+    type
+     Text (256)
+    comment
+     Field in Music Table for filter
+   [MusicFieldTable]
+    type
+     Text (256)
+    comment
+     Only filled if Music table is to be included in filter ("Music")
+
+ PGenres
+  fields
+   [PG_Id]
+    type
+     Long Integer
+    comment
+     Unique ID
+   [ParentGenre]
+    type
+     Text (510)
+
+ Years
+  fields
+   [YE_Id]
+    type
+     Long Integer
+    comment
+     Unique ID
+   [Year]
+    type
+     Long Integer
+    comment
+     The Year (9999 = Unknown year)

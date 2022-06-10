@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<head>
+
+  <title>Gamebase adapter files | PyGamebase</title>
+
+  <style type="text/css">
+    body {
+        margin: 1em;
+        line-height: 1.3;
+    }
+
+    .code_identifier {
+        font-weight: bold;
+        font-family: Courier, monospace;
+    }
+    .code_type {
+        color: #600;
+        font-style: italic;
+        font-family: monospace;
+    }
+    .api_entry {
+        margin-left: 1em;
+        margin-top: 1em;
+        margin-bottom: 1em;
+    }
+    .api_entry > .name {
+        padding: 3px 11px;
+        display: inline-block;
+    }
+    .api_entry > .variableName {
+        background-color: #ccf;
+    }
+    .api_entry > .functionName {
+        background-color: #fcc;
+    }
+    .api_entry .name .code_identifier {
+        font-size: 150%;
+    }
+    .api_entry > .description {
+        margin-left: 1em;
+    }
+    .api_function_params {
+        margin-top: 0.5em;
+        margin-left: 1em;
+    }
+    .api_function_params .param {
+        margin-left: 1em;
+    }
+    .api_function_params .param .name {
+        display: block;
+        color: #060;
+        font-weight: bold;
+        font-family: Courier, monospace;
+    }
+    .api_function_params .param .description {
+        margin-left: 1em;
+    }
+    .api_function_params .param .type {
+        color: #600;
+        font-style: italic;
+        font-family: Courier, monospace;
+    }
+
+    .code_identifier {
+        font-family: Courier, monospace;
+    }
+    .code_block {
+        font-family: Courier, monospace;
+        white-space: pre
+    }
+  </style>
+
+</head>
+<body>
+
+<h2>Gamebase adapter files</h2>
+
+<p>A Gamebase adapter file is a Python module (file extension ".py") that connects the frontend up to a particular Gamebase database and its associated media files.
+
+<p>The frontend will look in this module for the following things (only '<span class="code_identifier">config_databaseFilePath</span>' is strictly required but the more you can specify, the better the experience will be):
+
+  <div class="api_entry">
+    <div class="name variableName">
+      variable: <span class="code_identifier">config_title</span>
+    </div>
+    <span class="code_type">(str)</span>
+    <div class="description">
+      <p>A descriptive name for the Gamebase which will be shown in the titlebar of the window.
+      <p>This is optional. If omitted the path of the adapter file itself will be shown instead.
+      <div class="examples">
+        eg.<br>
+        &nbsp;"Commodore C64 (Gamebase64 v18)"<br>
+        &nbsp;"Sinclair ZX Spectrum (Speccymania v5)"<br>
+      </div>
+    </div>
+  </div>
+
+  <div class="api_entry">
+    <div class="name variableName">
+      variable: <span class="code_identifier">config_databaseFilePath</span>
+    </div>
+    <span class="code_type">(str)</span>
+    <div class="description">
+      <p>Path of the SQLite format Gamebase database file.
+      <p>This is required. The frontend won't run without it.
+      <div class="examples">
+        eg.<br>
+        &nbsp;"/home/daniel/gamebases/GBC_v18/GBC_v18.sqlite"<br>
+        &nbsp;"/home/daniel/gamebases/SpeccyMania v5/Sinclair ZX Spectrum.sqlite"<br>
+      </div>
+    </div>
+  </div>
+
+  <div class="api_entry">
+    <div class="name variableName">
+      variable: <span class="code_identifier">config_screenshotsBaseDirPath</span>
+    </div>
+    <span class="code_type">(str)</span>
+    <div class="description">
+      <p>Path of the folder that contains the screenshots.
+      <p>This is optional. If omitted then the frontend won't show any screenshots.
+      <div class="examples">
+        eg.<br>
+        &nbsp;"/home/daniel/gamebases/GBC_v18/Screenshots"<br>
+        &nbsp;"/home/daniel/gamebases/SpeccyMania v5/Screenshots"<br>
+      </div>
+    </div>
+  </div>
+
+  <div class="api_entry">
+    <div class="name variableName">
+      variable: <span class="code_identifier">config_photosBaseDirPath</span>
+    </div>
+    <span class="code_type">(str)</span>
+    <div class="description">
+      <p>Path of the folder that contains the photos (of musicians).
+      <p>This is optional. If omitted then the frontend won't show any photos.
+      <div class="examples">
+        eg.<br>
+        &nbsp;"/home/daniel/gamebases/GBC_v18/Photos"<br>
+        &nbsp;"/home/daniel/gamebases/SpeccyMania v5/Musician Photos"<br>
+      </div>
+    </div>
+  </div>
+
+  <div class="api_entry">
+    <div class="name variableName">
+      variable: <span class="code_identifier">config_musicBaseDirPath</span>
+    </div>
+    <span class="code_type">(str)</span>
+    <div class="description">
+      <p>Path of the folder that contains music.
+      <p>This is optional. In fact, it's not currently used by the frontend at all, but since the converter program may be given this folder to fix paths in it, it then will write it into the template adapter file under this variable name, in case it might be useful to a future version of the frontend, and for local use within the adapter's runMusic() function.
+      <div class="examples">
+        eg.<br>
+        &nbsp;"/home/daniel/gamebases/GBC_v18/C64Music"<br>
+        &nbsp;"/home/daniel/gamebases/SpeccyMania v5/Music"<br>
+      </div>
+    </div>
+  </div>
+
+  <div class="api_entry">
+    <div class="name variableName">
+      variable: <span class="code_identifier">config_extrasBaseDirPath</span>
+    </div>
+    <span class="code_type">(str)</span>
+    <div class="description">
+      <p>Path of the folder that contains the extras.
+      <p>This is optional. If omitted then the frontend won't display images of extras in its game detail pane (though it will still display their names from the database).
+      <div class="examples">
+        eg.<br>
+        &nbsp;"/home/daniel/gamebases/GBC_v18/Extras"<br>
+        &nbsp;"/home/daniel/gamebases/SpeccyMania v5/Extras"<br>
+      </div>
+    </div>
+  </div>
+
+  <div class="api_entry">
+    <div class="name functionName">
+      function: <span class="code_identifier">runGame()</span>
+    </div>
+    <div class="description">
+      <p>The frontend will call this function when you try to launch a game.
+        <p>The game file path is passed as an argument, and code in this function should go ahead and launch the emulator/game itself (which might be done with Python's standard 'subprocess' library, or the helpers in the 'utils' module).
+    </div>
+
+    <div class="api_function_params">
+      Params:
+      <div class="param">
+        <span class="name">gamePath:</span>
+        <div class="description">
+          <span class="type">(str)</span><br>
+          This comes from the 'Filename' field of the 'Games' table record.<br>
+          It is a path relative to the 'Games' folder.<br>
+          It is typically a zip file, though sometimes it may also (as seen in some Gamebases where the games are very small ROMs, eg. Atari 2600) just be the game file itself.
+        </div>
+      </div>
+      <div class="param">
+        <span class="name">fileToRun:</span>
+        <div class="description">
+          Either <span class="type">(str)</span> or <span class="type">(None)</span><br>
+          This comes from the 'FileToRun' field of the 'Games' table record.<br>
+          If present it will be the path of a file inside the zip file.
+        </div>
+      </div>
+      <div class="param">
+        <span class="name">gameInfo:</span>
+        <div class="description">
+          <span class="type">(dict)</span><br>
+          Supplementary information about the game.<br>
+          'Games' table record.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="api_entry">
+    <div class="name functionName">
+      function: <span class="code_identifier">runExtra()</span>
+    </div>
+    <div class="description">
+      <p>The frontend will call this function when you try to launch an extra.
+      <p>The extra file path is passed as an argument, and code in this function should go ahead and launch it in whatever way is appropriate (eg. opening an image viewer for an image, a PDF viewer for a PDF, or running it in an emulator as a game).
+    </div>
+
+    <div class="api_function_params">
+      Params:
+      <div class="param">
+        <span class="name">extraPath:</span>
+        <div class="description">
+          <span class="type">(str)</span><br>
+          This comes from the 'Path' field of the 'Extras' table record.<br>
+          It is a path relative to the 'Extras' folder.<br>
+          The file may typically be one of many types: a picture, text or PDF, sound files, or game files (zipped or unzipped).
+        </div>
+      </div>
+      <div class="param">
+        <span class="name">extraInfo:</span>
+        <div class="description">
+          <span class="type">(dict)</span><br>
+          Supplementary information about the extra.<br>
+          'Extras' table record.
+        </div>
+      </div>
+      <div class="param">
+        <span class="name">gameInfo:</span>
+        <div class="description">
+          <span class="type">(dict)</span><br>
+          Supplementary information about the game.<br>
+          'Games' table record.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="api_entry">
+    <div class="name functionName">
+      function: <span class="code_identifier">runMusic()</span>
+    </div>
+    <div class="description">
+      <p>The frontend will call this function when you try to launch a piece of music.
+      <p>The music file path is passed as an argument, and code in this function should go ahead and launch the music player itself (which might be done with Python's standard 'subprocess' library, or the helpers in the 'utils' module).
+    </div>
+
+    <div class="api_function_params">
+      Params:
+      <div class="param">
+        <span class="name">musicPath:</span>
+        <div class="description">
+          <span class="type">(str)</span><br>
+          This comes from the 'SidFilename' field of the 'Games' table record.<br>
+          It is a path relative to the 'Music' folder.<br>
+          The file may be one of many types: (for the C64) a SID file, (for the ZX Spectrum) an AY file, etc.
+        </div>
+      </div>
+      <div class="param">
+        <span class="name">gameInfo:</span>
+        <div class="description">
+          <span class="type">(dict)</span><br>
+          Supplementary information about the game.<br>
+          'Games' table record.
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+
+<h2>Helper functions</h2>
+<p>While you have the general capabilities of Python at your disposal, some specific helpers for common adapter file activities are also provided by the application in the 'utils' module.
+
+<p>For detailed usage information, see the docstrings either via Python's help() or by reading utils.py.
+
+<h3>Starting subprocesses</h3>
+
+<p>
+The recommended way to start an emulator is with <span class="code_identifier">utils.directStartTask()</span> or <span class="code_identifier">utils.shellStartTask()</span>. The first executes the command directly; the second launches it via the system shell, in which case you can rely on the system PATH, use environment variables, and so on. Both functions accept either a string, being a normal command line - ie. the command name followed by its whitespace-separated arguments (within which spaces and other special characters may need to be quoted or escaped) - or a list of strings, in which case the first element is the command and the remaining elements are its arguments (which whatever they contain will be passed to the subprocess verbatim, without the need to consider further argument splitting or quoting). The function returns immediately; the adapter script continues on while the launched program also runs. However any console output from the launched program is captured and can be viewed in the frontend's "subprocess log" (menu command "File -> Show subprocess output"). This can be useful if something goes wrong with the emulator and if PyGamebase hadn't been launched from a terminal (where subprocess output is also echoed in the normal way), you wouldn't have be able to see the emulator's messages.
+
+<p>
+If you won't need to see the launched program's messages in the frontend - perhaps you are shelling out to perform a simple, short-lived task like copying a file (though Python does also have internal libraries for those things) - you may use <span class="code_identifier">utils.directStartProcess()</span> or <span class="code_identifier">utils.shellStartProcess()</span>. The subprocess output won't be collected for the frontend's subprocess log. You can still see it if PyGamebase was launched from a terminal. You may also use <span class="code_identifier">utils.directRunProcess()</span> or <span class="code_identifier">utils.shellRunProcess()</span> - these functions wait until the subprocess has finished, then return the subprocess exit code and output to your adapter script.
+
+<h3>Gemus</h3>
+
+<p>
+Gamebase databases have a field called 'Gemus' with &lt;key&gt;=&lt;value&gt; data pairs to describe technical details that may be needed to get a particular game to run (eg. "rom=swe" in Gamebase64 to indicate the game should be run with a Swedish ROM, or "memory=8k" in Gamebase VIC-20 specifying the required memory configuration). While the GEMUS scripting language is effectively replaced by Python in PyGamebase, the Gemus database field is still accessible (via '<span class="code_identifier">gameInfo["Gemus"]</span>' in your runGame() or runExtra() function) and <span class="code_identifier">utils.Gemus</span> is a helper class for querying its contents. You might construct:
+
+<p class="code_block">gemus = utils.Gemus(gameInfo["Gemus"])</p>
+
+<p>
+and then call methods such as:
+
+<p class="code_block">gemus.get("memory")
+if gemus.fieldIs("rom", "swe"):
+if gemus.fieldIsOneOf("ram", ["512k", "1mb", "2mb", "4mb"]):</p>
+
+
+<h2>Examples</h2>
+
+<p>The adapter files created by the converter program are very basic. You will find some more developed examples in the <a href="../example_adapter_files">example_adapter_files</a> directory. They are tailored to my own system so don't expect them to work entirely without modification; at the least you will have to modify some paths.
+
+<p>MSX.py features an extensive GEMUS script for choosing machine models, extensions and so on converted to Python.
+
+<p>Various files (eg. Apple 2.py) include a function named '<span class="code_identifier">runGameWithMame()</span>' which shows the use of <span class="code_identifier">utils.allocateGameFilesToMameMediaSlots()</span> for dynamically assigning game files to the media options that MAME offers (eg. -cassette, -floppydisk1, -floppydisk2, ...) for a particular machine. The '<span class="code_identifier">availableDevices</span>' lists in this function were converted by hand from the output of "mame apple2e -listmedia" and "mame apple2gs -listmedia". Alternatively, the function <span class="code_identifier">utils.getMameMediaSlots()</span> can generate these on the fly (see amiga.py), but in spawning an extra MAME process, it will make your games slower to start.
+
+<p>Many files use the <span class="code_identifier">utils.popupMenu()</span> function to prompt the user with a menu in the frontend, typically for choosing an emulator.
+
+<p>keyboard typing
+
+</body>
+</html>
