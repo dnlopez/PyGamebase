@@ -96,7 +96,7 @@ class LineEditWithClearButton(QFrame):
          i_text:
           (str)
         """
-        textChanged = i_text == self.lineEdit.text()
+        textChanged = i_text != self.lineEdit.text()
         self.lineEdit.setText(i_text)
         if textChanged:
             self.lineEdit_onTextEdited(i_text)
