@@ -15,7 +15,7 @@ import qt_extras
 import db
 import gamebase
 import columns
-
+import frontend_utils
 
 
 detailPane_currentGameId = None
@@ -356,6 +356,15 @@ class DetailPane(QWidget):
                             messageBox.setInformativeText(traceback.format_exc())
                             messageBox.resizeToContent()
                             messageBox.exec()
+
+                    # Else if it's a link to a screenshot,
+                    # open it with the default application
+                    url = i_qUrl.toString()
+                    if url.startswith("screenshot:///"):
+                        screenshotPath = url[14:]
+                        screenshotPath = urllib.parse.unquote(screenshotPath)
+                        frontend_utils.openInDefaultApplication(gamebase.getScreenshotAbsolutePath(screenshotPath))
+
                     # If it's a link to a game,
                     # select it in the table view
                     elif url.startswith("game:///"):
@@ -363,6 +372,7 @@ class DetailPane(QWidget):
                         gameId = urllib.parse.unquote(gameId)
                         gameId = int(gameId)
                         tableView.selectGameWithId(gameId)
+
                     # Else if it's a normal link,
                     # open it with the default browser
                     else:
