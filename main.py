@@ -359,13 +359,17 @@ filterMenu_filterFormat_copySql_action = filterMenu.addAction("C&opy SQL")
 viewMenu = menuBar.addMenu("&View")
 viewMenu_toolbar_action = viewMenu.addAction("&Toolbar")
 viewMenu_toolbar_action.setCheckable(True)
-viewMenu_toolbar_action.setChecked(True)
+if not "toolbarVisible" in g_frontendSettings:
+    g_frontendSettings["toolbarVisible"] = True
+viewMenu_toolbar_action.setChecked(g_frontendSettings["toolbarVisible"])
 def viewMenu_toolbar_onTriggered(i_checked):
     toolbar.setVisible(i_checked)
 viewMenu_toolbar_action.triggered.connect(viewMenu_toolbar_onTriggered)
 
 viewMenu.addSeparator()
 
+if not "splitHorizontally" in g_frontendSettings:
+    g_frontendSettings["splitHorizontally"] = False
 def splitter_setHorizontal():
     splitter.setOrientation(Qt.Horizontal)
 def splitter_setVertical():
@@ -374,10 +378,11 @@ def splitter_setVertical():
 #viewMenu_toolbar_action = viewMenu.addMenu(viewMenu_splitMenu)
 viewMenu_verticalAction = viewMenu.addAction("Split &vertically")
 viewMenu_verticalAction.setCheckable(True)
-viewMenu_verticalAction.setChecked(True)
+viewMenu_verticalAction.setChecked(not g_frontendSettings["splitHorizontally"])
 viewMenu_verticalAction.triggered.connect(splitter_setVertical)
 viewMenu_horizontalAction = viewMenu.addAction("Split &horizontally")
 viewMenu_horizontalAction.setCheckable(True)
+viewMenu_horizontalAction.setChecked(g_frontendSettings["splitHorizontally"])
 viewMenu_horizontalAction.triggered.connect(splitter_setHorizontal)
 actionGroup = QActionGroup(filterMenu)
 actionGroup.setExclusive(True)
@@ -447,19 +452,28 @@ viewMenu.addSeparator()
 viewMenu_saveLayout = viewMenu.addAction("&Save layout")
 def viewMenu_saveLayout_onTriggered():
     configColumns = []
-    for tableColumn in g_tableColumns:
+    for tableColumn in columns.tableColumn_getBySlice():
         configColumns.append({
             "id": tableColumn["id"],
             "width": tableColumn["width"]
         })
 
     configDict = {
-        "tableColumns": configColumns
+        "tableColumns": configColumns,
+        "toolbarVisible": toolbar.isVisible(),
+        "splitHorizontally": splitter.orientation() == Qt.Horizontal,
+        "horizontalSplitPosition": splitter_lastPosition
     }
 
     settingsFilePath = QStandardPaths.writableLocation(QStandardPaths.GenericConfigLocation) + os.sep + "pyGamebase.json"
     with open(settingsFilePath, "wb") as f:
         f.write(json.dumps(configDict, indent=4).encode("utf-8"))
+
+    messageBox = qt_extras.ResizableMessageBox(QApplication.style().standardIcon(QStyle.SP_MessageBoxInformation), "Save layout", "")
+    #messageBox.setText("<big><b>Missing adapter setting:</b></big>")
+    messageBox.setInformativeText("Saved settings to " + settingsFilePath + ".")
+    messageBox.resizeToContent()
+    messageBox.exec()
 viewMenu_saveLayout.triggered.connect(viewMenu_saveLayout_onTriggered)
 
 # + }}}
@@ -471,15 +485,21 @@ toolbar_back_action = toolbar.addAction(QIcon(application.style().standardIcon(Q
 toolbar_back_action.triggered.connect(filterHistory_goBack)
 toolbar_forward_action = toolbar.addAction(QIcon(application.style().standardIcon(QStyle.SP_ArrowRight)), "Forward")
 toolbar_forward_action.triggered.connect(filterHistory_goForward)
+toolbar.setVisible(g_frontendSettings["toolbarVisible"])
 mainWindow.layout.addWidget(toolbar)
 
 # + }}}
 
 # Create splitter
-splitter = QSplitter(Qt.Vertical)
+if g_frontendSettings["splitHorizontally"]:
+    splitter = QSplitter(Qt.Horizontal)
+else:
+    splitter = QSplitter(Qt.Vertical)
 mainWindow.layout.addWidget(splitter)
 splitter.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-splitter_lastPosition = 200
+if not ("horizontalSplitPosition" in g_frontendSettings):
+    g_frontendSettings["horizontalSplitPosition"] = 200
+splitter_lastPosition = g_frontendSettings["horizontalSplitPosition"]
 def splitter_onSplitterMoved(i_pos, i_index):
     global splitter_lastPosition
     splitter_lastPosition = i_pos
@@ -843,10 +863,8 @@ except Exception as e:
 viewMenu_tableColumnsMenu.populateMenu()
 
 # Create initial table columns
-if "tableColumns" in g_frontendSettings:
-    initialColumns = g_frontendSettings["tableColumns"]
-else:
-    initialColumns = [
+if not "tableColumns" in g_frontendSettings:
+    g_frontendSettings["tableColumns"] = [
         { "id": "detail",
           "width": 35,
         },
@@ -882,7 +900,7 @@ else:
         }
     ]
 
-for initialColumn in initialColumns:
+for initialColumn in g_frontendSettings["tableColumns"]:
     columns.tableColumn_add(initialColumn["id"], initialColumn["width"])
 
 columnNameBar.initFromColumns()
