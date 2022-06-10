@@ -37,3 +37,19 @@ a {
     background-color: #444;
     border: 1px outset #666;
 }
+
+
+#name {
+    font-size: 140%;
+    display: inline;
+}
+#year {
+    display: inline;
+    margin-left: 4px;
+}
+#year:before {
+    content: ' (';
+}
+#year:after {
+    content: ')';
+}

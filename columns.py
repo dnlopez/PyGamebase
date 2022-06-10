@@ -58,6 +58,7 @@
 #     As exported from a GameBase 64 MDB file. Not currently used by this program.
 
 g_usableColumns = [
+    # Launch
     {
         "id": "detail",
         "groupName": "Launch",
@@ -95,6 +96,8 @@ g_usableColumns = [
         "textAlignment": "center",
         "comment": "Music Filename within Music Path"
     },
+
+    # Screenshots
     {
         "id": "pic[0]",
         "groupName": "Screenshots",
@@ -215,6 +218,8 @@ g_usableColumns = [
         "sortable": False,
         "filterable": False,
     },
+
+    # Screenshots (random order)
     {
         "id": "random_pic[0]",
         "groupName": "Screenshots (random order)",
@@ -335,6 +340,8 @@ g_usableColumns = [
         "sortable": False,
         "filterable": False,
     },
+
+    #
     {
         "id": "id",
         "screenName": "ID",

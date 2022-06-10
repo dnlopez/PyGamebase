@@ -23,27 +23,33 @@ detailPane_currentGameId = None
 
 if "detailPaneItems" not in settings.viewSettings:
     settings.viewSettings["detailPaneItems"] = [
-        "gameName",
+        "Name",
+        "Year",
         "Screenshots (which aren't in table)",
-        "related",
-        "memoText",
-        "comment",
-        "weblinks",
-        "nonImageExtras",
-        "imageExtras"
+        "Related games",
+        "Memo text",
+        "Comment",
+        "Web links",
+        "Non-image extras",
+        "Image extras"
     ]
 g_detailPaneItems = settings.viewSettings["detailPaneItems"]
 
 g_detailPaneItemsAvailable = set([
-    "gameName",
+    "Name",
+    "Year",
+    "Publisher",
+    "Developer",
+    "Programmer",
+    "Genre",
     "Screenshots (all)",
     "Screenshots (which aren't in table)",
-    "related",
-    "memoText",
-    "comment",
-    "weblinks",
-    "nonImageExtras",
-    "imageExtras"
+    "Related games",
+    "Memo text",
+    "Comment",
+    "Web links",
+    "Non-image extras",
+    "Image extras"
 ])
 
 class DetailPane(QWidget):
@@ -210,11 +216,31 @@ class DetailPane(QWidget):
                 html += '  </div>'
                 html += '\n\n'
 
-            elif item == "gameName":
-                html += '    <div id="game_name">' + gameRow["Games.Name"] + '</div>'
+            elif item == "Name":
+                html += '  <div id="name">' + gameRow["Games.Name"] + '</div>'
                 html += '\n\n'
 
-            elif item == "related":
+            elif item == "Year":
+                html += '  <div id="year">' + str(gameRow["Years.Year"]) + '</div>'
+                html += '\n\n'
+
+            elif item == "Publisher":
+                html += '  <div id="publisher">' + str(gameRow["Publishers.Publisher"]) + '</div>'
+                html += '\n\n'
+
+            elif item == "Developer":
+                html += '  <div id="developer">' + str(gameRow["Developers.Developer"]) + '</div>'
+                html += '\n\n'
+
+            elif item == "Programmer":
+                html += '  <div id="programmer">' + str(gameRow["Programmers.Programmer"]) + '</div>'
+                html += '\n\n'
+
+            elif item == "Genre":
+                html += '  <div id="genre">' + str(gameRow["PGenres.ParentGenre"]) + " : " + str(gameRow["Genres.Genre"]) + '</div>'
+                html += '\n\n'
+
+            elif item == "Related games":
                 html += '  <div id="related">\n'
 
                 # If there are related games,
@@ -246,7 +272,7 @@ class DetailPane(QWidget):
                 html += '  </div>'
                 html += '\n\n'
 
-            elif item == "memoText":
+            elif item == "Memo text":
                 # Insert memo text
                 if gameRow["Games.MemoText"] != None:
                     html += '  <p id="memo_text" style="white-space: pre-wrap;">'
@@ -254,7 +280,7 @@ class DetailPane(QWidget):
                     html += '</p>'
                     html += '\n\n'
 
-            elif item == "comment":
+            elif item == "Comment":
                 # Insert comment
                 if gameRow["Games.Comment"] != None:
                     html += '  <p id="comment" style="white-space: pre-wrap;">'
@@ -262,7 +288,7 @@ class DetailPane(QWidget):
                     html += '</p>'
                     html += '\n\n'
 
-            elif item == "weblinks":
+            elif item == "Web links":
                 # Insert weblink(s)
                 if "Games.WebLink_Name" in gameRow and gameRow["Games.WebLink_Name"] != None:
                     html += '  <p id="weblinks">\n'
@@ -297,7 +323,7 @@ class DetailPane(QWidget):
                     html += '  </p>'
                     html += '\n\n'
 
-            elif item == "nonImageExtras":
+            elif item == "Non-image extras":
                 # Seperate extras which are and aren't images
                 imageRows = []
                 nonImageRows = []
@@ -333,7 +359,7 @@ class DetailPane(QWidget):
                     html += "  </div>"
                     html += '\n\n'
 
-            elif item == "imageExtras":
+            elif item == "Image extras":
                 # Seperate extras which are and aren't images
                 imageRows = []
                 nonImageRows = []
