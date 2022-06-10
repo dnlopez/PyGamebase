@@ -49,7 +49,7 @@ def runGameWithRezopenmsx(i_gameDescription, i_region, i_gameFilePaths, i_gemusT
 
     executableAndArgs += ["--region", i_region]
 
-    # [if calling gemusScript(), don't need this]
+    # [if calling openmsxGemusScript(), don't need this]
     #for gameFilePath in i_gameFilePaths:
     #    executableAndArgs += ["--media", gameFilePath]
 
@@ -59,7 +59,7 @@ def runGameWithRezopenmsx(i_gameDescription, i_region, i_gameFilePaths, i_gemusT
 
     #
     executableAndArgs.append("--")
-    argsFromGemus = gemusScript(i_gameFilePaths[0], i_gemusText)
+    argsFromGemus = openmsxGemusScript(i_gameFilePaths[0], i_gemusText)
     executableAndArgs.extend(argsFromGemus)
 
     # Execute
@@ -142,7 +142,7 @@ def runExtra(i_extraPath, i_extraInfo, i_gameInfo):
         utils.openInDefaultApplication(config_extrasBaseDirPath + "/" + i_extraPath)
 
 
-def gemusScript(i_gameFilePath, i_gemusText):
+def openmsxGemusScript(i_gameFilePath, i_gemusText):
     args = []
 
     gemus = utils.Gemus(i_gemusText)

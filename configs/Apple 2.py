@@ -17,40 +17,12 @@ else:
 
 
 # Frontend configuration
-config_title = "Amiga 2.3"
-gamebaseBaseDirPath = driveBasePath + "/games/Commodore Amiga/gamebases/Gamebase Amiga 2.3"
-config_databaseFilePath = gamebaseBaseDirPath + "/Amiga 2.3.sqlite"
+config_title = "Apple II"
+gamebaseBaseDirPath = driveBasePath + "/games/Apple II/gamebases/Apple 2 Gamebase"
+config_databaseFilePath = gamebaseBaseDirPath + "/Apple 2.sqlite"
 config_screenshotsBaseDirPath = gamebaseBaseDirPath + "/Screenshots"
 config_extrasBaseDirPath = gamebaseBaseDirPath + "/Extras"
 
-
-def runGameWithMame(i_gameDescription, i_machineName, i_gameFilePaths):
-    """
-    Params:
-     i_gameDescription:
-      Either (str)
-      or (None)
-     i_machineName:
-      (str)
-     i_gameFilePaths:
-      (list of str)
-    """
-    mameExecutable = "/mnt/ve/prog/c/mame_git/mame64_0240"
-    print(i_gameFilePaths)
-
-    executableAndArgs = [mameExecutable, i_machineName]
-
-    # Get list of MAME media slots for the given machine
-    # and assign game files to them
-    availableDevices = utils.getMameMediaSlots(mameExecutable, i_machineName)
-    executableAndArgs.extend(utils.allocateGameFilesToMameMediaSlots(i_gameFilePaths, availableDevices))
-
-    if i_gameDescription:
-        executableAndArgs.extend(["--game-description", i_gameDescription])
-
-    # Execute
-    print(executableAndArgs)
-    utils.shellStartTask(executableAndArgs)
 
 def runGameWithRezmame(i_gameDescription, i_machineName, i_gameFilePaths):
     """
@@ -61,28 +33,26 @@ def runGameWithRezmame(i_gameDescription, i_machineName, i_gameFilePaths):
      i_machineName:
       (str)
       One of
-       "a500"
-       "a500n"
-       "a600"
-       "a600n"
-       "a1200"
-       "a1200n"
+       "apple2e"
+       "apple2gs"
      i_gameFilePaths:
       (list of str)
     """
     executableAndArgs = ["rezmame.py", i_machineName]
 
     # Assign game files to available MAME media slots
-    if i_machineName in ["a500", "a500n"]:
+    if i_machineName == "apple2e":
         availableDevices = [
-            ["floppydisk", [".mfi", ".dfi", ".hfe", ".mfm", ".td0", ".imd", ".d77", ".d88", ".1dd", ".cqm", ".cqi", ".dsk", ".adf", ".ipf"]],
-            ["printout", [".prn"]],
+            ["floppydisk1", [".mfi", ".dfi", ".dsk", ".do", ".po", ".rti", ".edd", ".woz", ".nib"]],
+            ["floppydisk2", [".mfi", ".dfi", ".dsk", ".do", ".po", ".rti", ".edd", ".woz", ".nib"]],
+            ["cassette", [".wav"]]
         ]
-    elif i_machineName in ["a600", "a600n", "a1200", "a1200n"]:
+    elif i_machineName == "apple2gs":
         availableDevices = [
-            ["floppydisk", [".mfi", ".dfi", ".hfe", ".mfm", ".td0", ".imd", ".d77", ".d88", ".1dd", ".cqm", ".cqi", ".dsk", ".adf", ".ipf"]],
-            ["printout", [".prn"]],
-            ["harddisk", [".chd", ".hd", " .hdv", ".2mg", ".hdi"]],
+            ["floppydisk1", [".mfi", ".dfi", ".dsk", ".do", ".po", ".rti", ".edd", ".woz", ".nib"]],
+            ["floppydisk2", [".mfi", ".dfi", ".dsk", ".do", ".po", ".rti", ".edd", ".woz", ".nib"]],
+            ["floppydisk3", [".mfi", ".dfi", ".hfe", ".mfm", ".td0", ".imd", ".d77", ".d88", ".1dd", ".cqm", ".cqi", ".dsk", ".ima", ".img", ".ufi", ".360", ".ipf", ".dc42", ".woz", ".2mg"]],
+            ["floppydisk4", [".mfi", ".dfi", ".hfe", ".mfm", ".td0", ".imd", ".d77", ".d88", ".1dd", ".cqm", ".cqi", ".dsk", ".ima", ".img", ".ufi", ".360", ".ipf", ".dc42", ".woz", ".2mg"]]
         ]
     executableAndArgs.extend(utils.allocateGameFilesToMameMediaSlots(i_gameFilePaths, availableDevices))
 
@@ -103,56 +73,15 @@ def runGameMenu(i_gameDescription, i_gameFilePaths):
       (list of str)
     """
     method = utils.popupMenu([
-        "rezfsuae A500",
-        "rezfsuae A600",
-        "mame a500 (Amiga 500 (PAL))",
-        "rezmame a500 (Amiga 500 (PAL))",
-        "rezmame a500n (Amiga 500 (NTSC))",
-        "rezmame a600 (Amiga 600 (PAL))",
-        "rezmame a600n (Amiga 600 (NTSC))",
-        "rezmame a1200 (Amiga 1200 (PAL))",
-        "rezmame a1200n (Amiga 1200 (NTSC))",
+        "rezmame apple2e (Apple //e)",
+        "rezmame apple2gs (Apple IIgs (ROM03))",
     ])
 
-    if method == "rezfsuae A500":
-        executableAndArgs = ["rezfsuae.py"]
+    if method == "rezmame apple2e (Apple //e)":
+        runGameWithRezmame(i_gameDescription, "apple2e", i_gameFilePaths)
+    elif method == "rezmame apple2gs (Apple IIgs (ROM03))":
+        runGameWithRezmame(i_gameDescription, "apple2gs", i_gameFilePaths)
 
-        executableAndArgs += ["--model", "A500"]
-
-        executableAndArgs += i_gameFilePaths
-
-        if i_gameDescription:
-            executableAndArgs.extend(["--game-description", i_gameDescription])
-
-        utils.shellStartTask(executableAndArgs)
-
-    elif method == "rezfsuae A600":
-        executableAndArgs = ["rezfsuae.py"]
-
-        executableAndArgs += ["--model", "A600"]
-
-        executableAndArgs += [i_gameFilePaths]
-
-        if i_gameDescription:
-            executableAndArgs.extend(["--game-description", i_gameDescription])
-
-        print(executableAndArgs)
-        utils.shellStartTask(executableAndArgs)
-
-    elif method == "mame a500 (Amiga 500 (PAL))":
-        runGameWithMame(i_gameDescription, "a500", i_gameFilePaths)
-    elif method == "rezmame a500 (Amiga 500 (PAL))":
-        runGameWithRezmame(i_gameDescription, "a500", i_gameFilePaths)
-    elif method == "rezmame a500n (Amiga 500 (NTSC))":
-        runGameWithRezmame(i_gameDescription, "a500n", i_gameFilePaths)
-    elif method == "rezmame a600 (Amiga 600 (PAL))":
-        runGameWithRezmame(i_gameDescription, "a600", i_gameFilePaths)
-    elif method == "rezmame a600n (Amiga 600 (NTSC))":
-        runGameWithRezmame(i_gameDescription, "a600n", i_gameFilePaths)
-    elif method == "rezmame a1200 (Amiga 1200 (PAL))":
-        runGameWithRezmame(i_gameDescription, "a1200", i_gameFilePaths)
-    elif method == "rezmame a1200n (Amiga 1200 (NTSC))":
-        runGameWithRezmame(i_gameDescription, "a1200n", i_gameFilePaths)
 
 def runGame(i_gamePath, i_fileToRun = None, i_gameInfo = None):
     #print('runGame(' + pprint.pformat(i_gamePath) + ', ' + pprint.pformat(i_fileToRun) + ', ' + pprint.pformat(i_gameInfo) + ')')

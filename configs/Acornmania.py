@@ -41,16 +41,27 @@ def runGameWithRezmame(i_gameDescription, i_machineName, i_gameFilePaths):
     executableAndArgs = ["rezmame.py", i_machineName]
 
     # Assign game files to available MAME media slots
-    availableDevices = [
-        ["cassette", [".wav", ".csw", ".uef"]],
-        ["romimage1", [".rom", ".bin"]],
-        ["romimage2", [".rom", ".bin"]],
-        ["romimage3", [".rom", ".bin"]],
-        ["romimage4", [".rom", ".bin"]],
-        ["printout", [".prn"]],
-        ["floppydisk1", [".mfi", ".dfi", ".hfe", ".mfm", ".td0", ".imd", ".d77", ".d88", ".1dd", ".cqm", ".cqi", ".dsk", ".ima", ".img", ".ufi", ".360", ".ipf", ".ssd", ".bbc", ".dsd", ".adf", ".ads", ".adm", ".adl", ".fsd"]],
-        ["floppydisk2", [".mfi", ".dfi", ".hfe", ".mfm", ".td0", ".imd", ".d77", ".d88", ".1dd", ".cqm", ".cqi", ".dsk", ".ima", ".img", ".ufi", ".360", ".ipf", ".ssd", ".bbc", ".dsd", ".adf", ".ads", ".adm", ".adl", ".fsd"]]
-    ]
+    if i_machineName == "bbcb":
+        availableDevices = [
+            ['cassette', ['.wav', '.csw', '.uef']],
+            ['romimage1', ['.rom', '.bin']],
+            ['romimage2', ['.rom', '.bin']],
+            ['romimage3', ['.rom', '.bin']],
+            ['romimage4', ['.rom', '.bin']],
+            ['printout', ['.prn']],
+            ['floppydisk1', ['.mfi', '.dfi', '.hfe', '.mfm', '.td0', '.imd', '.d77', '.d88', '.1dd', '.cqm', '.cqi', '.dsk', '.ima', '.img', '.ufi', '.360', '.ipf', '.ssd', '.bbc', '.dsd', '.adf', '.ads', '.adm', '.adl', '.fsd']],
+            ['floppydisk2', ['.mfi', '.dfi', '.hfe', '.mfm', '.td0', '.imd', '.d77', '.d88', '.1dd', '.cqm', '.cqi', '.dsk', '.ima', '.img', '.ufi', '.360', '.ipf', '.ssd', '.bbc', '.dsd', '.adf', '.ads', '.adm', '.adl', '.fsd']]
+        ]
+    elif i_machineName == "bbcm":
+        availableDevices = [
+            ['printout', ['.prn']],
+            ['cassette', ['.wav', '.csw', '.uef']],
+            ['floppydisk1', ['.mfi', '.dfi', '.hfe', '.mfm', '.td0', '.imd', '.d77', '.d88', '.1dd', '.cqm', '.cqi', '.dsk', '.ima', '.img', '.ufi', '.360', '.ipf', '.ssd', '.bbc', '.dsd', '.adf', '.ads', '.adm', '.adl', '.dds', '.fsd']],
+            ['floppydisk2', ['.mfi', '.dfi', '.hfe', '.mfm', '.td0', '.imd', '.d77', '.d88', '.1dd', '.cqm', '.cqi', '.dsk', '.ima', '.img', '.ufi', '.360', '.ipf', '.ssd', '.bbc', '.dsd', '.adf', '.ads', '.adm', '.adl', '.dds', '.fsd']],
+            ['cartridge1', ['.rom', '.bin']],
+            ['cartridge2', ['.rom', '.bin']],
+            ['romimage1', ['.rom', '.bin']]
+        ]
     executableAndArgs.extend(utils.allocateGameFilesToMameMediaSlots(i_gameFilePaths, availableDevices))
 
     if i_gameDescription:
