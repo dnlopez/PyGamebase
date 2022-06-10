@@ -68,7 +68,7 @@ def photoPath_relativeToAbsolute(i_relativePath):
     """
     if not hasattr(adapter, "config_photosBaseDirPath"):
         return None
-    return normalizeDirPathFromAdapter(adapter.config_screenshotsBaseDirPath) + "/" + i_relativePath
+    return normalizeDirPathFromAdapter(adapter.config_photosBaseDirPath) + "/" + i_relativePath
 
 # [was getScreenshotUrl()]
 def screenshotPath_relativeToUrl(i_relativePath):
