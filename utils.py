@@ -669,6 +669,52 @@ class Gemus():
 
 # + MAME {{{
 
+def getMameMediaSlots(i_mameExecutable, i_machineName):
+    """
+    Params:
+     i_mameExecutable:
+      (str)
+     i_machineName:
+      (str)
+
+    Returns:
+     (list)
+     Each element is:
+      (list)
+      List has elements:
+       0:
+        (str)
+        Media/MAME command-line option name
+        eg.
+         "cassette"
+         "cartridge"
+         "floppydisk1"
+       1:
+        (list of str)
+        Extensions of files which may go in the above slot
+        eg.
+         (for cassette) [".wav", ".cas"]
+    """
+    # Get list of MAME media slots for the given machine
+    exitCode, output = utils.shellRunProcess([i_mameExecutable, i_machineName, "-listmedia"])
+
+    # Example output:
+    #SYSTEM           MEDIA NAME       (brief)    IMAGE FILE EXTENSIONS SUPPORTED
+    #---------------- --------------------------- -------------------------------
+    #a600             floppydisk       (flop)     .mfi  .dfi  .hfe  .mfm  .td0  .imd  .d77  .d88  .1dd  .cqm  .cqi  .dsk  .adf  .ipf  
+    #a600             printout         (prin)     .prn
+    #a600             harddisk         (hard)     .chd  .hd   .hdv  .2mg  .hdi
+    #
+
+    # Split to lines and drop 2 lines of header and 1 blank line footer
+    outputLine = output.decode("utf-8").split("\n")[2:-1]
+    availableDevices = []
+    for line in outputLine:
+        print(line)
+        system, mediaName, brief, extensions = line.split(None, 3)
+        availableDevices.append([mediaName, extensions.split()])
+    return availableDevices
+
 def allocateGameFilesToMameMediaSlots(i_gameFilePaths, io_availableDevices):
     """
     Params:
@@ -676,21 +722,7 @@ def allocateGameFilesToMameMediaSlots(i_gameFilePaths, io_availableDevices):
       (list of str)
      io_availableDevices:
       (list)
-      Each element is:
-       (list)
-       List has elements:
-        0:
-         (str)
-         Media/MAME command-line option name
-         eg.
-          "cassette"
-          "cartridge"
-          "floppydisk1"
-        1:
-         (list of str)
-         Extensions of files which may go in the above slot
-         eg.
-          (for cassette) [".wav", ".cas"]
+      Same as returned from getMameMediaSlots().
 
     Returns:
      Function return value:
