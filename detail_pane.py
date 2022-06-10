@@ -98,6 +98,9 @@ class DetailPane(QWidget):
             def viewPageSourceAction_onTriggered(self):
                 self.page().toHtml(self.viewPageSourceAction_getHtml)
             def viewPageSourceAction_getHtml(self, i_html):
+                i_html = i_html.replace("<html><head>", "<html>\n<head>\n\n")
+                i_html = i_html.replace("</head><body>", "\n</head>\n<body>\n\n  ")
+                i_html = i_html.replace("</body></html>", "</body>\n</html>")
                 if self.plainTextViewer == None:
                     self.plainTextViewer = qt_extras.PlainTextViewer()
                     self.plainTextViewer.setGeometry(50, 75, 600, 400)
@@ -145,71 +148,84 @@ class DetailPane(QWidget):
         #
         html = ""
 
-        html += '<link rel="stylesheet" type="text/css" href="file://' + os.path.dirname(os.path.realpath(__file__)).replace("\\", "/") + '/styles/dark.css">'
+        html += '  <link rel="stylesheet" type="text/css" href="file://' + os.path.dirname(os.path.realpath(__file__)).replace("\\", "/") + '/styles/dark.css">\n'
 
         for item in g_detailPaneItems:
             if item == "screenshots":
+                html += '  <div id="screenshots">\n'
+
                 # Insert screenshots after the first one
                 supplementaryScreenshotRelativePaths = gamebase.dbRow_getSupplementaryScreenshotPaths(gameRow)
                 for relativePath in supplementaryScreenshotRelativePaths:
                     screenshotUrl = gamebase.getScreenshotUrl(relativePath)
                     if screenshotUrl != None:
-                        html += '<img src="' + screenshotUrl + '">'
+                        html += '    <a href="screenshot:///' + relativePath + '"><img src="' + screenshotUrl + '"></a>\n'
+
+                html += '  </div>'
+                html += '\n\n'
 
             elif item == "gameName":
-                html += '<div class="game_name">' + gameRow["Games.Name"] + '</div>'
+                html += '    <div id="game_name">' + gameRow["Games.Name"] + '</div>'
+                html += '\n\n'
 
             elif item == "related":
+                html += '  <div id="related">\n'
+
                 # If there are related games,
                 # insert links to the originals
                 if "Games.CloneOf_Name" in gameRow and gameRow["Games.CloneOf_Name"] != None:
-                    html += '<p style="white-space: pre-wrap;">'
+                    html += '    <p style="white-space: pre-wrap;">'
                     html += 'Clone of: '
                     html += '<a href="game:///' + str(gameRow["Games.CloneOf"]) + '">' + gameRow["Games.CloneOf_Name"] + '</a>'
-                    html += '</p>'
+                    html += '</p>\n'
 
                 if "Games.Prequel_Name" in gameRow and gameRow["Games.Prequel_Name"] != None:
-                    html += '<p style="white-space: pre-wrap;">'
+                    html += '    <p style="white-space: pre-wrap;">'
                     html += 'Prequel: '
                     html += '<a href="game:///' + str(gameRow["Games.Prequel"]) + '">' + gameRow["Games.Prequel_Name"] + '</a>'
-                    html += '</p>'
+                    html += '</p>\n'
 
                 if "Games.Sequel_Name" in gameRow and gameRow["Games.Sequel_Name"] != None:
-                    html += '<p style="white-space: pre-wrap;">'
+                    html += '    <p style="white-space: pre-wrap;">'
                     html += 'Sequel: '
                     html += '<a href="game:///' + str(gameRow["Games.Sequel"]) + '">' + gameRow["Games.Sequel_Name"] + '</a>'
-                    html += '</p>'
+                    html += '</p>\n'
 
                 if "Games.Related_Name" in gameRow and gameRow["Games.Related_Name"] != None:
-                    html += '<p style="white-space: pre-wrap;">'
+                    html += '    <p style="white-space: pre-wrap;">'
                     html += 'Related: '
                     html += '<a href="game:///' + str(gameRow["Games.Related"]) + '">' + gameRow["Games.Related_Name"] + '</a>'
-                    html += '</p>'
+                    html += '</p>\n'
+
+                html += '  </div>'
+                html += '\n\n'
 
             elif item == "memoText":
                 # Insert memo text
                 if gameRow["Games.MemoText"] != None:
-                    html += '<p style="white-space: pre-wrap;">'
+                    html += '  <p id="memo_text" style="white-space: pre-wrap;">'
                     html += gameRow["Games.MemoText"]
                     html += '</p>'
+                    html += '\n\n'
 
             elif item == "comment":
                 # Insert comment
                 if gameRow["Games.Comment"] != None:
-                    html += '<p style="white-space: pre-wrap;">'
+                    html += '  <p id="comment" style="white-space: pre-wrap;">'
                     html += gameRow["Games.Comment"]
                     html += '</p>'
+                    html += '\n\n'
 
             elif item == "weblinks":
                 # Insert weblink(s)
                 if "Games.WebLink_Name" in gameRow and gameRow["Games.WebLink_Name"] != None:
-                    html += '<p style="white-space: pre-wrap;">'
+                    html += '  <p id="weblinks">\n'
 
-                    html += gameRow["Games.WebLink_Name"] + ": "
+                    html += "    " + gameRow["Games.WebLink_Name"] + ": "
                     url = gameRow["Games.WebLink_URL"]
                     html += '<a href="' + url + '">'
                     html += url
-                    html += '</a>'
+                    html += '</a>\n'
                     #link.addEventListener("click", function (i_event) {
                     #    i_event.preventDefault();
                     #    electron.shell.openExternal(this.href);
@@ -218,7 +234,7 @@ class DetailPane(QWidget):
                     # If it's a World Of Spectrum link then insert a corresponding Spectrum Computing link
                     if gameRow["Games.WebLink_Name"] == "WOS":
                         # Separator
-                        html += '<span style="margin-left: 8px; margin-right: 8px; border-left: 1px dotted #666;"></span>'
+                        html += '    <span style="margin-left: 8px; margin-right: 8px; border-left: 1px dotted #666;"></span>'
                         # Label
                         html += 'Spectrum Computing: '
                         # Link
@@ -226,13 +242,14 @@ class DetailPane(QWidget):
                         html += '<a href="' + url + '">'
                         html += url
                         html += '</a>'
-                        html += '</span>'
+                        html += '</span>\n'
                         #link.addEventListener("click", function (i_event) {
                         #    i_event.preventDefault();
                         #    electron.shell.openExternal(this.href);
                         #});
 
-                    html += '</p>'
+                    html += '  </p>'
+                    html += '\n\n'
 
             elif item == "nonImageExtras":
                 # Seperate extras which are and aren't images
@@ -247,11 +264,13 @@ class DetailPane(QWidget):
 
                 # For each non-image, insert a link
                 if len(nonImageRows) > 0:
-                    html += '<div id="nonImageExtras">'
+                    html += '  <div id="nonImageExtras">\n'
 
                     for nonImageRowNo, nonImageRow in enumerate(nonImageRows):
                         #var label = nonImageRow.Name + " (" + nonImageRow.Path + ")";
                         #container.appendChild(document.createTextNode(label));
+
+                        html += "    "
 
                         if nonImageRowNo > 0:
                             #container.appendChild(document.createTextNode(" | "));
@@ -263,9 +282,10 @@ class DetailPane(QWidget):
                             html += ' href="extra:///' + path + '"'
                         html += '>'
                         html += nonImageRow["Name"]
-                        html += '</a>'
+                        html += '</a>\n'
 
-                    html += "</div>"
+                    html += "  </div>"
+                    html += '\n\n'
 
             elif item == "imageExtras":
                 # Seperate extras which are and aren't images
@@ -280,22 +300,25 @@ class DetailPane(QWidget):
 
                 # For each image, insert an image
                 if len(imageRows) > 0:
-                    html += '<div id="imageExtras">'
+                    html += '  <div id="imageExtras">\n'
 
                     for imageRowNo, imageRow in enumerate(imageRows):
                         #print("imageRow: " + str(imageRow))
                         #var cell = document.createElement("div");
+
+                        html += "    "
 
                         html += '<a href="extra:///' + imageRow["Path"] + '" style="display: inline-block; text-align: center;">'
                         if hasattr(gamebase.adapter, "config_extrasBaseDirPath"):
                             html += '<img src="file://' + gamebase.normalizeDirPathFromAdapter(gamebase.adapter.config_extrasBaseDirPath) + "/" + imageRow["Path"] + '" style="height: 300px;">'
                         #html += '<img src="https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_92x30dp.png" style="height: 300px;">'
                         html += '<div>' + imageRow["Name"] + '</div>'
-                        html += '</a>'
+                        html += '</a>\n'
 
                         #cell.appendChild(link);
 
-                    html += "</div>"
+                    html += "  </div>"
+                    html += '\n\n'
 
 
         #print(html)
