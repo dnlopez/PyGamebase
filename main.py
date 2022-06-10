@@ -95,11 +95,12 @@ while argNo < len(filteredArgv):
             print("(Run with --help to show command usage.)")
             #sys.exit(-1)
 
-#param_gamebaseAdapterFilePath = "/mnt/gear/dan/docs/code/c/gamebase/c64.py"
+# If no adapter file was specified
+# then prompt with a file picker
 if param_gamebaseAdapterFilePath == None:
-    print("ERROR: Insufficient arguments.")
-    print("(Run with --help to show command usage.)")
-    sys.exit(-1)
+    param_gamebaseAdapterFilePath, filter = QFileDialog.getOpenFileName(None, "Select Gamebase adapter file")
+    if param_gamebaseAdapterFilePath == "":
+        sys.exit(0)
 
 # + }}}
 
