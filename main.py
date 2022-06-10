@@ -705,7 +705,8 @@ tableView.selectionHasChanged.connect(tableView_onSelectionHasChanged)
 def tableView_onRequestDetailPane(i_withKeyboardAction, i_modelIndex):
     detailPaneWasAlreadyVisible = detailPane_height() > 0
     detailPane_show()
-    tableView.scrollTo(i_modelIndex, QAbstractItemView.PositionAtTop)
+    if splitter.orientation() == Qt.Vertical:
+        tableView.scrollTo(i_modelIndex, QAbstractItemView.PositionAtTop)
     gameId = tableView.dbRows[i_modelIndex.row()][tableView.dbColumnNames.index("Games.GA_Id")]
     if gameId != detail_pane.detailPane_currentGameId:
         detailPane.populate(gameId)
