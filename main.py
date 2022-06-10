@@ -112,7 +112,7 @@ gamebase.importAdapter(param_gamebaseAdapterFilePath)
 
 
 # Load frontend configuration settings
-settings.loadSettings()
+settings.loadViewSettings()
 
 
 # + Filter history {{{
@@ -457,7 +457,7 @@ def viewMenu_saveLayout_onTriggered():
     settings.values["horizontalSplitPosition"] = splitter_lastPosition
     settings.values["detailPaneItems"] = detail_pane.g_detailPaneItems
 
-    settings.saveSettings()
+    settings.saveViewSettings()
 viewMenu_saveLayout.triggered.connect(viewMenu_saveLayout_onTriggered)
 
 # + }}}
