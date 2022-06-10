@@ -16,20 +16,23 @@ import db
 import gamebase
 import columns
 import frontend_utils
+import settings
 
 
 detailPane_currentGameId = None
 
-g_detailPaneItems = [
-    "gameName",
-    "Screenshots (which aren't in table)",
-    "related",
-    "memoText",
-    "comment",
-    "weblinks",
-    "nonImageExtras",
-    "imageExtras"
-]
+if "detailPaneItems" not in settings.values:
+    settings.values["detailPaneItems"] = [
+        "gameName",
+        "Screenshots (which aren't in table)",
+        "related",
+        "memoText",
+        "comment",
+        "weblinks",
+        "nonImageExtras",
+        "imageExtras"
+    ]
+g_detailPaneItems = settings.values["detailPaneItems"]
 
 g_detailPaneItemsAvailable = set([
     "gameName",

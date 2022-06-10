@@ -20,6 +20,7 @@ from PySide2.QtGui import *
 from PySide2.QtWebEngineWidgets import *
 
 # This program
+import settings
 import qt_extras
 import columns
 import sql
@@ -111,15 +112,7 @@ gamebase.importAdapter(param_gamebaseAdapterFilePath)
 
 
 # Load frontend configuration settings
-g_frontendSettings = {}
-settingsFilePath = QStandardPaths.writableLocation(QStandardPaths.GenericConfigLocation) + os.sep + "pyGamebase.json"
-if os.path.exists(settingsFilePath):
-    try:
-        with open(settingsFilePath, "rb") as f:
-            g_frontendSettings = json.loads(f.read().decode("utf-8"))
-    except Exception as e:
-        import traceback
-        print("Failed to read frontend settings file: " + "\n".join(traceback.format_exception_only(e)))
+settings.loadSettings()
 
 
 # + Filter history {{{
@@ -359,17 +352,17 @@ filterMenu_filterFormat_copySql_action = filterMenu.addAction("C&opy SQL")
 viewMenu = menuBar.addMenu("&View")
 viewMenu_toolbar_action = viewMenu.addAction("&Toolbar")
 viewMenu_toolbar_action.setCheckable(True)
-if not "toolbarVisible" in g_frontendSettings:
-    g_frontendSettings["toolbarVisible"] = True
-viewMenu_toolbar_action.setChecked(g_frontendSettings["toolbarVisible"])
+if not "toolbarVisible" in settings.values:
+    settings.values["toolbarVisible"] = True
+viewMenu_toolbar_action.setChecked(settings.values["toolbarVisible"])
 def viewMenu_toolbar_onTriggered(i_checked):
     toolbar.setVisible(i_checked)
 viewMenu_toolbar_action.triggered.connect(viewMenu_toolbar_onTriggered)
 
 viewMenu.addSeparator()
 
-if not "splitHorizontally" in g_frontendSettings:
-    g_frontendSettings["splitHorizontally"] = False
+if not "splitHorizontally" in settings.values:
+    settings.values["splitHorizontally"] = False
 def splitter_setHorizontal():
     splitter.setOrientation(Qt.Horizontal)
 def splitter_setVertical():
@@ -378,11 +371,11 @@ def splitter_setVertical():
 #viewMenu_toolbar_action = viewMenu.addMenu(viewMenu_splitMenu)
 viewMenu_verticalAction = viewMenu.addAction("Split &vertically")
 viewMenu_verticalAction.setCheckable(True)
-viewMenu_verticalAction.setChecked(not g_frontendSettings["splitHorizontally"])
+viewMenu_verticalAction.setChecked(not settings.values["splitHorizontally"])
 viewMenu_verticalAction.triggered.connect(splitter_setVertical)
 viewMenu_horizontalAction = viewMenu.addAction("Split &horizontally")
 viewMenu_horizontalAction.setCheckable(True)
-viewMenu_horizontalAction.setChecked(g_frontendSettings["splitHorizontally"])
+viewMenu_horizontalAction.setChecked(settings.values["splitHorizontally"])
 viewMenu_horizontalAction.triggered.connect(splitter_setHorizontal)
 actionGroup = QActionGroup(filterMenu)
 actionGroup.setExclusive(True)
@@ -457,23 +450,14 @@ def viewMenu_saveLayout_onTriggered():
             "id": tableColumn["id"],
             "width": tableColumn["width"]
         })
+    settings.values["tableColumns"] = configColumns
 
-    configDict = {
-        "tableColumns": configColumns,
-        "toolbarVisible": toolbar.isVisible(),
-        "splitHorizontally": splitter.orientation() == Qt.Horizontal,
-        "horizontalSplitPosition": splitter_lastPosition
-    }
+    settings.values["toolbarVisible"] = toolbar.isVisible()
+    settings.values["splitHorizontally"] = splitter.orientation() == Qt.Horizontal
+    settings.values["horizontalSplitPosition"] = splitter_lastPosition
+    settings.values["detailPaneItems"] = detail_pane.g_detailPaneItems
 
-    settingsFilePath = QStandardPaths.writableLocation(QStandardPaths.GenericConfigLocation) + os.sep + "pyGamebase.json"
-    with open(settingsFilePath, "wb") as f:
-        f.write(json.dumps(configDict, indent=4).encode("utf-8"))
-
-    messageBox = qt_extras.ResizableMessageBox(QApplication.style().standardIcon(QStyle.SP_MessageBoxInformation), "Save layout", "")
-    #messageBox.setText("<big><b>Missing adapter setting:</b></big>")
-    messageBox.setInformativeText("Saved settings to " + settingsFilePath + ".")
-    messageBox.resizeToContent()
-    messageBox.exec()
+    settings.saveSettings()
 viewMenu_saveLayout.triggered.connect(viewMenu_saveLayout_onTriggered)
 
 # + }}}
@@ -485,21 +469,21 @@ toolbar_back_action = toolbar.addAction(QIcon(application.style().standardIcon(Q
 toolbar_back_action.triggered.connect(filterHistory_goBack)
 toolbar_forward_action = toolbar.addAction(QIcon(application.style().standardIcon(QStyle.SP_ArrowRight)), "Forward")
 toolbar_forward_action.triggered.connect(filterHistory_goForward)
-toolbar.setVisible(g_frontendSettings["toolbarVisible"])
+toolbar.setVisible(settings.values["toolbarVisible"])
 mainWindow.layout.addWidget(toolbar)
 
 # + }}}
 
 # Create splitter
-if g_frontendSettings["splitHorizontally"]:
+if settings.values["splitHorizontally"]:
     splitter = QSplitter(Qt.Horizontal)
 else:
     splitter = QSplitter(Qt.Vertical)
 mainWindow.layout.addWidget(splitter)
 splitter.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-if not ("horizontalSplitPosition" in g_frontendSettings):
-    g_frontendSettings["horizontalSplitPosition"] = 200
-splitter_lastPosition = g_frontendSettings["horizontalSplitPosition"]
+if not ("horizontalSplitPosition" in settings.values):
+    settings.values["horizontalSplitPosition"] = 200
+splitter_lastPosition = settings.values["horizontalSplitPosition"]
 def splitter_onSplitterMoved(i_pos, i_index):
     global splitter_lastPosition
     splitter_lastPosition = i_pos
@@ -864,8 +848,8 @@ except Exception as e:
 viewMenu_tableColumnsMenu.populateMenu()
 
 # Create initial table columns
-if not "tableColumns" in g_frontendSettings:
-    g_frontendSettings["tableColumns"] = [
+if not "tableColumns" in settings.values:
+    settings.values["tableColumns"] = [
         { "id": "detail",
           "width": 35,
         },
@@ -901,7 +885,7 @@ if not "tableColumns" in g_frontendSettings:
         }
     ]
 
-for initialColumn in g_frontendSettings["tableColumns"]:
+for initialColumn in settings.values["tableColumns"]:
     columns.tableColumn_add(initialColumn["id"], initialColumn["width"])
 
 columnNameBar.initFromColumns()
