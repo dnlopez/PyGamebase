@@ -400,10 +400,24 @@ class TableColumnsMenu(qt_extras.StayOpenMenu):
 
         self.aboutToShow.connect(self.onAboutToShow)
 
+        self.flatActions = []
+        # (list of QAction)
+
     def populateMenu(self):
+        groups = {}
         # Add all the usable columns
         for usableColumn in columns.usableColumn_getBySlice():
-            action = self.addAction(usableColumn["screenName"])
+            if "groupName" in usableColumn:
+                if usableColumn["groupName"] not in groups:
+                    newGroup = qt_extras.StayOpenMenu(usableColumn["groupName"])
+                    self.addMenu(newGroup)
+                    groups[usableColumn["groupName"]] = newGroup
+                actionParent = groups[usableColumn["groupName"]]
+            else:
+                actionParent = self
+
+            action = actionParent.addAction(usableColumn["screenName"])
+            self.flatActions.append(action)
             action.setCheckable(True)
             columnId = usableColumn["id"]
             action.setChecked(columns.tableColumn_getById(columnId) != None)
@@ -411,7 +425,7 @@ class TableColumnsMenu(qt_extras.StayOpenMenu):
 
     def onAboutToShow(self):
         for usableColumnNo, usableColumn in enumerate(columns.usableColumn_getBySlice()):
-            action = self.actions()[usableColumnNo]
+            action = self.flatActions[usableColumnNo]
             columnId = usableColumn["id"]
             action.setChecked(columns.tableColumn_getById(columnId) != None)
 
