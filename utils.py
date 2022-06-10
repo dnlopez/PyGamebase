@@ -696,7 +696,7 @@ def getMameMediaSlots(i_mameExecutable, i_machineName):
          (for cassette) [".wav", ".cas"]
     """
     # Get list of MAME media slots for the given machine
-    exitCode, output = utils.shellRunProcess([i_mameExecutable, i_machineName, "-listmedia"])
+    exitCode, output = shellRunProcess([i_mameExecutable, i_machineName, "-listmedia"])
 
     # Example output:
     #SYSTEM           MEDIA NAME       (brief)    IMAGE FILE EXTENSIONS SUPPORTED
