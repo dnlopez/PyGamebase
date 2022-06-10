@@ -189,13 +189,24 @@ def dbRow_allScreenshotRelativePaths(i_row):
     rv.extend(dbRow_supplementaryScreenshotRelativePaths(i_row))
     return rv
 
-def dbRow_nthScreenshotRelativePath(i_row, i_picNo):
+def dbRow_screenshotCount(i_row):
     """
     Params:
      i_row:
       (sqlite3.Row)
       A row from the 'Games' table
 
+    Returns:
+     (int)
+    """
+    return len(dbRow_supplementaryScreenshotRelativePaths(i_row)) + 1
+
+def dbRow_nthScreenshotRelativePath(i_row, i_picNo):
+    """
+    Params:
+     i_row:
+      (sqlite3.Row)
+      A row from the 'Games' table
      i_picNo:
       (int)
       0: first picture
@@ -222,7 +233,6 @@ def dbRow_nthScreenshotFullPath(i_row, i_picNo):
      i_row:
       (sqlite3.Row)
       A row from the 'Games' table
-
      i_picNo:
       (int)
       0: first picture
@@ -234,6 +244,67 @@ def dbRow_nthScreenshotFullPath(i_row, i_picNo):
       There is no screenshot at this numeric position.
     """
     path = dbRow_nthScreenshotRelativePath(i_row, i_picNo)
+    if path != None:
+        path = screenshotPath_relativeToAbsolute(path)
+    return path
+
+
+import random
+g_sessionRandomSeed = random.randint(0, 100)
+
+def dbRow_allRandomScreenshotRelativePaths(i_row):
+    """
+    Params:
+     i_row:
+      (sqlite3.Row)
+      A row from the 'Games' table
+
+    Returns:
+     (list of str)
+     Paths of images, relative to the 'Screenshots' folder.
+    """
+    allRelativePaths = dbRow_allScreenshotRelativePaths(i_row)
+    random.Random(i_row["Games.GA_Id"] + g_sessionRandomSeed).shuffle(allRelativePaths)
+    return allRelativePaths
+
+def dbRow_nthRandomScreenshotRelativePath(i_row, i_picNo):
+    """
+    Params:
+     i_row:
+      (sqlite3.Row)
+      A row from the 'Games' table
+     i_picNo:
+      (int)
+      0: first picture
+
+    Returns:
+     Either (str)
+      Path of image, relative to the 'Screenshots' folder.
+     or (None)
+      There is no screenshot at this numeric position.
+    """
+    allRelativePaths = dbRow_allRandomScreenshotRelativePaths(i_row)
+    if i_picNo >= len(allRelativePaths):
+        return None
+    return allRelativePaths[i_picNo]
+
+def dbRow_nthRandomScreenshotFullPath(i_row, i_picNo):
+    """
+    Params:
+     i_row:
+      (sqlite3.Row)
+      A row from the 'Games' table
+     i_picNo:
+      (int)
+      0: first picture
+
+    Returns:
+     Either (str)
+      Absolute (resolved via the adapter's 'config_screenshotsBaseDirPath') path of image.
+     or (None)
+      There is no screenshot at this numeric position.
+    """
+    path = dbRow_nthRandomScreenshotRelativePath(i_row, i_picNo)
     if path != None:
         path = screenshotPath_relativeToAbsolute(path)
     return path

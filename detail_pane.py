@@ -167,12 +167,35 @@ class DetailPane(QWidget):
             elif item == "Screenshots (which aren't in table)":
                 html += '  <div id="screenshots">\n'
 
-                allScreenshotRelativePaths = gamebase.dbRow_allScreenshotRelativePaths(gameRow)
-                for screenshotNo, relativePath in enumerate(allScreenshotRelativePaths):
-                    if columns.tableColumn_getById("pic[" + str(screenshotNo) + "]") == None:
-                        screenshotUrl = gamebase.screenshotPath_relativeToUrl(relativePath)
-                        if screenshotUrl != None:
-                            html += '    <a href="screenshot:///' + relativePath + '"><img src="' + screenshotUrl + '"></a>\n'
+                randomPicColumns = [column  for column in columns.tableColumn_getBySlice()  if column["id"].startswith("random_pic[")]
+                if len(randomPicColumns) == 0:
+                    allScreenshotRelativePaths = gamebase.dbRow_allScreenshotRelativePaths(gameRow)
+                    for screenshotNo, relativePath in enumerate(allScreenshotRelativePaths):
+                        if columns.tableColumn_getById("pic[" + str(screenshotNo) + "]") == None:
+                            screenshotUrl = gamebase.screenshotPath_relativeToUrl(relativePath)
+                            if screenshotUrl != None:
+                                html += '    <a href="screenshot:///' + relativePath + '"><img src="' + screenshotUrl + '"></a>\n'
+                else:
+                    relativePathsInTable = set()
+
+                    randomScreenshotRelativePaths = gamebase.dbRow_allRandomScreenshotRelativePaths(gameRow)
+                    for randomPicColumn in randomPicColumns:
+                        randomPicNo = int(randomPicColumn["id"][11:-1])
+                        if randomPicNo < len(randomScreenshotRelativePaths):
+                            relativePathsInTable.add(randomScreenshotRelativePaths[randomPicNo])
+
+                    picColumns = [column  for column in columns.tableColumn_getBySlice()  if column["id"].startswith("pic[")]
+                    allScreenshotRelativePaths = gamebase.dbRow_allScreenshotRelativePaths(gameRow)
+                    for picColumn in picColumns:
+                        picNo = int(picColumn["id"][4:-1])
+                        if picNo < len(allScreenshotRelativePaths):
+                            relativePathsInTable.add(allScreenshotRelativePaths[picNo])
+
+                    for screenshotNo, relativePath in enumerate(allScreenshotRelativePaths):
+                        if relativePath not in relativePathsInTable:
+                            screenshotUrl = gamebase.screenshotPath_relativeToUrl(relativePath)
+                            if screenshotUrl != None:
+                                html += '    <a href="screenshot:///' + relativePath + '"><img src="' + screenshotUrl + '"></a>\n'
 
                 html += '  </div>'
                 html += '\n\n'

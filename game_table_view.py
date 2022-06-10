@@ -2,6 +2,7 @@
 import sqlite3
 import functools
 import copy
+import random
 
 # Qt
 from PySide2.QtCore import *
@@ -187,6 +188,16 @@ class MyStyledItemDelegate(QStyledItemDelegate):
                 destRect = danrectToQrect(fitLetterboxed(qrectToDanrect(pixmap.rect()), qrectToDanrect(i_option.rect)))
                 i_painter.drawPixmap(destRect, pixmap)
 
+        # Random screenshot
+        elif column["id"].startswith("random_pic[") and column["id"].endswith("]"):
+            picNo = int(column["id"][11:-1])
+
+            screenshotFullPath = gamebase.dbRow_nthRandomScreenshotFullPath(self.parent().dbRows[i_index.row()], picNo)
+            if screenshotFullPath != None:
+                pixmap = QPixmap(screenshotFullPath)
+                destRect = danrectToQrect(fitLetterboxed(qrectToDanrect(pixmap.rect()), qrectToDanrect(i_option.rect)))
+                i_painter.drawPixmap(destRect, pixmap)
+
         # Musician photo
         elif column["id"] == "musician_photo":
             photoFullPath = gamebase.dbRow_photoFullPath(self.parent().dbRows[i_index.row()])
@@ -244,6 +255,14 @@ class MyTableModel(QAbstractTableModel):
                 return Qt.AlignCenter
         # Screenshot
         elif column["id"].startswith("pic[") and column["id"].endswith("]"):
+            # (Done via delegate)
+            #if i_role == Qt.DecorationRole:
+            #    screenshotPath = self.parent().dbRows[i_index.row()][self.parent().dbColumnNames.index("Games.ScrnshotFilename")]
+            #    pixmap = QPixmap(gamebase.normalizeDirPathFromAdapter(gamebase.adapter.config_screenshotsBaseDirPath) + "/" + screenshotPath)
+            #    return pixmap;
+            pass
+        # Random screenshot
+        elif column["id"].startswith("random_pic[") and column["id"].endswith("]"):
             # (Done via delegate)
             #if i_role == Qt.DecorationRole:
             #    screenshotPath = self.parent().dbRows[i_index.row()][self.parent().dbColumnNames.index("Games.ScrnshotFilename")]
@@ -678,6 +697,15 @@ class GameTableView(QTableView):
 
             rowNo = i_modelIndex.row()
             screenshotFullPath = gamebase.dbRow_nthScreenshotFullPath(self.dbRows[rowNo], picNo)
+            if screenshotFullPath != None:
+                frontend_utils.openInDefaultApplication(screenshotFullPath)
+
+        # Random screenshot
+        elif columnId.startswith("random_pic[") and columnId.endswith("]"):
+            picNo = int(columnId[11:-1])
+
+            rowNo = i_modelIndex.row()
+            screenshotFullPath = gamebase.dbRow_nthRandomScreenshotFullPath(self.dbRows[rowNo], picNo)
             if screenshotFullPath != None:
                 frontend_utils.openInDefaultApplication(screenshotFullPath)
 
