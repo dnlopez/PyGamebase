@@ -32,6 +32,7 @@ import sql_filter_bar
 import column_filter_bar
 import column_name_bar
 import game_table_view
+import preferences_window
 
 
 # Create a Qt application
@@ -112,6 +113,7 @@ gamebase.importAdapter(param_gamebaseAdapterFilePath)
 
 
 # Load frontend configuration settings
+settings.loadPreferences()
 settings.loadViewSettings()
 
 
@@ -283,6 +285,14 @@ action.triggered.connect(menu_file_openDatabaseInExternalProgram_onTriggered)
 
 editMenu = menuBar.addMenu("&Edit")
 editMenu.addAction("Copy")
+editMenu.addSeparator()
+editMenu_preferences_action = editMenu.addAction("&Preferences...")
+g_preferencesWindow = None
+def editMenu_preferences_onTriggered():
+    global g_preferencesWindow
+    g_preferencesWindow = preferences_window.PreferencesWindow()
+    g_preferencesWindow.show()
+editMenu_preferences_action.triggered.connect(editMenu_preferences_onTriggered)
 
 def filterFormat_perColumn():
     # Show column filter bar instead of SQL filter bar
@@ -352,17 +362,17 @@ filterMenu_filterFormat_copySql_action = filterMenu.addAction("C&opy SQL")
 viewMenu = menuBar.addMenu("&View")
 viewMenu_toolbar_action = viewMenu.addAction("&Toolbar")
 viewMenu_toolbar_action.setCheckable(True)
-if not "toolbarVisible" in settings.values:
-    settings.values["toolbarVisible"] = True
-viewMenu_toolbar_action.setChecked(settings.values["toolbarVisible"])
+if not "toolbarVisible" in settings.viewSettings:
+    settings.viewSettings["toolbarVisible"] = True
+viewMenu_toolbar_action.setChecked(settings.viewSettings["toolbarVisible"])
 def viewMenu_toolbar_onTriggered(i_checked):
     toolbar.setVisible(i_checked)
 viewMenu_toolbar_action.triggered.connect(viewMenu_toolbar_onTriggered)
 
 viewMenu.addSeparator()
 
-if not "splitHorizontally" in settings.values:
-    settings.values["splitHorizontally"] = False
+if not "splitHorizontally" in settings.viewSettings:
+    settings.viewSettings["splitHorizontally"] = False
 def splitter_setHorizontal():
     splitter.setOrientation(Qt.Horizontal)
 def splitter_setVertical():
@@ -371,11 +381,11 @@ def splitter_setVertical():
 #viewMenu_toolbar_action = viewMenu.addMenu(viewMenu_splitMenu)
 viewMenu_verticalAction = viewMenu.addAction("Split &vertically")
 viewMenu_verticalAction.setCheckable(True)
-viewMenu_verticalAction.setChecked(not settings.values["splitHorizontally"])
+viewMenu_verticalAction.setChecked(not settings.viewSettings["splitHorizontally"])
 viewMenu_verticalAction.triggered.connect(splitter_setVertical)
 viewMenu_horizontalAction = viewMenu.addAction("Split &horizontally")
 viewMenu_horizontalAction.setCheckable(True)
-viewMenu_horizontalAction.setChecked(settings.values["splitHorizontally"])
+viewMenu_horizontalAction.setChecked(settings.viewSettings["splitHorizontally"])
 viewMenu_horizontalAction.triggered.connect(splitter_setHorizontal)
 actionGroup = QActionGroup(filterMenu)
 actionGroup.setExclusive(True)
@@ -450,12 +460,12 @@ def viewMenu_saveLayout_onTriggered():
             "id": tableColumn["id"],
             "width": tableColumn["width"]
         })
-    settings.values["tableColumns"] = configColumns
+    settings.viewSettings["tableColumns"] = configColumns
 
-    settings.values["toolbarVisible"] = toolbar.isVisible()
-    settings.values["splitHorizontally"] = splitter.orientation() == Qt.Horizontal
-    settings.values["horizontalSplitPosition"] = splitter_lastPosition
-    settings.values["detailPaneItems"] = detail_pane.g_detailPaneItems
+    settings.viewSettings["toolbarVisible"] = toolbar.isVisible()
+    settings.viewSettings["splitHorizontally"] = splitter.orientation() == Qt.Horizontal
+    settings.viewSettings["horizontalSplitPosition"] = splitter_lastPosition
+    settings.viewSettings["detailPaneItems"] = detail_pane.g_detailPaneItems
 
     settings.saveViewSettings()
 viewMenu_saveLayout.triggered.connect(viewMenu_saveLayout_onTriggered)
@@ -469,21 +479,21 @@ toolbar_back_action = toolbar.addAction(QIcon(application.style().standardIcon(Q
 toolbar_back_action.triggered.connect(filterHistory_goBack)
 toolbar_forward_action = toolbar.addAction(QIcon(application.style().standardIcon(QStyle.SP_ArrowRight)), "Forward")
 toolbar_forward_action.triggered.connect(filterHistory_goForward)
-toolbar.setVisible(settings.values["toolbarVisible"])
+toolbar.setVisible(settings.viewSettings["toolbarVisible"])
 mainWindow.layout.addWidget(toolbar)
 
 # + }}}
 
 # Create splitter
-if settings.values["splitHorizontally"]:
+if settings.viewSettings["splitHorizontally"]:
     splitter = QSplitter(Qt.Horizontal)
 else:
     splitter = QSplitter(Qt.Vertical)
 mainWindow.layout.addWidget(splitter)
 splitter.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-if not ("horizontalSplitPosition" in settings.values):
-    settings.values["horizontalSplitPosition"] = 200
-splitter_lastPosition = settings.values["horizontalSplitPosition"]
+if not ("horizontalSplitPosition" in settings.viewSettings):
+    settings.viewSettings["horizontalSplitPosition"] = 200
+splitter_lastPosition = settings.viewSettings["horizontalSplitPosition"]
 def splitter_onSplitterMoved(i_pos, i_index):
     global splitter_lastPosition
     splitter_lastPosition = i_pos
@@ -848,8 +858,8 @@ except Exception as e:
 viewMenu_tableColumnsMenu.populateMenu()
 
 # Create initial table columns
-if not "tableColumns" in settings.values:
-    settings.values["tableColumns"] = [
+if not "tableColumns" in settings.viewSettings:
+    settings.viewSettings["tableColumns"] = [
         { "id": "detail",
           "width": 35,
         },
@@ -885,7 +895,7 @@ if not "tableColumns" in settings.values:
         }
     ]
 
-for initialColumn in settings.values["tableColumns"]:
+for initialColumn in settings.viewSettings["tableColumns"]:
     columns.tableColumn_add(initialColumn["id"], initialColumn["width"])
 
 columnNameBar.initFromColumns()
@@ -963,6 +973,11 @@ action.triggered.connect(menu_file_showSubprocessOutput_onTriggered)
 
 # + }}}
 
+# If application stylesheet wasn't already set (via command line)
+# and there's one specified in the preferences,
+# activate it
+if application.styleSheet() == "" and "applicationStylesheet" in settings.preferences and settings.preferences["applicationStylesheet"] != "":
+    application.setStyleSheet("file:///" + settings.preferences["applicationStylesheet"])
 
 # Enter Qt application main loop
 exitCode = application.exec_()

@@ -21,8 +21,8 @@ import settings
 
 detailPane_currentGameId = None
 
-if "detailPaneItems" not in settings.values:
-    settings.values["detailPaneItems"] = [
+if "detailPaneItems" not in settings.viewSettings:
+    settings.viewSettings["detailPaneItems"] = [
         "gameName",
         "Screenshots (which aren't in table)",
         "related",
@@ -32,7 +32,7 @@ if "detailPaneItems" not in settings.values:
         "nonImageExtras",
         "imageExtras"
     ]
-g_detailPaneItems = settings.values["detailPaneItems"]
+g_detailPaneItems = settings.viewSettings["detailPaneItems"]
 
 g_detailPaneItemsAvailable = set([
     "gameName",
@@ -64,6 +64,12 @@ class DetailPane(QWidget):
         self.layout.setSpacing(0)
         self.layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(self.layout)
+
+        # Default background colour if no stylesheet
+        pal = QPalette()
+        pal.setColor(QPalette.Window, Qt.white)
+        self.setAutoFillBackground(True)
+        self.setPalette(pal)
 
         self.margin = QPushButton("x")
         self.margin.clicked.connect(self.margin_onClicked)
@@ -152,7 +158,8 @@ class DetailPane(QWidget):
         #
         html = ""
 
-        html += '  <link rel="stylesheet" type="text/css" href="file://' + os.path.dirname(os.path.realpath(__file__)).replace("\\", "/") + '/styles/dark.css">\n'
+        if "detailPaneStylesheet" in settings.preferences and settings.preferences["detailPaneStylesheet"] != "":
+            html += '  <link rel="stylesheet" type="text/css" href="file://' + (settings.preferences["detailPaneStylesheet"]).replace("\\", "/") + '">\n'
 
         for item in g_detailPaneItems:
             if item == "Screenshots (all)":
