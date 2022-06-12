@@ -316,7 +316,7 @@ class MyTableModel(QAbstractTableModel):
     def headerData(self, i_columnNo, i_orientation, i_role):
         if i_orientation == Qt.Horizontal and i_role == Qt.DisplayRole:
             column = columns.tableColumn_getByPos(i_columnNo)
-            return column["screenName"]
+            return column["headingName"]
 
         return None
 

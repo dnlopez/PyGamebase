@@ -201,7 +201,7 @@ class ColumnNameBar(QWidget):
                 widgetDict = {}
 
                 # Create header button
-                headingButton = ColumnNameBar.HeadingButton(column["screenName"], column["filterable"], self)
+                headingButton = ColumnNameBar.HeadingButton(column["headingName"], column["filterable"], self)
                 widgetDict["headingButton"] = headingButton
                 # Set its fixed properties (apart from position)
                 headingButton.setVisible(True)
@@ -305,7 +305,7 @@ class ColumnNameBar(QWidget):
             if column["filterable"]:
                 headingButton = self.columnWidgets[column["id"]]["headingButton"]
 
-                newCaption = column["screenName"]
+                newCaption = column["headingName"]
 
                 sortIndex = 1
                 sortDirection = 0

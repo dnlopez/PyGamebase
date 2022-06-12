@@ -425,27 +425,27 @@ class TableColumnsMenu(qt_extras.StayOpenMenu):
     def populateMenu(self):
         # Add all the usable columns
         for usableColumn in columns.usableColumn_getBySlice():
-            self.addActionForColumn(usableColumn, usableColumn.get("submenuNames", []))
+            self.addActionForColumn(usableColumn, usableColumn["menuPath"])
 
-    def addActionForColumn(self, i_usableColumn, i_submenuNames):
+    def addActionForColumn(self, i_usableColumn, i_menuPath):
         # If the column is in a submenu
-        if len(i_submenuNames) > 0:
+        if len(i_menuPath) > 1:
             # If don't have the next submenu yet,
             # create one
-            if i_submenuNames[0] not in self.submenus:
-                submenu = TableColumnsMenu(i_submenuNames[0], self)
-                self.submenus[i_submenuNames[0]] = submenu
+            if i_menuPath[0] not in self.submenus:
+                submenu = TableColumnsMenu(i_menuPath[0], self)
+                self.submenus[i_menuPath[0]] = submenu
                 self.addMenu(submenu)
             else:
-                submenu = self.submenus[i_submenuNames[0]]
+                submenu = self.submenus[i_menuPath[0]]
             # Pass on to the submenu
-            submenu.addActionForColumn(i_usableColumn, i_submenuNames[1:])
+            submenu.addActionForColumn(i_usableColumn, i_menuPath[1:])
 
         # Else if the column is in this menu
         else:
             # Create action and save it in self.actions under the column id
             columnId = i_usableColumn["id"]
-            action = self.addAction(i_usableColumn["screenName"])
+            action = self.addAction(i_menuPath[0])
             self.actions[columnId] = action
             #
             if "tooltip" in i_usableColumn:

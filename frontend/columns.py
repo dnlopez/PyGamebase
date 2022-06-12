@@ -9,12 +9,13 @@
 #    id:
 #     (str)
 #     A unique internal identifier for the column.
-#    submenuNames:
+#    menuPath:
 #     (list of str)
-#     Names of submenus under which to place this item in column selection menus.
-#    screenName:
+#     Path under which to show this column in column selection menus.
+#     All components except the last are submenu names, and the last component is the actual menu item name.
+#    headingName:
 #     (str)
-#     The text that will appear in the heading for this column and in column selection menus.
+#     The text that will appear in the heading for this column.
 #    dbColumnNames:
 #     (list of str)
 #     Fully-qualified (ie. "<table name>.<column name>") names of columns that all must exist in the database
@@ -61,8 +62,8 @@ g_usableColumns = [
     # Launch
     {
         "id": "detail",
-        "submenuNames": ["Launch"],
-        "screenName": "Show detail (+)",
+        "menuPath": ["Launch", "Show detail (+)"],
+        "headingName": "Show detail (+)",
         "defaultWidth": 35,
         "sortable": False,
         "filterable": False,
@@ -70,8 +71,8 @@ g_usableColumns = [
     },
     {
         "id": "play",
-        "submenuNames": ["Launch"],
-        "screenName": "Start game (▶)",
+        "menuPath": ["Launch", "Start game (▶)"],
+        "headingName": "Start game (▶)",
         "dbColumnNames": ["Games.Filename"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.Filename AS [Games.Filename]",
@@ -83,8 +84,8 @@ g_usableColumns = [
     },
     {
         "id": "music",
-        "submenuNames": ["Launch"],
-        "screenName": "Start music (M)",
+        "menuPath": ["Launch", "Start music (M)"],
+        "headingName": "Start music (M)",
         "dbColumnNames": ["Games.SidFilename"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.SidFilename AS [Games.SidFilename]",
@@ -100,8 +101,8 @@ g_usableColumns = [
     # Screenshots
     {
         "id": "pic[0]",
-        "submenuNames": ["Screenshots"],
-        "screenName": "1",
+        "menuPath": ["Screenshots", "1"],
+        "headingName": "1",
         "dbColumnNames": ["Games.ScrnshotFilename"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.ScrnshotFilename AS [Games.ScrnshotFilename]",
@@ -112,8 +113,8 @@ g_usableColumns = [
     },
     {
         "id": "pic[1]",
-        "submenuNames": ["Screenshots"],
-        "screenName": "2",
+        "menuPath": ["Screenshots", "2"],
+        "headingName": "2",
         "dbColumnNames": ["Games.ScrnshotFilename"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.ScrnshotFilename AS [Games.ScrnshotFilename]",
@@ -124,8 +125,8 @@ g_usableColumns = [
     },
     {
         "id": "pic[2]",
-        "submenuNames": ["Screenshots"],
-        "screenName": "3",
+        "menuPath": ["Screenshots", "3"],
+        "headingName": "3",
         "dbColumnNames": ["Games.ScrnshotFilename"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.ScrnshotFilename AS [Games.ScrnshotFilename]",
@@ -136,8 +137,8 @@ g_usableColumns = [
     },
     {
         "id": "pic[3]",
-        "submenuNames": ["Screenshots"],
-        "screenName": "4",
+        "menuPath": ["Screenshots", "4"],
+        "headingName": "4",
         "dbColumnNames": ["Games.ScrnshotFilename"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.ScrnshotFilename AS [Games.ScrnshotFilename]",
@@ -148,8 +149,8 @@ g_usableColumns = [
     },
     {
         "id": "pic[4]",
-        "submenuNames": ["Screenshots"],
-        "screenName": "5",
+        "menuPath": ["Screenshots", "5"],
+        "headingName": "5",
         "dbColumnNames": ["Games.ScrnshotFilename"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.ScrnshotFilename AS [Games.ScrnshotFilename]",
@@ -160,8 +161,8 @@ g_usableColumns = [
     },
     {
         "id": "pic[5]",
-        "submenuNames": ["Screenshots"],
-        "screenName": "6",
+        "menuPath": ["Screenshots", "6"],
+        "headingName": "6",
         "dbColumnNames": ["Games.ScrnshotFilename"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.ScrnshotFilename AS [Games.ScrnshotFilename]",
@@ -172,8 +173,8 @@ g_usableColumns = [
     },
     {
         "id": "pic[6]",
-        "submenuNames": ["Screenshots"],
-        "screenName": "7",
+        "menuPath": ["Screenshots", "7"],
+        "headingName": "7",
         "dbColumnNames": ["Games.ScrnshotFilename"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.ScrnshotFilename AS [Games.ScrnshotFilename]",
@@ -184,8 +185,8 @@ g_usableColumns = [
     },
     {
         "id": "pic[7]",
-        "submenuNames": ["Screenshots"],
-        "screenName": "8",
+        "menuPath": ["Screenshots", "8"],
+        "headingName": "8",
         "dbColumnNames": ["Games.ScrnshotFilename"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.ScrnshotFilename AS [Games.ScrnshotFilename]",
@@ -196,8 +197,8 @@ g_usableColumns = [
     },
     {
         "id": "pic[8]",
-        "submenuNames": ["Screenshots"],
-        "screenName": "9",
+        "menuPath": ["Screenshots", "9"],
+        "headingName": "9",
         "dbColumnNames": ["Games.ScrnshotFilename"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.ScrnshotFilename AS [Games.ScrnshotFilename]",
@@ -208,8 +209,8 @@ g_usableColumns = [
     },
     {
         "id": "pic[9]",
-        "submenuNames": ["Screenshots"],
-        "screenName": "10",
+        "menuPath": ["Screenshots", "10"],
+        "headingName": "10",
         "dbColumnNames": ["Games.ScrnshotFilename"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.ScrnshotFilename AS [Games.ScrnshotFilename]",
@@ -222,8 +223,8 @@ g_usableColumns = [
     # Screenshots (random order)
     {
         "id": "random_pic[0]",
-        "submenuNames": ["Screenshots (random order)"],
-        "screenName": "1",
+        "menuPath": ["Screenshots (random order)", "1"],
+        "headingName": "1",
         "dbColumnNames": ["Games.ScrnshotFilename"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.ScrnshotFilename AS [Games.ScrnshotFilename]",
@@ -234,8 +235,8 @@ g_usableColumns = [
     },
     {
         "id": "random_pic[1]",
-        "submenuNames": ["Screenshots (random order)"],
-        "screenName": "2",
+        "menuPath": ["Screenshots (random order)", "2"],
+        "headingName": "2",
         "dbColumnNames": ["Games.ScrnshotFilename"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.ScrnshotFilename AS [Games.ScrnshotFilename]",
@@ -246,8 +247,8 @@ g_usableColumns = [
     },
     {
         "id": "random_pic[2]",
-        "submenuNames": ["Screenshots (random order)"],
-        "screenName": "3",
+        "menuPath": ["Screenshots (random order)", "3"],
+        "headingName": "3",
         "dbColumnNames": ["Games.ScrnshotFilename"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.ScrnshotFilename AS [Games.ScrnshotFilename]",
@@ -258,8 +259,8 @@ g_usableColumns = [
     },
     {
         "id": "random_pic[3]",
-        "submenuNames": ["Screenshots (random order)"],
-        "screenName": "4",
+        "menuPath": ["Screenshots (random order)", "4"],
+        "headingName": "4",
         "dbColumnNames": ["Games.ScrnshotFilename"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.ScrnshotFilename AS [Games.ScrnshotFilename]",
@@ -270,8 +271,8 @@ g_usableColumns = [
     },
     {
         "id": "random_pic[4]",
-        "submenuNames": ["Screenshots (random order)"],
-        "screenName": "5",
+        "menuPath": ["Screenshots (random order)", "5"],
+        "headingName": "5",
         "dbColumnNames": ["Games.ScrnshotFilename"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.ScrnshotFilename AS [Games.ScrnshotFilename]",
@@ -282,8 +283,8 @@ g_usableColumns = [
     },
     {
         "id": "random_pic[5]",
-        "submenuNames": ["Screenshots (random order)"],
-        "screenName": "6",
+        "menuPath": ["Screenshots (random order)", "6"],
+        "headingName": "6",
         "dbColumnNames": ["Games.ScrnshotFilename"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.ScrnshotFilename AS [Games.ScrnshotFilename]",
@@ -294,8 +295,8 @@ g_usableColumns = [
     },
     {
         "id": "random_pic[6]",
-        "submenuNames": ["Screenshots (random order)"],
-        "screenName": "7",
+        "menuPath": ["Screenshots (random order)", "7"],
+        "headingName": "7",
         "dbColumnNames": ["Games.ScrnshotFilename"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.ScrnshotFilename AS [Games.ScrnshotFilename]",
@@ -306,8 +307,8 @@ g_usableColumns = [
     },
     {
         "id": "random_pic[7]",
-        "submenuNames": ["Screenshots (random order)"],
-        "screenName": "8",
+        "menuPath": ["Screenshots (random order)", "8"],
+        "headingName": "8",
         "dbColumnNames": ["Games.ScrnshotFilename"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.ScrnshotFilename AS [Games.ScrnshotFilename]",
@@ -318,8 +319,8 @@ g_usableColumns = [
     },
     {
         "id": "random_pic[8]",
-        "submenuNames": ["Screenshots (random order)"],
-        "screenName": "9",
+        "menuPath": ["Screenshots (random order)", "9"],
+        "headingName": "9",
         "dbColumnNames": ["Games.ScrnshotFilename"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.ScrnshotFilename AS [Games.ScrnshotFilename]",
@@ -330,8 +331,8 @@ g_usableColumns = [
     },
     {
         "id": "random_pic[9]",
-        "submenuNames": ["Screenshots (random order)"],
-        "screenName": "10",
+        "menuPath": ["Screenshots (random order)", "10"],
+        "headingName": "10",
         "dbColumnNames": ["Games.ScrnshotFilename"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.ScrnshotFilename AS [Games.ScrnshotFilename]",
@@ -344,7 +345,8 @@ g_usableColumns = [
     #
     {
         "id": "id",
-        "screenName": "ID",
+        "menuPath": ["ID"],
+        "headingName": "ID",
         "dbColumnNames": ["Games.GA_Id"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.GA_Id AS [Games.GA_Id]",
@@ -358,7 +360,8 @@ g_usableColumns = [
     },
     {
         "id": "name",
-        "screenName": "Name",
+        "menuPath": ["Name"],
+        "headingName": "Name",
         "dbColumnNames": ["Games.Name"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.Name AS [Games.Name]",
@@ -372,7 +375,8 @@ g_usableColumns = [
     },
     {
         "id": "year",
-        "screenName": "Year",
+        "menuPath": ["Year"],
+        "headingName": "Year",
         "dbColumnNames": ["Games.YE_Id", "Years.Year"],
         "dbTableNames": ["Years"],
         "dbSelect": "Years.Year AS [Years.Year]",
@@ -386,7 +390,8 @@ g_usableColumns = [
     },
     {
         "id": "publisher",
-        "screenName": "Publisher",
+        "menuPath": ["Publisher"],
+        "headingName": "Publisher",
         "dbColumnNames": ["Games.PU_Id", "Publishers.Publisher"],
         "dbTableNames": ["Publishers"],
         "dbSelect": "Publishers.Publisher AS [Publishers.Publisher]",
@@ -399,7 +404,8 @@ g_usableColumns = [
     },
     {
         "id": "developer",
-        "screenName": "Developer",
+        "menuPath": ["Developer"],
+        "headingName": "Developer",
         "dbColumnNames": ["Games.DE_Id", "Developers.Developer"],
         "dbTableNames": ["Developers"],
         "dbSelect": "Developers.Developer AS [Developers.Developer]",
@@ -412,7 +418,8 @@ g_usableColumns = [
     },
     {
         "id": "programmer",
-        "screenName": "Programmer",
+        "menuPath": ["Programmer"],
+        "headingName": "Programmer",
         "dbColumnNames": ["Games.PR_Id", "Programmers.Programmer"],
         "dbTableNames": ["Programmers"],
         "dbSelect": "Programmers.Programmer AS [Programmers.Programmer]",
@@ -425,7 +432,8 @@ g_usableColumns = [
     },
     {
         "id": "parent_genre",
-        "screenName": "Parent genre",
+        "menuPath": ["Parent genre"],
+        "headingName": "Parent genre",
         "dbColumnNames": ["Games.GE_Id", "Genres.PG_Id", "PGenres.ParentGenre"],
         "dbTableNames": ["PGenres"],
         "dbSelect": "PGenres.ParentGenre AS [PGenres.ParentGenre]",
@@ -438,7 +446,8 @@ g_usableColumns = [
     },
     {
         "id": "genre",
-        "screenName": "Genre",
+        "menuPath": ["Genre"],
+        "headingName": "Genre",
         "dbColumnNames": ["Games.GE_Id", "Genres.Genre"],
         "dbTableNames": ["Genres"],
         "dbSelect": "Genres.Genre AS [Genres.Genre]",
@@ -451,7 +460,8 @@ g_usableColumns = [
     },
     {
         "id": "language",
-        "screenName": "Language",
+        "menuPath": ["Language"],
+        "headingName": "Language",
         "dbColumnNames": ["Games.LA_Id", "Languages.Language"],
         "dbTableNames": ["Languages"],
         "dbSelect": "Languages.Language AS [Languages.Language]",
@@ -464,7 +474,8 @@ g_usableColumns = [
     },
     {
         "id": "cracker",
-        "screenName": "Cracker",
+        "menuPath": ["Cracker"],
+        "headingName": "Cracker",
         "dbColumnNames": ["Games.CR_Id", "Crackers.Cracker"],
         "dbTableNames": ["Crackers"],
         "dbSelect": "Crackers.Cracker AS [Crackers.Cracker]",
@@ -477,7 +488,8 @@ g_usableColumns = [
     },
     {
         "id": "artist",
-        "screenName": "Artist",
+        "menuPath": ["Artist"],
+        "headingName": "Artist",
         "dbColumnNames": ["Games.AR_Id", "Artists.Artist"],
         "dbTableNames": ["Artists"],
         "dbSelect": "Artists.Artist AS [Artists.Artist]",
@@ -490,7 +502,8 @@ g_usableColumns = [
     },
     {
         "id": "license",
-        "screenName": "License",
+        "menuPath": ["License"],
+        "headingName": "License",
         "dbColumnNames": ["Games.LI_Id", "Licenses.License"],
         "dbTableNames": ["Licenses"],
         "dbSelect": "Licenses.License AS [Licenses.License]",
@@ -503,7 +516,8 @@ g_usableColumns = [
     },
     {
         "id": "rarity",
-        "screenName": "Rarity",
+        "menuPath": ["Rarity"],
+        "headingName": "Rarity",
         "dbColumnNames": ["Games.RA_Id", "Rarities.Rarity"],
         "dbTableNames": ["Rarities"],
         "dbSelect": "Rarities.Rarity AS [Rarities.Rarity]",
@@ -516,8 +530,8 @@ g_usableColumns = [
     },
     {
         "id": "musician_name",
-        "submenuNames": ["Musician"],
-        "screenName": "Musician",
+        "menuPath": ["Musician", "Musician"],
+        "headingName": "Musician",
         "dbColumnNames": ["Games.MU_Id", "Musicians.Musician"],
         "dbTableNames": ["Musicians"],
         "dbSelect": "Musicians.Musician AS [Musicians.Musician]",
@@ -530,8 +544,8 @@ g_usableColumns = [
     },
     {
         "id": "musician_photo",
-        "submenuNames": ["Musician"],
-        "screenName": "Musician photo",
+        "menuPath": ["Musician", "Musician photo"],
+        "headingName": "Musician photo",
         "dbColumnNames": ["Games.MU_Id", "Musicians.Photo"],
         "dbTableNames": ["Musicians"],
         "dbSelect": "Musicians.Photo AS [Musicians.Photo]",
@@ -545,8 +559,8 @@ g_usableColumns = [
     },
     {
         "id": "musician_group",
-        "submenuNames": ["Musician"],
-        "screenName": "Musician group",
+        "menuPath": ["Musician", "Musician group"],
+        "headingName": "Musician group",
         "dbColumnNames": ["Games.MU_Id", "Musicians.Grp"],
         "dbTableNames": ["Musicians"],
         "dbSelect": "Musicians.Grp AS [Musicians.Grp]",
@@ -559,8 +573,8 @@ g_usableColumns = [
     },
     {
         "id": "musician_nick",
-        "submenuNames": ["Musician"],
-        "screenName": "Musician nick",
+        "menuPath": ["Musician", "Musician nick"],
+        "headingName": "Musician nick",
         "dbColumnNames": ["Games.MU_Id", "Musicians.Nick"],
         "dbTableNames": ["Musicians"],
         "dbSelect": "Musicians.Nick AS [Musicians.Nick]",
@@ -573,7 +587,8 @@ g_usableColumns = [
     },
     {
         "id": "pal_ntsc",
-        "screenName": "PAL/NTSC",
+        "menuPath": ["PAL/NTSC"],
+        "headingName": "PAL/NTSC",
         "dbColumnNames": ["Games.V_PalNTSC"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.V_PalNTSC AS [Games.V_PalNTSC]",
@@ -594,7 +609,8 @@ g_usableColumns = [
     },
     {
         "id": "control",
-        "screenName": "Control",
+        "menuPath": ["Control"],
+        "headingName": "Control",
         "dbColumnNames": ["Games.Control"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.Control AS [Games.Control]",
@@ -620,8 +636,8 @@ g_usableColumns = [
     },
     {
         "id": "clone_of",
-        "submenuNames": ["Related games"],
-        "screenName": "Clone of",
+        "menuPath": ["Related games", "Clone of"],
+        "headingName": "Clone of",
         "dbColumnNames": ["Games.CloneOf"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.CloneOf AS [Games.CloneOf]",
@@ -635,8 +651,8 @@ g_usableColumns = [
     },
     {
         "id": "prequel",
-        "submenuNames": ["Related games"],
-        "screenName": "Prequel",
+        "menuPath": ["Related games", "Prequel"],
+        "headingName": "Prequel",
         "dbColumnNames": ["Games.Prequel"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.Prequel AS [Games.Prequel]",
@@ -651,8 +667,8 @@ g_usableColumns = [
     },
     {
         "id": "sequel",
-        "submenuNames": ["Related games"],
-        "screenName": "Sequel",
+        "menuPath": ["Related games", "Sequel"],
+        "headingName": "Sequel",
         "dbColumnNames": ["Games.Sequel"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.Sequel AS [Games.Sequel]",
@@ -667,8 +683,8 @@ g_usableColumns = [
     },
     {
         "id": "related",
-        "submenuNames": ["Related games"],
-        "screenName": "Related",
+        "menuPath": ["Related games", "Related"],
+        "headingName": "Related",
         "dbColumnNames": ["Games.Related"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.Related AS [Games.Related]",
@@ -683,7 +699,8 @@ g_usableColumns = [
     },
     {
         "id": "gemus",
-        "screenName": "Gemus",
+        "menuPath": ["Gemus"],
+        "headingName": "Gemus",
         "dbColumnNames": ["Games.Gemus"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.Gemus AS [Games.Gemus]",
@@ -697,8 +714,8 @@ g_usableColumns = [
 
     {
         "id": "players",
-        "submenuNames": ["Players"],
-        "screenName": "Players",
+        "menuPath": ["Players", "Players (combined info)"],
+        "headingName": "Players",
         "dbColumnNames": ["Games.PlayersFrom", "Games.PlayersTo", "Games.PlayersSim"],
         "dbTableNames": ["Games"],
         "dbSelect": "iif(Games.PlayersFrom == Games.PlayersTo, Games.PlayersFrom, Games.PlayersFrom || ' - ' || Games.PlayersTo) || iif(Games.PlayersSim, ' (simultaneous)', '') AS Players",
@@ -710,8 +727,8 @@ g_usableColumns = [
     },
     {
         "id": "players_from",
-        "submenuNames": ["Players"],
-        "screenName": "Players from",
+        "menuPath": ["Players", "Players from"],
+        "headingName": "Players from",
         "tooltip": "Minimum number of players the game supports (-1=Unknown)",
         "dbColumnNames": ["Games.PlayersFrom"],
         "dbTableNames": ["Games"],
@@ -726,8 +743,8 @@ g_usableColumns = [
     },
     {
         "id": "players_to",
-        "submenuNames": ["Players"],
-        "screenName": "Players to",
+        "menuPath": ["Players", "Players to"],
+        "headingName": "Players to",
         "dbColumnNames": ["Games.PlayersTo"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.PlayersTo AS [Games.PlayersTo]",
@@ -741,8 +758,8 @@ g_usableColumns = [
     },
     {
         "id": "players_sim",
-        "submenuNames": ["Players"],
-        "screenName": "Players simultaneous",
+        "menuPath": ["Players", "Players simultaneous"],
+        "headingName": "Players simultaneous",
         "dbColumnNames": ["Games.PlayersSim"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.PlayersSim AS [Games.PlayersSim]",
@@ -757,8 +774,8 @@ g_usableColumns = [
 
     {
         "id": "comment",
-        "submenuNames": ["Comments"],
-        "screenName": "Comment",
+        "menuPath": ["Comments", "Comment"],
+        "headingName": "Comment",
         "dbColumnNames": ["Games.Comment"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.Comment AS [Games.Comment]",
@@ -771,8 +788,8 @@ g_usableColumns = [
     },
     {
         "id": "v_comment",
-        "submenuNames": ["Comments"],
-        "screenName": "V Comment",
+        "menuPath": ["Comments", "V Comment"],
+        "headingName": "V Comment",
         "dbColumnNames": ["Games.V_Comment"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.V_Comment AS [Games.V_Comment]",
@@ -785,8 +802,8 @@ g_usableColumns = [
     },
     {
         "id": "memo_text",
-        "submenuNames": ["Comments"],
-        "screenName": "Memo text",
+        "menuPath": ["Comments", "Memo text"],
+        "headingName": "Memo text",
         "dbColumnNames": ["Games.MemoText"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.MemoText AS [Games.MemoText]",
@@ -801,8 +818,8 @@ g_usableColumns = [
 
     {
         "id": "filename",
-        "submenuNames": ["Filenames"],
-        "screenName": "Filename",
+        "menuPath": ["Filenames", "Filename"],
+        "headingName": "Filename",
         "dbColumnNames": ["Games.Filename"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.Filename AS [Games.Filename]",
@@ -816,8 +833,8 @@ g_usableColumns = [
     },
     {
         "id": "file_to_run",
-        "submenuNames": ["Filenames"],
-        "screenName": "File to run",
+        "menuPath": ["Filenames", "File to run"],
+        "headingName": "File to run",
         "dbColumnNames": ["Games.FileToRun"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.FileToRun AS [Games.FileToRun]",
@@ -831,8 +848,8 @@ g_usableColumns = [
     },
     {
         "id": "file_to_run2",
-        "submenuNames": ["Filenames"],
-        "screenName": "File to run",
+        "menuPath": ["Filenames", "File to run"],
+        "headingName": "File to run",
         "dbColumnNames": ["Games.FileToRun"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.FileToRun AS [Games.FileToRun]",
@@ -846,8 +863,8 @@ g_usableColumns = [
     },
     {
         "id": "filename_index",
-        "submenuNames": ["Filenames"],
-        "screenName": "Filename index",
+        "menuPath": ["Filenames", "Filename index"],
+        "headingName": "Filename index",
         "dbColumnNames": ["Games.FilenameIndex"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.FilenameIndex AS [Games.FilenameIndex]",
@@ -919,7 +936,7 @@ g_tableColumns = []
 # Type: TableColumn
 #  (dict)
 #  Has keys:
-#   screenName:
+#   headingName:
 #    (str)
 #    Used in
 #     heading button, if it's visible
@@ -961,7 +978,7 @@ def tableColumn_add(i_id, i_width=None, i_beforeColumnId=None):
 
     newTableColumn = {
         "id": usableColumn["id"],
-        "screenName": usableColumn["screenName"],
+        "headingName": usableColumn["headingName"],
         "sortable": usableColumn["sortable"],
         "filterable": usableColumn["filterable"]
     }
