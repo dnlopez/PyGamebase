@@ -891,6 +891,171 @@ class Gemus():
 
 # + }}}
 
+# + Config files {{{
+
+def setIniValue(i_filePath, i_sectionName, i_keyName, i_value,
+                i_keyValueDelimiter = "=", i_sectionNameCaseSensitive = True, i_keyNameCaseSensitive = False):
+    """
+    Set a key=value pair in a Windows .INI-style file.
+
+    Similar to, in GEMUS
+     Set_INI_Value()
+
+    Params:
+     i_filePath:
+      (str)
+      Path of file to work in.
+     i_sectionName:
+      (str)
+      Name of INI file section to work in.
+      If the section doesn't exist in the file, it will be created.
+     i_keyName:
+      (str)
+      Name of key in key=value pair.
+      If a line with this key already exists in the file, that line will be changed,
+      else a new line will be added.
+     i_value:
+      (str)
+      Value of key=value pair.
+     i_keyValueDelimiter:
+      (str)
+      String that seperates a key and a value.
+     i_sectionNameCaseSensitive:
+      (bool)
+     i_keyNameCaseSensitive:
+      (bool)
+    """
+    # Read lines of file
+    with open(i_filePath, "r") as handle:
+        lines = handle.readlines()
+
+
+    def getKeyAndValue(i_line):
+        keyAndValue = i_line.split(i_keyValueDelimiter, 1)
+        if len(keyAndValue) < 2:
+            return None, None
+        return keyAndValue[0].strip(), keyAndValue[1].strip()
+
+    # Find target section
+    lineNo = 0
+    while lineNo < len(lines):
+        line = lines[lineNo]
+
+        strippedLine = line.strip()
+        if strippedLine.startswith("[") and strippedLine.endswith("]"):
+            sectionName = strippedLine[1:-1]
+            if (i_sectionNameCaseSensitive and sectionName == i_sectionName) or (not i_sectionNameCaseSensitive and sectionName.upper() == i_sectionName.upper()):
+                break
+
+        lineNo += 1
+    # If didn't 'break', ie. didn't find the target section
+    # add a new section
+    else:
+        lines.append("\n")
+        lineNo += 1
+        lines.append("[" + i_sectionName + "]\n")
+
+    # For each line in target section
+    lineNo += 1
+    updated = False
+    while lineNo < len(lines):
+        line = lines[lineNo]
+
+        # If found another section,
+        # break
+        strippedLine = line.strip()
+        if strippedLine.startswith("[") and strippedLine.endswith("]"):
+            break
+
+        # If found the right key,
+        # replace the value and break
+        keyName, value = getKeyAndValue(strippedLine)
+        if keyName != None and ((i_keyNameCaseSensitive and keyName == i_keyName) or \
+                                (not i_keyNameCaseSensitive and keyName.upper() == i_keyName.upper())):
+            lines[lineNo] = i_keyName + i_keyValueDelimiter + i_value + "\n"
+            updated = True
+            break
+
+        lineNo += 1
+
+    # If section or file ended without finding existing value to change,
+    # rewind back over any blank lines, and insert a new key=value
+    if not updated:
+        lineNo -= 1
+        while lines[lineNo].strip() == "":
+            lineNo -= 1
+        lines.insert(lineNo + 1, i_keyName + i_keyValueDelimiter + i_value + "\n")
+
+
+    # Write file back
+    with open(i_filePath, "w") as handle:
+        handle.writelines(lines)
+
+def setCfgValue(i_filePath, i_keyName, i_value,
+                i_keyValueDelimiter = "=", i_keyNameCaseSensitive = False):
+    """
+    Set a key=value pair in a file which simply has one of them per line (almost a Windows .INI-style file, but without sections).
+
+    Similar to, in GEMUS
+     Set_CFG_Item()
+     Set_CFG_Value()
+
+    Params:
+     i_filePath:
+      (str)
+      Path of file to work in.
+     i_keyName:
+      (str)
+      Name of key in key=value pair.
+      If a line with this key already exists in the file, that line will be changed,
+      else a new line will be added.
+     i_value:
+      (str)
+      Value of key=value pair.
+     i_keyValueDelimiter:
+      (str)
+      String that seperates a key and a value.
+     i_keyNameCaseSensitive:
+      (bool)
+    """
+    # Read lines of file
+    with open(i_filePath, "r") as handle:
+        lines = handle.readlines()
+
+
+    def getKeyAndValue(i_line):
+        keyAndValue = i_line.split(i_keyValueDelimiter, 1)
+        if len(keyAndValue) < 2:
+            return None, None
+        return keyAndValue[0].strip(), keyAndValue[1].strip()
+
+    # For each line
+    lineNo = 0
+    while lineNo < len(lines):
+        line = lines[lineNo]
+
+        # If found the right key,
+        # replace the value and break
+        keyName, value = getKeyAndValue(line)
+        if keyName != None and ((i_keyNameCaseSensitive and keyName == i_keyName) or \
+                                (not i_keyNameCaseSensitive and keyName.upper() == i_keyName.upper())):
+            lines[lineNo] = i_keyName + i_keyValueDelimiter + i_value + "\n"
+            break
+
+        lineNo += 1
+    # If didn't 'break', ie. didn't find the target key
+    # rewind back over any blank lines, and insert a new key=value
+    else:
+        lineNo -= 1
+        while lines[lineNo].strip() == "":
+            lineNo -= 1
+        lines.insert(lineNo + 1, i_keyName + i_keyValueDelimiter + i_value + "\n")
+
+
+    # Write file back
+    with open(i_filePath, "w") as handle:
+        handle.writelines(lines)
+
 # + }}}
 
 # + MAME {{{
