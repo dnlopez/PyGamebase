@@ -165,6 +165,9 @@ def filterHistory_goBack():
         oredRows = sql.sqlWhereExpressionToColumnFilters(sqlWhereExpression)
         columnFilterBar.setFilterValues(oredRows)
 
+        columnFilterBar.repositionFilterEdits()
+        columnFilterBar.repositionTabOrder()
+
     # Refilter
     tableView.refilter(sqlWhereExpression, columnNameBar.sort_operations)
 
@@ -192,6 +195,9 @@ def filterHistory_goForward():
     else:
         oredRows = sql.sqlWhereExpressionToColumnFilters(sqlWhereExpression)
         columnFilterBar.setFilterValues(oredRows)
+
+        columnFilterBar.repositionFilterEdits()
+        columnFilterBar.repositionTabOrder()
 
     # Refilter
     tableView.refilter(sqlWhereExpression, columnNameBar.sort_operations)
