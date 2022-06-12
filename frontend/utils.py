@@ -1185,3 +1185,164 @@ def messageBox(i_text, i_title="Message from adapter", i_icon="information"):
     frontend.messageBox(i_text, i_title, i_icon)
 
 # + }}}
+
+# + Simulating key presses {{{
+
+import time
+
+def typeOnKeyboard(i_thingsToType):
+    """
+    Dependencies:
+     The 'pyautogui' module must be installed to use this function.
+
+    Params:
+     i_thingsToType:
+      Either (str)
+       Things to type.
+       The string may contain any of the following substrings, concatenated together:
+        Single-character strings
+         the space character
+         \t \n \r
+         ! " # $ % & ' ( ) * + , - . /
+         0 1 2 3 4 5 6 7 8 9
+         : ; < = > ? @ [ \\ ] ^ _ `
+         a b c d e f g h i j k l m n o p q r s t u v w x y z
+         A B C D E F G H I J K L M N O P Q R S T U V W X Y Z
+         { | } ~
+        Multiple-character strings (which each must be enclosed in curly braces, eg. "{tab}{space}")
+         Common keys
+          space tab backspace return
+         Modifier keys
+          shift shiftleft shiftright
+          ctrl ctrlleft ctrlright
+          alt altleft altright
+          option optionleft optionright
+          win winleft winright
+         Lock keys
+          capslock numlock scrolllock
+         Escape and function keys
+          esc escape
+          f1 f2 f3 f4 f5 f6 f7 f8 f9 f10 f11 f12 f13 f14 f15 f16 f17 f18 f19 f20 f21 f22 f23 f24
+         Navigation block keys
+          insert delete del home end pagedown pgdn pageup pgup
+         Cursor keys
+          up down left right
+         Numeric keypad
+          num0 num1 num2 num3 num4 num5 num6 num7 num8 num9
+          add subtract divide multiply decimal
+          enter
+         Multimedia and system keys
+          apps browserback browserfavorites browserforward browserhome browserrefresh browsersearch browserstop
+          launchapp1 launchapp2 launchmail launchmediaselect
+          playpause stop nexttrack prevtrack
+          volumedown volumemute volumeup
+          sleep
+          print printscreen prntscrn prtsc prtscr pause
+         Language entry keys
+          kana kanji hanguel hangul hanja junja
+         Other keys
+          accept clear convert execute final fn help modechange nonconvert select separator yen command
+       Any key specified as above will be pressed and released before moving onto the next key. This including the modifiers, like {shift}.
+       But any key may also be written (in braces, since it will become multiple characters if not already) with a suffix for additional behaviour:
+        down
+         Press and hold the key down.
+         eg.
+          {shift down}abc
+           Will type 'ABC' (if caps lock is off).
+         You will normally want to follow this at some point with an 'up' as described next.
+        up
+         Release the key.
+         eg.
+          {shift down}abc{shift up}def
+           Will type 'ABCdef' (if caps lock is off).
+        +
+         Press and hold the key down only for the next non-suffixed key, then release it.
+         eg,
+          {shift+}abc
+           Will type 'Abc' (if caps lock is off).
+        Some more examples:
+         {alt+}{f4}
+          The shortcut for closing a window on Windows.
+         {ctrl+}{alt+}{f2}
+          The shortcut for switching to the second virtual console on Linux.
+         {alt down}{tab}{tab}{tab}{alt up}
+          Switch to the third-last application used using the 'Alt-Tab' switcher.
+      or (list)
+       Each element is:
+        Either (str)
+         Things to type, in the same format asa above.
+        or (float)
+         Set the between-key delay for subsequent characters to this many seconds.
+         The initial setting is 0.02.
+        or (dict)
+
+    """
+    try:
+        import pyautogui
+    except ImportError as e:
+        import traceback
+        import frontend
+        frontend.messageBox("<b>You must install the Python library 'pyautogui' to use typeOnKeyboard().</b><br>\n<br>\n(" + "<br>\n".join(traceback.format_exception_only(e)).strip() + ")", "Error", "critical")
+        return
+
+    pyautogui.PAUSE = 0
+
+    if isinstance(i_thingsToType, str):
+        i_thingsToType = [i_thingsToType]
+
+    keyDownDelay = 0.02
+    betweenKeyDelay = 0.02
+
+    singleKeyHolds = set()
+
+    for thing in i_thingsToType:
+        if isinstance(thing, float):
+            betweenKeyDelay = thing;
+
+        elif isinstance(thing, dict):
+            pass
+
+        elif isinstance(thing, str):
+            # Split tokens
+            #  Each is either a single character or something in braces
+            tokens = []
+            charNo = 0
+            while charNo < len(thing):
+                if thing[charNo] == "{":
+                    charNo += 1
+                    startCharNo = charNo
+                    while charNo < len(thing):
+                        if thing[charNo] == "}":
+                            break
+                        charNo += 1
+                    tokens.append(thing[startCharNo:charNo])
+                    charNo += 1
+                else:
+                    tokens.append(thing[charNo])
+                    charNo += 1
+
+            #
+            for token in tokens:
+                if len(token) > 1 and token.endswith(" down"):
+                    keyName = token[:-5]
+                    pyautogui.keyDown(keyName)
+                elif len(token) > 1 and token.endswith(" up"):
+                    keyName = token[:-3]
+                    pyautogui.keyUp(keyName)
+                elif len(token) > 1 and token.endswith("+"):
+                    keyName = token[:-1]
+                    singleKeyHolds.add(keyName)
+                    pyautogui.keyDown(keyName)
+                else:
+                    keyName = token
+                    pyautogui.keyDown(keyName)
+                    time.sleep(keyDownDelay)
+                    pyautogui.keyUp(keyName)
+                    #
+                    for singleKeyHold in singleKeyHolds:
+                        pyautogui.keyUp(singleKeyHold)
+                    singleKeyHolds.clear()
+
+                time.sleep(betweenKeyDelay)
+
+# + }}}
