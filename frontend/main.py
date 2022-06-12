@@ -453,6 +453,8 @@ class TableColumnsMenu(qt_extras.StayOpenMenu):
             #
             if "tooltip" in i_usableColumn:
                 action.setToolTip(i_usableColumn["tooltip"])
+            elif "mdbComment" in i_usableColumn:
+                action.setToolTip(i_usableColumn["mdbComment"])
             action.setCheckable(True)
             action.setChecked(columns.tableColumn_getById(columnId) != None)
             action.triggered.connect(functools.partial(self.action_onTriggered, columnId))
