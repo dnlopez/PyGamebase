@@ -18,6 +18,7 @@ import frontend_utils
 import utils
 import sql
 import gamebase
+import settings
 
 
 # + Game table view {{{
@@ -351,9 +352,11 @@ class GameTableView(QTableView):
         self.setItemDelegate(MyStyledItemDelegate(self))
 
         # Set row height
+        if "rowHeight" not in settings.viewSettings:
+            settings.viewSettings["rowHeight"] = 200
         #self.rowHeight(200)
         self.verticalHeader().setSectionResizeMode(QHeaderView.Fixed)
-        self.verticalHeader().setDefaultSectionSize(200)
+        self.verticalHeader().setDefaultSectionSize(settings.viewSettings["rowHeight"])
         self.verticalHeader().setMinimumSectionSize(2)
         self.verticalHeader().hide()
 

@@ -569,6 +569,7 @@ def viewMenu_saveLayout_onTriggered():
     settings.viewSettings["splitHorizontally"] = splitter.orientation() == Qt.Horizontal
     settings.viewSettings["horizontalSplitPosition"] = splitter_lastPosition
     settings.viewSettings["detailPaneItems"] = detail_pane.g_detailPaneItems
+    settings.viewSettings["rowHeight"] = tableView.rowHeight()
 
     settings.saveViewSettings()
 viewMenu_saveLayout.triggered.connect(viewMenu_saveLayout_onTriggered)
