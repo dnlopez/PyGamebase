@@ -492,11 +492,20 @@ class TableColumnsMenu(qt_extras.StayOpenMenu):
         columnFilterBar.repositionFilterEdits()
         columnFilterBar.repositionTabOrder()
 
+        # Remember currently selected game ID and column number
+        selectedGameId = tableView.selectedGameId()
+        selectedColumnNo = tableView.selectionModel().currentIndex().column()
+
         # Requery DB in case filter criteria have changed
         refilterFromCurrentlyVisibleBar()
         tableView.requery()
         #
         tableView.resizeAllColumns([column["width"]  for column in columns.tableColumn_getBySlice()])
+
+        # Reselect same game and column in table, if it's still there
+        rowNo = tableView.findGameWithId(selectedGameId)
+        if rowNo != None:
+            tableView.selectionModel().setCurrentIndex(tableView.selectionModel().model().index(rowNo, selectedColumnNo), QItemSelectionModel.ClearAndSelect)
 
     # + }}}
 
