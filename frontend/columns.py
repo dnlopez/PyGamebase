@@ -9,9 +9,9 @@
 #    id:
 #     (str)
 #     A unique internal identifier for the column.
-#    groupName:
-#     (str)
-#     Columns which share this text will appear grouped under this description in column selection menus.
+#    submenuNames:
+#     (list of str)
+#     Names of submenus under which to place this item in column selection menus.
 #    screenName:
 #     (str)
 #     The text that will appear in the heading for this column and in column selection menus.
@@ -50,10 +50,10 @@
 #     One of
 #      "left"
 #      "center"
-#    dbType:
+#    mdbType:
 #     (str)
 #     As exported from a GameBase 64 MDB file. Not currently used by this program.
-#    comment:
+#    mdbComment:
 #     (str)
 #     As exported from a GameBase 64 MDB file. Not currently used by this program.
 
@@ -61,7 +61,7 @@ g_usableColumns = [
     # Launch
     {
         "id": "detail",
-        "groupName": "Launch",
+        "submenuNames": ["Launch"],
         "screenName": "Show detail (+)",
         "defaultWidth": 35,
         "sortable": False,
@@ -70,7 +70,7 @@ g_usableColumns = [
     },
     {
         "id": "play",
-        "groupName": "Launch",
+        "submenuNames": ["Launch"],
         "screenName": "Start game (▶)",
         "dbColumnNames": ["Games.Filename"],
         "dbTableNames": ["Games"],
@@ -83,24 +83,24 @@ g_usableColumns = [
     },
     {
         "id": "music",
-        "groupName": "Launch",
+        "submenuNames": ["Launch"],
         "screenName": "Start music (M)",
         "dbColumnNames": ["Games.SidFilename"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.SidFilename AS [Games.SidFilename]",
         "dbIdentifiers": ["Games.SidFilename", "SidFilename"],
-        "dbType": "Memo/Hyperlink (255)",
         "defaultWidth": 35,
         "sortable": False,
         "filterable": False,
         "textAlignment": "center",
-        "comment": "Music Filename within Music Path"
+        "mdbType": "Memo/Hyperlink (255)",
+        "mdbComment": "Music Filename within Music Path"
     },
 
     # Screenshots
     {
         "id": "pic[0]",
-        "groupName": "Screenshots",
+        "submenuNames": ["Screenshots"],
         "screenName": "1",
         "dbColumnNames": ["Games.ScrnshotFilename"],
         "dbTableNames": ["Games"],
@@ -112,7 +112,7 @@ g_usableColumns = [
     },
     {
         "id": "pic[1]",
-        "groupName": "Screenshots",
+        "submenuNames": ["Screenshots"],
         "screenName": "2",
         "dbColumnNames": ["Games.ScrnshotFilename"],
         "dbTableNames": ["Games"],
@@ -124,7 +124,7 @@ g_usableColumns = [
     },
     {
         "id": "pic[2]",
-        "groupName": "Screenshots",
+        "submenuNames": ["Screenshots"],
         "screenName": "3",
         "dbColumnNames": ["Games.ScrnshotFilename"],
         "dbTableNames": ["Games"],
@@ -136,7 +136,7 @@ g_usableColumns = [
     },
     {
         "id": "pic[3]",
-        "groupName": "Screenshots",
+        "submenuNames": ["Screenshots"],
         "screenName": "4",
         "dbColumnNames": ["Games.ScrnshotFilename"],
         "dbTableNames": ["Games"],
@@ -148,7 +148,7 @@ g_usableColumns = [
     },
     {
         "id": "pic[4]",
-        "groupName": "Screenshots",
+        "submenuNames": ["Screenshots"],
         "screenName": "5",
         "dbColumnNames": ["Games.ScrnshotFilename"],
         "dbTableNames": ["Games"],
@@ -160,7 +160,7 @@ g_usableColumns = [
     },
     {
         "id": "pic[5]",
-        "groupName": "Screenshots",
+        "submenuNames": ["Screenshots"],
         "screenName": "6",
         "dbColumnNames": ["Games.ScrnshotFilename"],
         "dbTableNames": ["Games"],
@@ -172,7 +172,7 @@ g_usableColumns = [
     },
     {
         "id": "pic[6]",
-        "groupName": "Screenshots",
+        "submenuNames": ["Screenshots"],
         "screenName": "7",
         "dbColumnNames": ["Games.ScrnshotFilename"],
         "dbTableNames": ["Games"],
@@ -184,7 +184,7 @@ g_usableColumns = [
     },
     {
         "id": "pic[7]",
-        "groupName": "Screenshots",
+        "submenuNames": ["Screenshots"],
         "screenName": "8",
         "dbColumnNames": ["Games.ScrnshotFilename"],
         "dbTableNames": ["Games"],
@@ -196,7 +196,7 @@ g_usableColumns = [
     },
     {
         "id": "pic[8]",
-        "groupName": "Screenshots",
+        "submenuNames": ["Screenshots"],
         "screenName": "9",
         "dbColumnNames": ["Games.ScrnshotFilename"],
         "dbTableNames": ["Games"],
@@ -208,7 +208,7 @@ g_usableColumns = [
     },
     {
         "id": "pic[9]",
-        "groupName": "Screenshots",
+        "submenuNames": ["Screenshots"],
         "screenName": "10",
         "dbColumnNames": ["Games.ScrnshotFilename"],
         "dbTableNames": ["Games"],
@@ -222,7 +222,7 @@ g_usableColumns = [
     # Screenshots (random order)
     {
         "id": "random_pic[0]",
-        "groupName": "Screenshots (random order)",
+        "submenuNames": ["Screenshots (random order)"],
         "screenName": "1",
         "dbColumnNames": ["Games.ScrnshotFilename"],
         "dbTableNames": ["Games"],
@@ -234,7 +234,7 @@ g_usableColumns = [
     },
     {
         "id": "random_pic[1]",
-        "groupName": "Screenshots (random order)",
+        "submenuNames": ["Screenshots (random order)"],
         "screenName": "2",
         "dbColumnNames": ["Games.ScrnshotFilename"],
         "dbTableNames": ["Games"],
@@ -246,7 +246,7 @@ g_usableColumns = [
     },
     {
         "id": "random_pic[2]",
-        "groupName": "Screenshots (random order)",
+        "submenuNames": ["Screenshots (random order)"],
         "screenName": "3",
         "dbColumnNames": ["Games.ScrnshotFilename"],
         "dbTableNames": ["Games"],
@@ -258,7 +258,7 @@ g_usableColumns = [
     },
     {
         "id": "random_pic[3]",
-        "groupName": "Screenshots (random order)",
+        "submenuNames": ["Screenshots (random order)"],
         "screenName": "4",
         "dbColumnNames": ["Games.ScrnshotFilename"],
         "dbTableNames": ["Games"],
@@ -270,7 +270,7 @@ g_usableColumns = [
     },
     {
         "id": "random_pic[4]",
-        "groupName": "Screenshots (random order)",
+        "submenuNames": ["Screenshots (random order)"],
         "screenName": "5",
         "dbColumnNames": ["Games.ScrnshotFilename"],
         "dbTableNames": ["Games"],
@@ -282,7 +282,7 @@ g_usableColumns = [
     },
     {
         "id": "random_pic[5]",
-        "groupName": "Screenshots (random order)",
+        "submenuNames": ["Screenshots (random order)"],
         "screenName": "6",
         "dbColumnNames": ["Games.ScrnshotFilename"],
         "dbTableNames": ["Games"],
@@ -294,7 +294,7 @@ g_usableColumns = [
     },
     {
         "id": "random_pic[6]",
-        "groupName": "Screenshots (random order)",
+        "submenuNames": ["Screenshots (random order)"],
         "screenName": "7",
         "dbColumnNames": ["Games.ScrnshotFilename"],
         "dbTableNames": ["Games"],
@@ -306,7 +306,7 @@ g_usableColumns = [
     },
     {
         "id": "random_pic[7]",
-        "groupName": "Screenshots (random order)",
+        "submenuNames": ["Screenshots (random order)"],
         "screenName": "8",
         "dbColumnNames": ["Games.ScrnshotFilename"],
         "dbTableNames": ["Games"],
@@ -318,7 +318,7 @@ g_usableColumns = [
     },
     {
         "id": "random_pic[8]",
-        "groupName": "Screenshots (random order)",
+        "submenuNames": ["Screenshots (random order)"],
         "screenName": "9",
         "dbColumnNames": ["Games.ScrnshotFilename"],
         "dbTableNames": ["Games"],
@@ -330,7 +330,7 @@ g_usableColumns = [
     },
     {
         "id": "random_pic[9]",
-        "groupName": "Screenshots (random order)",
+        "submenuNames": ["Screenshots (random order)"],
         "screenName": "10",
         "dbColumnNames": ["Games.ScrnshotFilename"],
         "dbTableNames": ["Games"],
@@ -349,12 +349,12 @@ g_usableColumns = [
         "dbTableNames": ["Games"],
         "dbSelect": "Games.GA_Id AS [Games.GA_Id]",
         "dbIdentifiers": ["Games.GA_Id", "GA_Id"],
-        "dbType": "Long Integer",
         "defaultWidth": 50,
         "sortable": False,
         "filterable": False,
         "textAlignment": "left",
-        "comment": "Unique ID"
+        "mdbType": "Long Integer",
+        "mdbComment": "Unique ID"
     },
     {
         "id": "name",
@@ -363,12 +363,12 @@ g_usableColumns = [
         "dbTableNames": ["Games"],
         "dbSelect": "Games.Name AS [Games.Name]",
         "dbIdentifiers": ["Games.Name", "Name"],
-        "dbType": "Text (510)",
         "defaultWidth": 250,
         "sortable": True,
         "filterable": True,
         "textAlignment": "left",
-        "comment": "Game Name"
+        "mdbType": "Text (510)",
+        "mdbComment": "Game Name"
     },
     {
         "id": "year",
@@ -377,12 +377,12 @@ g_usableColumns = [
         "dbTableNames": ["Years"],
         "dbSelect": "Years.Year AS [Years.Year]",
         "dbIdentifiers": ["Years.Year", "Year"],
-        "dbType": "Long Integer",
         "defaultWidth": 75,
         "sortable": True,
         "filterable": True,
         "textAlignment": "left",
-        "comment": "The Year (9999 = Unknown year)"
+        "mdbType": "Long Integer",
+        "mdbComment": "The Year (9999 = Unknown year)"
     },
     {
         "id": "publisher",
@@ -391,10 +391,10 @@ g_usableColumns = [
         "dbTableNames": ["Publishers"],
         "dbSelect": "Publishers.Publisher AS [Publishers.Publisher]",
         "dbIdentifiers": ["Publishers.Publisher", "Publisher"],
-        "dbType": "Text (510)",
         "defaultWidth": 250,
         "sortable": True,
         "filterable": True,
+        "mdbType": "Text (510)",
         "textAlignment": "left",
     },
     {
@@ -404,10 +404,10 @@ g_usableColumns = [
         "dbTableNames": ["Developers"],
         "dbSelect": "Developers.Developer AS [Developers.Developer]",
         "dbIdentifiers": ["Developers.Developer", "Developer"],
-        "dbType": "Text (510)",
         "defaultWidth": 250,
         "sortable": True,
         "filterable": True,
+        "mdbType": "Text (510)",
         "textAlignment": "left",
     },
     {
@@ -417,11 +417,11 @@ g_usableColumns = [
         "dbTableNames": ["Programmers"],
         "dbSelect": "Programmers.Programmer AS [Programmers.Programmer]",
         "dbIdentifiers": ["Programmers.Programmer", "Programmer"],
-        "dbType": "Text (510)",
         "defaultWidth": 250,
         "sortable": True,
         "filterable": True,
         "textAlignment": "left",
+        "mdbType": "Text (510)",
     },
     {
         "id": "parent_genre",
@@ -430,11 +430,11 @@ g_usableColumns = [
         "dbTableNames": ["PGenres"],
         "dbSelect": "PGenres.ParentGenre AS [PGenres.ParentGenre]",
         "dbIdentifiers": ["PGenres.ParentGenre", "ParentGenre"],
-        "dbType": "Text (510)",
         "defaultWidth": 150,
         "sortable": True,
         "filterable": True,
         "textAlignment": "left",
+        "mdbType": "Text (510)",
     },
     {
         "id": "genre",
@@ -443,11 +443,11 @@ g_usableColumns = [
         "dbTableNames": ["Genres"],
         "dbSelect": "Genres.Genre AS [Genres.Genre]",
         "dbIdentifiers": ["Genres.Genre", "Genre"],
-        "dbType": "Text (510)",
         "defaultWidth": 150,
         "sortable": True,
         "filterable": True,
         "textAlignment": "left",
+        "mdbType": "Text (510)",
     },
     {
         "id": "language",
@@ -456,11 +456,11 @@ g_usableColumns = [
         "dbTableNames": ["Languages"],
         "dbSelect": "Languages.Language AS [Languages.Language]",
         "dbIdentifiers": ["Languages.Language", "Language"],
-        "dbType": "Text (510)",
         "defaultWidth": 150,
         "sortable": True,
         "filterable": True,
         "textAlignment": "left",
+        "mdbType": "Text (510)",
     },
     {
         "id": "cracker",
@@ -469,11 +469,11 @@ g_usableColumns = [
         "dbTableNames": ["Crackers"],
         "dbSelect": "Crackers.Cracker AS [Crackers.Cracker]",
         "dbIdentifiers": ["Crackers.Cracker", "Cracker"],
-        "dbType": "Text (510)",
         "defaultWidth": 150,
         "sortable": True,
         "filterable": True,
         "textAlignment": "left",
+        "mdbType": "Text (510)",
     },
     {
         "id": "artist",
@@ -482,11 +482,11 @@ g_usableColumns = [
         "dbTableNames": ["Artists"],
         "dbSelect": "Artists.Artist AS [Artists.Artist]",
         "dbIdentifiers": ["Artists.Artist", "Artist"],
-        "dbType": "Text (510)",
         "defaultWidth": 250,
         "sortable": True,
         "filterable": True,
         "textAlignment": "left",
+        "mdbType": "Text (510)",
     },
     {
         "id": "license",
@@ -495,11 +495,11 @@ g_usableColumns = [
         "dbTableNames": ["Licenses"],
         "dbSelect": "Licenses.License AS [Licenses.License]",
         "dbIdentifiers": ["Licenses.License", "License"],
-        "dbType": "Text (510)",
         "defaultWidth": 150,
         "sortable": True,
         "filterable": True,
         "textAlignment": "left",
+        "mdbType": "Text (510)",
     },
     {
         "id": "rarity",
@@ -508,68 +508,68 @@ g_usableColumns = [
         "dbTableNames": ["Rarities"],
         "dbSelect": "Rarities.Rarity AS [Rarities.Rarity]",
         "dbIdentifiers": ["Rarities.Rarity", "Rarity"],
-        "dbType": "Text (510)",
         "defaultWidth": 150,
         "sortable": True,
         "filterable": True,
         "textAlignment": "left",
+        "mdbType": "Text (510)",
     },
     {
         "id": "musician_name",
-        "groupName": "Musician",
+        "submenuNames": ["Musician"],
         "screenName": "Musician",
         "dbColumnNames": ["Games.MU_Id", "Musicians.Musician"],
         "dbTableNames": ["Musicians"],
         "dbSelect": "Musicians.Musician AS [Musicians.Musician]",
         "dbIdentifiers": ["Musicians.Musician", "Musician"],
-        "dbType": "Text (510)",
         "defaultWidth": 150,
         "sortable": True,
         "filterable": True,
         "textAlignment": "left",
+        "mdbType": "Text (510)",
     },
     {
         "id": "musician_photo",
-        "groupName": "Musician",
+        "submenuNames": ["Musician"],
         "screenName": "Musician photo",
         "dbColumnNames": ["Games.MU_Id", "Musicians.Photo"],
         "dbTableNames": ["Musicians"],
         "dbSelect": "Musicians.Photo AS [Musicians.Photo]",
         "dbIdentifiers": ["Musicians.Photo", "Photo"],
-        "dbType": "Text (510)",
         "defaultWidth": 100,
         "sortable": True,
         "filterable": True,
         "textAlignment": "left",
-        "comment": "Musician Photo within Photo Path"
+        "mdbType": "Text (510)",
+        "mdbComment": "Musician Photo within Photo Path"
     },
     {
         "id": "musician_group",
-        "groupName": "Musician",
+        "submenuNames": ["Musician"],
         "screenName": "Musician group",
         "dbColumnNames": ["Games.MU_Id", "Musicians.Grp"],
         "dbTableNames": ["Musicians"],
         "dbSelect": "Musicians.Grp AS [Musicians.Grp]",
         "dbIdentifiers": ["Musicians.Grp", "Grp"],
-        "dbType": "Text (510)",
         "defaultWidth": 150,
         "sortable": True,
         "filterable": True,
         "textAlignment": "left",
+        "mdbType": "Text (510)",
     },
     {
         "id": "musician_nick",
-        "groupName": "Musician",
+        "submenuNames": ["Musician"],
         "screenName": "Musician nick",
         "dbColumnNames": ["Games.MU_Id", "Musicians.Nick"],
         "dbTableNames": ["Musicians"],
         "dbSelect": "Musicians.Nick AS [Musicians.Nick]",
         "dbIdentifiers": ["Musicians.Nick", "Nick"],
-        "dbType": "Text (510)",
         "defaultWidth": 150,
         "sortable": True,
         "filterable": True,
         "textAlignment": "left",
+        "mdbType": "Text (510)",
     },
     {
         "id": "pal_ntsc",
@@ -578,7 +578,6 @@ g_usableColumns = [
         "dbTableNames": ["Games"],
         "dbSelect": "Games.V_PalNTSC AS [Games.V_PalNTSC]",
         "dbIdentifiers": ["Games.V_PalNTSC", "V_PalNTSC"],
-        "dbType": "Long Integer",
         "type": "enum",
         "enumMap": {
             0: "PAL",
@@ -590,7 +589,8 @@ g_usableColumns = [
         "sortable": True,
         "filterable": True,
         "textAlignment": "left",
-        "comment": "Game version is PAL, NTSC or BOTH (0=PAL, 1=BOTH, 2=NTSC, 3=PAL[+NTSC?])"
+        "mdbType": "Long Integer",
+        "mdbComment": "Game version is PAL, NTSC or BOTH (0=PAL, 1=BOTH, 2=NTSC, 3=PAL[+NTSC?])"
     },
     {
         "id": "control",
@@ -599,7 +599,6 @@ g_usableColumns = [
         "dbTableNames": ["Games"],
         "dbSelect": "Games.Control AS [Games.Control]",
         "dbIdentifiers": ["Games.Control", "Control"],
-        "dbType": "Long Integer",
         "type": "enum",
         "enumMap": {
             0: "JoyPort2",
@@ -616,70 +615,71 @@ g_usableColumns = [
         "sortable": True,
         "filterable": True,
         "textAlignment": "left",
-        "comment": "Game's control method (0=JoyPort2, 1=JoyPort1, 2=Keyboard, 3=PaddlePort2, 4=PaddlePort1, 5=Mouse, 6=LightPen, 7=KoalaPad, 8=LightGun"
+        "mdbType": "Long Integer",
+        "mdbComment": "Game's control method (0=JoyPort2, 1=JoyPort1, 2=Keyboard, 3=PaddlePort2, 4=PaddlePort1, 5=Mouse, 6=LightPen, 7=KoalaPad, 8=LightGun"
     },
     {
         "id": "clone_of",
-        "groupName": "Related games",
+        "submenuNames": ["Related games"],
         "screenName": "Clone of",
         "dbColumnNames": ["Games.CloneOf"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.CloneOf AS [Games.CloneOf]",
         "dbIdentifiers": ["Games.CloneOf", "CloneOf"],
-        "dbType": "Long Integer",
         "type": "gameId",
         "defaultWidth": 100,
         "sortable": True,
         "filterable": True,
+        "mdbType": "Long Integer",
         "textAlignment": "left",
     },
     {
         "id": "prequel",
-        "groupName": "Related games",
+        "submenuNames": ["Related games"],
         "screenName": "Prequel",
         "dbColumnNames": ["Games.Prequel"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.Prequel AS [Games.Prequel]",
         "dbIdentifiers": ["Games.Prequel", "Prequel"],
-        "dbType": "Long Integer NOT NULL",
         "type": "gameId",
         "defaultWidth": 100,
         "sortable": True,
         "filterable": True,
         "textAlignment": "left",
-        "comment": "Link to GA_ID of prequel game (0 if no prequel)"
+        "mdbType": "Long Integer NOT NULL",
+        "mdbComment": "Link to GA_ID of prequel game (0 if no prequel)"
     },
     {
         "id": "sequel",
-        "groupName": "Related games",
+        "submenuNames": ["Related games"],
         "screenName": "Sequel",
         "dbColumnNames": ["Games.Sequel"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.Sequel AS [Games.Sequel]",
         "dbIdentifiers": ["Games.Sequel", "Sequel"],
-        "dbType": "Long Integer NOT NULL",
         "type": "gameId",
         "defaultWidth": 100,
         "sortable": True,
         "filterable": True,
         "textAlignment": "left",
-        "comment": "Link to GA_ID of sequel game (0 if no sequel)"
+        "mdbType": "Long Integer NOT NULL",
+        "mdbComment": "Link to GA_ID of sequel game (0 if no sequel)"
     },
     {
         "id": "related",
-        "groupName": "Related games",
+        "submenuNames": ["Related games"],
         "screenName": "Related",
         "dbColumnNames": ["Games.Related"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.Related AS [Games.Related]",
         "dbIdentifiers": ["Games.Related", "Related"],
-        "dbType": "Long Integer NOT NULL",
         "type": "gameId",
         "defaultWidth": 100,
         "sortable": True,
         "filterable": True,
         "textAlignment": "left",
-        "comment": "Link to GA_ID of related game (0 if no related game)"
+        "mdbType": "Long Integer NOT NULL",
+        "mdbComment": "Link to GA_ID of related game (0 if no related game)"
     },
     {
         "id": "gemus",
@@ -688,22 +688,21 @@ g_usableColumns = [
         "dbTableNames": ["Games"],
         "dbSelect": "Games.Gemus AS [Games.Gemus]",
         "dbIdentifiers": ["Games.Gemus", "Gemus"],
-        "dbType": "Memo/Hyperlink (255)",
         "defaultWidth": 200,
         "sortable": True,
         "filterable": True,
         "textAlignment": "left",
+        "mdbType": "Memo/Hyperlink (255)",
     },
 
     {
         "id": "players",
-        "groupName": "Players",
+        "submenuNames": ["Players"],
         "screenName": "Players",
         "dbColumnNames": ["Games.PlayersFrom", "Games.PlayersTo", "Games.PlayersSim"],
         "dbTableNames": ["Games"],
         "dbSelect": "iif(Games.PlayersFrom == Games.PlayersTo, Games.PlayersFrom, Games.PlayersFrom || ' - ' || Games.PlayersTo) || iif(Games.PlayersSim, ' (simultaneous)', '') AS Players",
         "dbIdentifiers": ["Players"],
-        #"dbType": "Long Integer",
         "defaultWidth": 100,
         "sortable": True,
         "filterable": True,
@@ -711,53 +710,54 @@ g_usableColumns = [
     },
     {
         "id": "players_from",
-        "groupName": "Players",
+        "submenuNames": ["Players"],
         "screenName": "Players from",
+        "tooltip": "Minimum number of players the game supports (-1=Unknown)",
         "dbColumnNames": ["Games.PlayersFrom"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.PlayersFrom AS [Games.PlayersFrom]",
         "dbIdentifiers": ["Games.PlayersFrom", "PlayersFrom"],
-        "dbType": "Long Integer",
         "defaultWidth": 100,
         "sortable": True,
         "filterable": True,
         "textAlignment": "left",
-        "comment": "Minimum number of players the game supports (-1=Unknown)"
+        "mdbType": "Long Integer",
+        "mdbComment": "Minimum number of players the game supports (-1=Unknown)"
     },
     {
         "id": "players_to",
-        "groupName": "Players",
+        "submenuNames": ["Players"],
         "screenName": "Players to",
         "dbColumnNames": ["Games.PlayersTo"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.PlayersTo AS [Games.PlayersTo]",
         "dbIdentifiers": ["Games.PlayersTo", "PlayersTo"],
-        "dbType": "Long Integer",
         "defaultWidth": 100,
         "sortable": True,
         "filterable": True,
         "textAlignment": "left",
-        "comment": "Maximum number of players the game supports (-1=Unknown)"
+        "mdbType": "Long Integer",
+        "mdbComment": "Maximum number of players the game supports (-1=Unknown)"
     },
     {
         "id": "players_sim",
-        "groupName": "Players",
+        "submenuNames": ["Players"],
         "screenName": "Players simultaneous",
         "dbColumnNames": ["Games.PlayersSim"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.PlayersSim AS [Games.PlayersSim]",
         "dbIdentifiers": ["Games.PlayersSim", "PlayersSim"],
-        "dbType": "Boolean NOT NULL",
         "defaultWidth": 100,
         "sortable": True,
         "filterable": True,
         "textAlignment": "left",
-        "comment": "The Game can be played by more than one player simultaneously"
+        "mdbType": "Boolean NOT NULL",
+        "mdbComment": "The Game can be played by more than one player simultaneously"
     },
 
     {
         "id": "comment",
-        "groupName": "Comments",
+        "submenuNames": ["Comments"],
         "screenName": "Comment",
         "dbColumnNames": ["Games.Comment"],
         "dbTableNames": ["Games"],
@@ -767,11 +767,11 @@ g_usableColumns = [
         "sortable": True,
         "filterable": True,
         "textAlignment": "left",
-        "dbType": "Text (510)",
+        "mdbType": "Text (510)",
     },
     {
         "id": "v_comment",
-        "groupName": "Comments",
+        "submenuNames": ["Comments"],
         "screenName": "V Comment",
         "dbColumnNames": ["Games.V_Comment"],
         "dbTableNames": ["Games"],
@@ -781,68 +781,83 @@ g_usableColumns = [
         "sortable": True,
         "filterable": True,
         "textAlignment": "left",
-        "dbType": "Text (510)",
+        "mdbType": "Text (510)",
     },
     {
         "id": "memo_text",
-        "groupName": "Comments",
+        "submenuNames": ["Comments"],
         "screenName": "Memo text",
         "dbColumnNames": ["Games.MemoText"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.MemoText AS [Games.MemoText]",
         "dbIdentifiers": ["Games.MemoText", "MemoText"],
-        "dbType": "Memo/Hyperlink (255)",
         "defaultWidth": 250,
         "sortable": True,
         "filterable": True,
         "textAlignment": "left",
-        "comment": "User Notes field"
+        "mdbType": "Memo/Hyperlink (255)",
+        "mdbComment": "User Notes field"
     },
 
     {
         "id": "filename",
-        "groupName": "Filenames",
+        "submenuNames": ["Filenames"],
         "screenName": "Filename",
         "dbColumnNames": ["Games.Filename"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.Filename AS [Games.Filename]",
         "dbIdentifiers": ["Games.Filename", "Filename"],
-        "dbType": "Memo/Hyperlink (255)",
         "defaultWidth": 250,
         "sortable": True,
         "filterable": True,
         "textAlignment": "left",
-        "comment": "Game Filename within Game Paths"
+        "mdbType": "Memo/Hyperlink (255)",
+        "mdbComment": "Game Filename within Game Paths"
     },
     {
         "id": "file_to_run",
-        "groupName": "Filenames",
+        "submenuNames": ["Filenames"],
         "screenName": "File to run",
         "dbColumnNames": ["Games.FileToRun"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.FileToRun AS [Games.FileToRun]",
         "dbIdentifiers": ["Games.FileToRun", "FileToRun"],
-        "dbType": "Memo/Hyperlink (255)",
         "defaultWidth": 250,
         "sortable": True,
         "filterable": True,
         "textAlignment": "left",
-        "comment": "File to Run within Filename if Filename is an archive containing more than one compatible emulator file"
+        "mdbType": "Memo/Hyperlink (255)",
+        "mdbComment": "File to Run within Filename if Filename is an archive containing more than one compatible emulator file"
+    },
+    {
+        "id": "file_to_run2",
+        "submenuNames": ["Filenames"],
+        "screenName": "File to run",
+        "dbColumnNames": ["Games.FileToRun"],
+        "dbTableNames": ["Games"],
+        "dbSelect": "Games.FileToRun AS [Games.FileToRun]",
+        "dbIdentifiers": ["Games.FileToRun", "FileToRun"],
+        "defaultWidth": 250,
+        "sortable": True,
+        "filterable": True,
+        "textAlignment": "left",
+        "mdbType": "Memo/Hyperlink (255)",
+        "mdbComment": "File to Run within Filename if Filename is an archive containing more than one compatible emulator file"
     },
     {
         "id": "filename_index",
-        "groupName": "Filenames",
+        "submenuNames": ["Filenames"],
         "screenName": "Filename index",
         "dbColumnNames": ["Games.FilenameIndex"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.FilenameIndex AS [Games.FilenameIndex]",
         "dbIdentifiers": ["Games.FilenameIndex", "FilenameIndex"],
-        "dbType": "Long Integer",
         "defaultWidth": 250,
         "sortable": True,
         "filterable": True,
         "textAlignment": "left",
-        "comment": "Image Index inside Game file"
+        "mdbType": "Long Integer",
+        "mdbComment": "Image Index inside Game file"
     },
 ]
 

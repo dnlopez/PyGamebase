@@ -395,39 +395,76 @@ actionGroup.addAction(viewMenu_verticalAction)
 viewMenu.addSeparator()
 
 class TableColumnsMenu(qt_extras.StayOpenMenu):
-    def __init__(self, i_parent=None):
-        qt_extras.StayOpenMenu.__init__(self, i_parent)
+    # + Init {{{
+
+    def __init__(self, i_title=None, i_parent=None):
+        qt_extras.StayOpenMenu.__init__(self, i_title, i_parent)
+
+        self.setToolTipsVisible(True)
+
+        self.submenus = {}
+        # (dict)
+        # Dictionary has:
+        #  Keys:
+        #   (str)
+        #   Submenu title
+        #  Values:
+        #   (TableColumnsMenu)
+
+        self.actions = {}
+        # (dict)
+        # Dictionary has:
+        #  Keys:
+        #   (str)
+        #   Column ID
+        #  Values:
+        #   (QAction)
 
         self.aboutToShow.connect(self.onAboutToShow)
 
-        self.flatActions = []
-        # (list of QAction)
-
     def populateMenu(self):
-        groups = {}
         # Add all the usable columns
         for usableColumn in columns.usableColumn_getBySlice():
-            if "groupName" in usableColumn:
-                if usableColumn["groupName"] not in groups:
-                    newGroup = qt_extras.StayOpenMenu(usableColumn["groupName"])
-                    self.addMenu(newGroup)
-                    groups[usableColumn["groupName"]] = newGroup
-                actionParent = groups[usableColumn["groupName"]]
-            else:
-                actionParent = self
+            self.addActionForColumn(usableColumn, usableColumn.get("submenuNames", []))
 
-            action = actionParent.addAction(usableColumn["screenName"])
-            self.flatActions.append(action)
+    def addActionForColumn(self, i_usableColumn, i_submenuNames):
+        # If the column is in a submenu
+        if len(i_submenuNames) > 0:
+            # If don't have the next submenu yet,
+            # create one
+            if i_submenuNames[0] not in self.submenus:
+                submenu = TableColumnsMenu(i_submenuNames[0], self)
+                self.submenus[i_submenuNames[0]] = submenu
+                self.addMenu(submenu)
+            else:
+                submenu = self.submenus[i_submenuNames[0]]
+            # Pass on to the submenu
+            submenu.addActionForColumn(i_usableColumn, i_submenuNames[1:])
+
+        # Else if the column is in this menu
+        else:
+            # Create action and save it in self.actions under the column id
+            columnId = i_usableColumn["id"]
+            action = self.addAction(i_usableColumn["screenName"])
+            self.actions[columnId] = action
+            #
+            if "tooltip" in i_usableColumn:
+                action.setToolTip(i_usableColumn["tooltip"])
             action.setCheckable(True)
-            columnId = usableColumn["id"]
             action.setChecked(columns.tableColumn_getById(columnId) != None)
             action.triggered.connect(functools.partial(self.action_onTriggered, columnId))
 
+    # + }}}
+
+    # + On show {{{
+
     def onAboutToShow(self):
-        for usableColumnNo, usableColumn in enumerate(columns.usableColumn_getBySlice()):
-            action = self.flatActions[usableColumnNo]
-            columnId = usableColumn["id"]
+        for columnId, action in self.actions.items():
             action.setChecked(columns.tableColumn_getById(columnId) != None)
+
+    # + }}}
+
+    # + On action triggered {{{
 
     def action_onTriggered(self, i_selectedColumnId):
         # Toggle the visibility of the selected column,
@@ -455,6 +492,8 @@ class TableColumnsMenu(qt_extras.StayOpenMenu):
         tableView.requery()
         #
         tableView.resizeAllColumns([column["width"]  for column in columns.tableColumn_getBySlice()])
+
+    # + }}}
 
 viewMenu_tableColumnsMenu = TableColumnsMenu("&Table columns")
 viewMenu_tableColumnsMenu_action = viewMenu.addMenu(viewMenu_tableColumnsMenu)
