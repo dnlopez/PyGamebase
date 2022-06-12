@@ -17,30 +17,35 @@ else:
 
 
 # Frontend configuration
-config_title = "Atari ST"
-gamebaseBaseDirPath = driveBasePath + "/games/Atari ST/gamebases/Gamebase ST v4/Atari ST"
-config_databaseFilePath = gamebaseBaseDirPath + "/Atari ST.sqlite"
-config_screenshotsBaseDirPath = gamebaseBaseDirPath + "/Screenshots"
+config_title = "Mattel Intellivision"
+gamebaseBaseDirPath = driveBasePath + "/games/Mattel Intellivision/gamebases/Gamebase"
+config_databaseFilePath = gamebaseBaseDirPath + "/Intellivision.sqlite"
+config_screenshotsBaseDirPath = gamebaseBaseDirPath + "/Screens"
 config_extrasBaseDirPath = gamebaseBaseDirPath + "/Extras"
 
 
-def runGameInEmulator(i_gameDescription, i_gameFilePaths):
+def runGameWithRezmame(i_gameDescription, i_gameFilePaths):
     """
     Params:
      i_gameDescription:
       Either (str)
       or (None)
      i_gameFilePaths:
-      (list of string)
+      (list of str)
     """
-    executableAndArgs = ["rezhatari.py"]
+    executableAndArgs = ["rezmame.py", "intv"]
 
-    if (i_gameDescription != None):
-        executableAndArgs += ["--game-description", i_gameDescription]
+    # Assign game files to available MAME media slots
+    availableDevices = [
+        ["cartridge", [".bin", ".int", ".rom", ".itv"]]
+    ]
+    executableAndArgs.extend(utils.allocateGameFilesToMameMediaSlots(i_gameFilePaths, availableDevices))
 
-    executableAndArgs += ["--", i_gameFilePaths[0]]
+    if i_gameDescription:
+        executableAndArgs.extend(["--game-description", i_gameDescription])
 
     # Execute
+    print(executableAndArgs)
     utils.shellStartTask(executableAndArgs)
 
 def runGame(i_gamePath, i_fileToRun = None, i_gameInfo = None):
@@ -73,7 +78,7 @@ def runGame(i_gamePath, i_fileToRun = None, i_gameInfo = None):
         gameDescription += " (" + i_gameInfo["Publisher"] + ")"
 
     #
-    runGameInEmulator(gameDescription, utils.joinPaths(tempDirPath, gameFiles))
+    runGameWithRezmame(gameDescription, utils.joinPaths(tempDirPath, gameFiles))
 
 def runExtra(i_extraPath, i_extraInfo, i_gameInfo):
     #print('runExtra(' + pprint.pformat(i_extraPath) + ', ' + pprint.pformat(i_extraInfo) + ', ' + pprint.pformat(i_gameInfo) + ')')
@@ -90,6 +95,6 @@ def runExtra(i_extraPath, i_extraInfo, i_gameInfo):
             gameDescription += " (" + i_gameInfo["Publisher"] + ")"
 
         #
-        runGameInEmulator(gameDescription, utils.joinPaths(tempDirPath, zipMembers))
+        runGameMenu(gameDescription, utils.joinPaths(tempDirPath, zipMembers))
     else:
         utils.openInDefaultApplication(config_extrasBaseDirPath + "/" + i_extraPath)

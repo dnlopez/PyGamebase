@@ -17,11 +17,11 @@ else:
 
 
 # Frontend configuration
-config_title = "Tandy Radio Shack TRS-80 CoCo"
-gamebaseBaseDirPath = driveBasePath + "/games/Tandy Radio Shack TRS-80 CoCo/gamebases/gamebase beta/CoCo"
-config_databaseFilePath = gamebaseBaseDirPath + "/CoCo.sqlite"
-config_screenshotsBaseDirPath = gamebaseBaseDirPath + "/Screenshots"
-config_extrasBaseDirPath = gamebaseBaseDirPath + "/Games"
+config_title = "Dragon"
+gamebaseBaseDirPath = driveBasePath + "/games/Dragon/gamebases/gamebase/extracted"
+config_databaseFilePath = gamebaseBaseDirPath + "/Dragon.sqlite"
+config_screenshotsBaseDirPath = gamebaseBaseDirPath + "/screen"
+config_extrasBaseDirPath = gamebaseBaseDirPath + "/extras"
 
 
 def runGameWithRezmame(i_gameDescription, i_machineName, i_gameFilePaths):
@@ -128,7 +128,7 @@ def runGameMenu(i_gameDescription, i_gameFilePaths):
 def runGame(i_gamePath, i_fileToRun = None, i_gameInfo = None):
     #print('runGame(' + pprint.pformat(i_gamePath) + ', ' + pprint.pformat(i_fileToRun) + ', ' + pprint.pformat(i_gameInfo) + ')')
 
-    gamesBaseDirPath = gamebaseBaseDirPath + "/Games/"
+    gamesBaseDirPath = gamebaseBaseDirPath + "/games/"
     tempDirPath = tempfile.gettempdir() + "/gamebase"
 
     # If file is a zip

@@ -26,7 +26,7 @@ config_musicBaseDirPath = gamebaseBaseDirPath + "/C64Music"
 config_extrasBaseDirPath = gamebaseBaseDirPath + "/Extras"
 
 
-def runGameInVice(i_gameDescription, i_gameFilePaths):
+def runGameWithVice(i_gameDescription, i_gameFilePaths):
     """
     Params:
      i_gameDescription:
@@ -124,7 +124,7 @@ def runGame(i_gamePath, i_fileToRun = None, i_gameInfo = None):
         gameDescription += " (" + i_gameInfo["Publisher"] + ")"
 
     #
-    #runGameInVice(gameDescription, utils.joinPaths(tempDirPath, gameFiles))
+    runGameWithVice(gameDescription, utils.joinPaths(tempDirPath, gameFiles))
 
 def runExtra(i_extraPath, i_extraInfo, i_gameInfo):
     #print('runExtra(' + pprint.pformat(i_extraPath) + ', ' + pprint.pformat(i_extraInfo) + ', ' + pprint.pformat(i_gameInfo) + ')')
@@ -141,7 +141,7 @@ def runExtra(i_extraPath, i_extraInfo, i_gameInfo):
             gameDescription += " (" + i_gameInfo["Publisher"] + ")"
 
         #
-        runGameInVice(gameDescription, utils.joinPaths(tempDirPath, zipMembers))
+        runGameWithVice(gameDescription, utils.joinPaths(tempDirPath, zipMembers))
     else:
         utils.openInDefaultApplication(config_extrasBaseDirPath + "/" + i_extraPath)
 

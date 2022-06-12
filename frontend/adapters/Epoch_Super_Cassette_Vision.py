@@ -17,31 +17,60 @@ else:
 
 
 # Frontend configuration
-config_title = "Atari ST"
-gamebaseBaseDirPath = driveBasePath + "/games/Atari ST/gamebases/Gamebase ST v4/Atari ST"
-config_databaseFilePath = gamebaseBaseDirPath + "/Atari ST.sqlite"
+config_title = "Epoch Super Cassette Vision"
+gamebaseBaseDirPath = driveBasePath + "/games/Epoch Super Cassette Vision/gamebases/Epoch SCV"
+config_databaseFilePath = gamebaseBaseDirPath + "/Epoch SCV.sqlite"
 config_screenshotsBaseDirPath = gamebaseBaseDirPath + "/Screenshots"
 config_extrasBaseDirPath = gamebaseBaseDirPath + "/Extras"
 
 
-def runGameInEmulator(i_gameDescription, i_gameFilePaths):
+def runGameWithRezmame(i_gameDescription, i_machineName, i_gameFilePaths):
+    """
+    Params:
+     i_gameDescription:
+      Either (str)
+      or (None)
+     i_machineName:
+      (str)
+      One of
+       "scv"
+       "scv_pal"
+     i_gameFilePaths:
+      (list of str)
+    """
+    executableAndArgs = ["rezmame.py", i_machineName]
+
+    # Assign game files to available MAME media slots
+    availableDevices = [
+        ["cartridge", [".bin", ".rom"]]
+    ]
+    executableAndArgs.extend(utils.allocateGameFilesToMameMediaSlots(i_gameFilePaths, availableDevices))
+
+    if i_gameDescription:
+        executableAndArgs.extend(["--game-description", i_gameDescription])
+
+    # Execute
+    print(executableAndArgs)
+    utils.shellStartTask(executableAndArgs)
+
+def runGameMenu(i_gameDescription, i_gameFilePaths):
     """
     Params:
      i_gameDescription:
       Either (str)
       or (None)
      i_gameFilePaths:
-      (list of string)
+      (list of str)
     """
-    executableAndArgs = ["rezhatari.py"]
+    method = utils.popupMenu([
+        "rezmame scv (Super Cassette Vision)",
+        "rezmame scv_pal (Super Cassette Vision (PAL))",
+    ])
 
-    if (i_gameDescription != None):
-        executableAndArgs += ["--game-description", i_gameDescription]
-
-    executableAndArgs += ["--", i_gameFilePaths[0]]
-
-    # Execute
-    utils.shellStartTask(executableAndArgs)
+    if method == "rezmame scv (Super Cassette Vision)":
+        runGameWithRezmame(i_gameDescription, "scv", i_gameFilePaths)
+    elif method == "rezmame scv_pal (Super Cassette Vision (PAL))":
+        runGameWithRezmame(i_gameDescription, "scv_pal", i_gameFilePaths)
 
 def runGame(i_gamePath, i_fileToRun = None, i_gameInfo = None):
     #print('runGame(' + pprint.pformat(i_gamePath) + ', ' + pprint.pformat(i_fileToRun) + ', ' + pprint.pformat(i_gameInfo) + ')')
@@ -73,7 +102,7 @@ def runGame(i_gamePath, i_fileToRun = None, i_gameInfo = None):
         gameDescription += " (" + i_gameInfo["Publisher"] + ")"
 
     #
-    runGameInEmulator(gameDescription, utils.joinPaths(tempDirPath, gameFiles))
+    runGameMenu(gameDescription, utils.joinPaths(tempDirPath, gameFiles))
 
 def runExtra(i_extraPath, i_extraInfo, i_gameInfo):
     #print('runExtra(' + pprint.pformat(i_extraPath) + ', ' + pprint.pformat(i_extraInfo) + ', ' + pprint.pformat(i_gameInfo) + ')')
@@ -90,6 +119,6 @@ def runExtra(i_extraPath, i_extraInfo, i_gameInfo):
             gameDescription += " (" + i_gameInfo["Publisher"] + ")"
 
         #
-        runGameInEmulator(gameDescription, utils.joinPaths(tempDirPath, zipMembers))
+        runGameMenu(gameDescription, utils.joinPaths(tempDirPath, zipMembers))
     else:
         utils.openInDefaultApplication(config_extrasBaseDirPath + "/" + i_extraPath)

@@ -24,16 +24,12 @@ config_screenshotsBaseDirPath = gamebaseBaseDirPath + "/Screenshots"
 config_extrasBaseDirPath = gamebaseBaseDirPath + "/Extras"
 
 
-def runGameOnMachine(i_gameDescription, i_machineName, i_gameFilePaths):
+def runGameWithVice(i_gameDescription, i_gameFilePaths):
     """
     Params:
      i_gameDescription:
       Either (str)
       or (None)
-     i_machineName:
-      (str)
-      One of
-       "pet"
      i_gameFilePaths:
       (list of str)
     """
@@ -49,21 +45,10 @@ def runGameOnMachine(i_gameDescription, i_machineName, i_gameFilePaths):
 
     executableAndArgs += i_gameFilePaths
 
-    print(executableAndArgs)
     # Execute
+    print(executableAndArgs)
     utils.shellStartTask(executableAndArgs)
 
-
-def runGameMenu(i_gameDescription, i_gameFilePaths):
-    """
-    Params:
-     i_gameDescription:
-      Either (str)
-      or (None)
-     i_gameFilePaths:
-      (list of str)
-    """
-    runGameOnMachine(i_gameDescription, "pet", i_gameFilePaths)
 
 def runGame(i_gamePath, i_fileToRun = None, i_gameInfo = None):
     #print('runGame(' + pprint.pformat(i_gamePath) + ', ' + pprint.pformat(i_fileToRun) + ', ' + pprint.pformat(i_gameInfo) + ')')
@@ -95,7 +80,7 @@ def runGame(i_gamePath, i_fileToRun = None, i_gameInfo = None):
         gameDescription += " (" + i_gameInfo["Publisher"] + ")"
 
     #
-    runGameMenu(gameDescription, utils.joinPaths(tempDirPath, gameFiles))
+    runGameWithVice(gameDescription, utils.joinPaths(tempDirPath, gameFiles))
 
 def runExtra(i_extraPath, i_extraInfo, i_gameInfo):
     #print('runExtra(' + pprint.pformat(i_extraPath) + ', ' + pprint.pformat(i_extraInfo) + ', ' + pprint.pformat(i_gameInfo) + ')')
@@ -112,6 +97,6 @@ def runExtra(i_extraPath, i_extraInfo, i_gameInfo):
             gameDescription += " (" + i_gameInfo["Publisher"] + ")"
 
         #
-        runGameMenu(gameDescription, utils.joinPaths(tempDirPath, zipMembers))
+        runGameWithVice(gameDescription, utils.joinPaths(tempDirPath, zipMembers))
     else:
         utils.openInDefaultApplication(config_extrasBaseDirPath + "/" + i_extraPath)
