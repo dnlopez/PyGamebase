@@ -42,9 +42,8 @@ def savePreferences():
     with open(settingsFilePath, "wb") as f:
         f.write(json.dumps(preferences, indent=4).encode("utf-8"))
 
-    #messageBox = qt_extras.ResizableMessageBox(QApplication.style().standardIcon(QStyle.SP_MessageBoxInformation), "Save preferences", "")
-    ##messageBox.setText("<big><b>Missing adapter setting:</b></big>")
-    #messageBox.setInformativeText("Saved preferences to " + settingsFilePath + ".")
+    #messageBox = qt_extras.ResizableMessageBox(QApplication.style().standardIcon(QStyle.SP_MessageBoxInformation), "Save preferences")
+    #messageBox.setText("Saved preferences to " + settingsFilePath + ".")
     #messageBox.resizeToContent()
     #messageBox.exec()
 
@@ -77,9 +76,8 @@ def saveViewSettings():
     with open(settingsFilePath, "wb") as f:
         f.write(json.dumps(viewSettings, indent=4).encode("utf-8"))
 
-    messageBox = qt_extras.ResizableMessageBox(QApplication.style().standardIcon(QStyle.SP_MessageBoxInformation), "Save layout", "")
-    #messageBox.setText("<big><b>Missing adapter setting:</b></big>")
-    messageBox.setInformativeText("Saved layout settings to " + settingsFilePath + ".")
+    messageBox = qt_extras.ResizableMessageBox(QApplication.style().standardIcon(QStyle.SP_MessageBoxInformation), "Save layout")
+    messageBox.setText("Saved layout settings to " + settingsFilePath + ".")
     messageBox.resizeToContent()
     messageBox.exec()
 

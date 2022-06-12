@@ -423,9 +423,8 @@ class DetailPane(QWidget):
                         except Exception as e:
                             import traceback
                             print(traceback.format_exc())
-                            messageBox = qt_extras.ResizableMessageBox(QApplication.style().standardIcon(QStyle.SP_MessageBoxCritical), "Error", "")
-                            messageBox.setText("<big><b>In runExtra():</b></big>")
-                            messageBox.setInformativeText(traceback.format_exc())
+                            messageBox = qt_extras.ResizableMessageBox(QApplication.style().standardIcon(QStyle.SP_MessageBoxCritical), "Error")
+                            messageBox.setText("<big><b>In runExtra():</b></big><pre>" + traceback.format_exc() + "</pre>")
                             messageBox.resizeToContent()
                             messageBox.exec()
 

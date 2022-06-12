@@ -580,9 +580,8 @@ class GameTableView(QTableView):
             import traceback
             print(traceback.format_exc())
 
-            messageBox = qt_extras.ResizableMessageBox(QApplication.style().standardIcon(QStyle.SP_MessageBoxCritical), "Error", "")
-            messageBox.setText("<big><b>In SQL WHERE expression:</b></big>")
-            messageBox.setInformativeText("\n".join(traceback.format_exception_only(e)))
+            messageBox = qt_extras.ResizableMessageBox(QApplication.style().standardIcon(QStyle.SP_MessageBoxCritical), "Error")
+            messageBox.setText("<big><b>In SQL WHERE expression:</b></big><pre>" + "\n".join(traceback.format_exception_only(e)) + "</pre>")
             messageBox.resizeToContent()
             messageBox.exec()
 
@@ -668,9 +667,8 @@ class GameTableView(QTableView):
             except Exception as e:
                 import traceback
                 print(traceback.format_exc())
-                messageBox = qt_extras.ResizableMessageBox(QApplication.style().standardIcon(QStyle.SP_MessageBoxCritical), "Error", "")
-                messageBox.setText("<big><b>In runGame():</b></big>")
-                messageBox.setInformativeText(traceback.format_exc())
+                messageBox = qt_extras.ResizableMessageBox(QApplication.style().standardIcon(QStyle.SP_MessageBoxCritical), "Error")
+                messageBox.setText("<big><b>In runGame():</b></big><pre>" + traceback.format_exc() + "</pre>")
                 messageBox.resizeToContent()
                 messageBox.exec()
 
@@ -685,9 +683,8 @@ class GameTableView(QTableView):
             except Exception as e:
                 import traceback
                 print(traceback.format_exc())
-                messageBox = qt_extras.ResizableMessageBox(QApplication.style().standardIcon(QStyle.SP_MessageBoxCritical), "Error", "")
-                messageBox.setText("<big><b>In runMusic():</b></big>")
-                messageBox.setInformativeText(traceback.format_exc())
+                messageBox = qt_extras.ResizableMessageBox(QApplication.style().standardIcon(QStyle.SP_MessageBoxCritical), "Error")
+                messageBox.setText("<big><b>In runMusic():</b></big><pre>" + traceback.format_exc() + "</pre>")
                 messageBox.resizeToContent()
                 messageBox.exec()
 

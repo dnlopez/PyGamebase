@@ -112,7 +112,7 @@ class LineEditWithClearButton(QFrame):
 
 
 class ResizableMessageBox(QDialog):
-    def __init__(self, i_icon, i_title, i_text, i_buttons=QDialogButtonBox.Ok, i_parent=None, i_windowFlags=Qt.Dialog):
+    def __init__(self, i_icon, i_title, i_text="", i_buttons=QDialogButtonBox.Ok, i_parent=None, i_windowFlags=Qt.Dialog):
         """
         Params:
          i_icon:
@@ -136,33 +136,27 @@ class ResizableMessageBox(QDialog):
         self.layout = QGridLayout(self)
 
         self.iconLabel = QLabel(self)
-        self.layout.addWidget(self.iconLabel, 0, 0, 2, 1, Qt.AlignTop)
+        self.layout.addWidget(self.iconLabel, 0, 0, 1, 1, Qt.AlignTop)
         if i_icon != None:
            self.iconLabel.setPixmap(i_icon.pixmap(128, 128))
 
         self.label = QLabel(self)
         self.label.setWordWrap(True)
-        self.layout.addWidget(self.label, 0, 2, Qt.AlignTop)
+        self.layout.addWidget(self.label, 0, 2, 1, 1, Qt.AlignTop)
         #2, 0: <PySide2.QtWidgets.QLabel(0x55f631f52a30, name="qt_msgbox_label") at 0x7fc7814ecf40>
         self.label.setTextInteractionFlags(Qt.TextSelectableByMouse|Qt.LinksAccessibleByMouse|Qt.LinksAccessibleByKeyboard|Qt.TextSelectableByKeyboard)
 
-        self.informativeLabel = QLabel(self)
-        self.informativeLabel.setWordWrap(True)
-        self.layout.addWidget(self.informativeLabel, 1, 2, Qt.AlignTop)
-        #2, 1: <PySide2.QtWidgets.QLabel(0x55f632830ea0, name="qt_msgbox_informativelabel") at 0x7fc7814ecfc0>
-        self.informativeLabel.setTextInteractionFlags(Qt.TextSelectableByMouse|Qt.LinksAccessibleByMouse|Qt.LinksAccessibleByKeyboard|Qt.TextSelectableByKeyboard)
-
         self.buttons = QDialogButtonBox(i_buttons, self)
-        self.layout.addWidget(self.buttons, 2, 0, 1, 3)
+        self.layout.addWidget(self.buttons, 1, 0, 1, 3)
         self.buttons.accepted.connect(self.accept)
         self.buttons.rejected.connect(self.reject)
+        self.buttons.setFocus()
 
         self.layout.setColumnStretch(0, 0)
         self.layout.setColumnStretch(1, 0)
         self.layout.setColumnStretch(2, 1)
         self.layout.setRowStretch(0, 0)
         self.layout.setRowStretch(1, 1)
-        self.layout.setRowStretch(2, 0)
 
         self.setWindowTitle(i_title)
         self.setText(i_text)
@@ -177,22 +171,19 @@ class ResizableMessageBox(QDialog):
         # Get dimensions of text when unwrapped
         labelFontMetrics = QFontMetrics(self.label.property("font"))
         labelWidth = max([labelFontMetrics.horizontalAdvance(line)  for line in self.label.text().split("\n")])
-        informativeLabelFontMetrics = QFontMetrics(self.informativeLabel.property("font"))
-        informativeLabelWidth = max([informativeLabelFontMetrics.horizontalAdvance(line)  for line in self.informativeLabel.text().split("\n")])
 
         #
         layoutContentsMargins = self.layout.contentsMargins()
         layoutSpacing = self.layout.spacing()
 
         #
-        contentWidth = layoutContentsMargins.left() + self.layout.itemAtPosition(0, 0).geometry().width() + layoutSpacing + max(labelWidth, informativeLabelWidth) + layoutContentsMargins.right()
+        contentWidth = layoutContentsMargins.left() + self.layout.itemAtPosition(0, 0).geometry().width() + layoutSpacing + labelWidth + layoutContentsMargins.right()
         if contentWidth > screenGeometry.width() - screenEdgeMargin:
             contentWidth = screenGeometry.width() - screenEdgeMargin
 
         #
         labelBoundingRect = labelFontMetrics.boundingRect(0, 0, contentWidth, screenGeometry.height() - screenEdgeMargin, Qt.TextWordWrap | Qt.TextExpandTabs, self.label.text(), 4);
-        informativeLabelBoundingRect = informativeLabelFontMetrics.boundingRect(0, 0, contentWidth, screenGeometry.height() - screenEdgeMargin, Qt.TextWordWrap | Qt.TextExpandTabs, self.informativeLabel.text(), 4);
-        contentHeight = layoutContentsMargins.top() + labelBoundingRect.height() + layoutSpacing + informativeLabelBoundingRect.height() + layoutSpacing + self.buttons.height() + layoutContentsMargins.bottom()
+        contentHeight = layoutContentsMargins.top() + labelBoundingRect.height() + layoutSpacing + self.buttons.height() + layoutContentsMargins.bottom()
         if contentHeight > screenGeometry.height() - screenEdgeMargin:
             contentHeight = screenGeometry.height() - screenEdgeMargin
 
@@ -224,9 +215,6 @@ class ResizableMessageBox(QDialog):
 
     def setText(self, i_text):
         self.label.setText(i_text)
-
-    def setInformativeText(self, i_text):
-        self.informativeLabel.setText(i_text)
 
 
 

@@ -1159,3 +1159,29 @@ def popupMenu(i_itemTexts):
         return i_itemTexts[selectedItemNo]
 
 # + }}}
+
+# + Message box {{{
+
+def messageBox(i_text, i_title="Message from adapter", i_icon="information"):
+    """
+    Params:
+     i_message:
+      (str)
+      May be a plain string, or rich text using a subset of HTML, see: https://doc.qt.io/qt-5/richtext-html-subset.html
+       eg.
+        "<p><big><b>Heading</b></big><p>Detailed information"
+     i_title:
+      (str)
+     i_icon:
+      Either (str)
+       One of
+        "information"
+        "warning"
+        "critical"
+      or (None)
+       No icon.
+    """
+    import frontend
+    frontend.messageBox(i_text, i_title, i_icon)
+
+# + }}}

@@ -489,9 +489,9 @@ viewMenu_saveLayout.triggered.connect(viewMenu_saveLayout_onTriggered)
 # + Toolbar {{{
 
 toolbar = QToolBar()
-toolbar_back_action = toolbar.addAction(QIcon(application.style().standardIcon(QStyle.SP_ArrowLeft)), "Back")
+toolbar_back_action = toolbar.addAction(QIcon(QApplication.style().standardIcon(QStyle.SP_ArrowLeft)), "Back")
 toolbar_back_action.triggered.connect(filterHistory_goBack)
-toolbar_forward_action = toolbar.addAction(QIcon(application.style().standardIcon(QStyle.SP_ArrowRight)), "Forward")
+toolbar_forward_action = toolbar.addAction(QIcon(QApplication.style().standardIcon(QStyle.SP_ArrowRight)), "Forward")
 toolbar_forward_action.triggered.connect(filterHistory_goForward)
 toolbar.setVisible(settings.viewSettings["toolbarVisible"])
 mainWindow.layout.addWidget(toolbar)
@@ -849,9 +849,8 @@ mainWindow.show()
 
 #
 if not hasattr(gamebase.adapter, "config_databaseFilePath"):
-    messageBox = qt_extras.ResizableMessageBox(QApplication.style().standardIcon(QStyle.SP_MessageBoxCritical), "Error", "")
-    messageBox.setText("<big><b>Missing adapter setting:</b></big>")
-    messageBox.setInformativeText("config_databaseFilePath")
+    messageBox = qt_extras.ResizableMessageBox(QApplication.style().standardIcon(QStyle.SP_MessageBoxCritical), "Error")
+    messageBox.setText("<big><b>Missing adapter setting:</b></big><pre>config_databaseFilePath</pre>")
     messageBox.resizeToContent()
     messageBox.exec()
     sys.exit(1)
@@ -861,9 +860,8 @@ try:
 except Exception as e:
     import traceback
     print(traceback.format_exc())
-    messageBox = qt_extras.ResizableMessageBox(QApplication.style().standardIcon(QStyle.SP_MessageBoxCritical), "Error", "")
-    messageBox.setText("<big><b>When opening database file:</b></big>")
-    messageBox.setInformativeText("With path:\n" + gamebase.adapter.config_databaseFilePath + "\n\nAn error occurred:\n" + "\n".join(traceback.format_exception_only(e)))
+    messageBox = qt_extras.ResizableMessageBox(QApplication.style().standardIcon(QStyle.SP_MessageBoxCritical), "Error")
+    messageBox.setText("<big><b>When opening database file:</b></big><p>\nWith path:<br>\n<br>\n" + gamebase.adapter.config_databaseFilePath + "<p>\nAn error occurred:<pre>" + "<br>\n".join(traceback.format_exception_only(e)) + "</pre>")
     messageBox.resizeToContent()
     messageBox.exec()
     sys.exit(1)
