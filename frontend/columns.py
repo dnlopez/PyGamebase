@@ -798,6 +798,52 @@ g_usableColumns = [
         "textAlignment": "left",
         "comment": "User Notes field"
     },
+
+    {
+        "id": "filename",
+        "groupName": "Filenames",
+        "screenName": "Filename",
+        "dbColumnNames": ["Games.Filename"],
+        "dbTableNames": ["Games"],
+        "dbSelect": "Games.Filename AS [Games.Filename]",
+        "dbIdentifiers": ["Games.Filename", "Filename"],
+        "dbType": "Memo/Hyperlink (255)",
+        "defaultWidth": 250,
+        "sortable": True,
+        "filterable": True,
+        "textAlignment": "left",
+        "comment": "Game Filename within Game Paths"
+    },
+    {
+        "id": "file_to_run",
+        "groupName": "Filenames",
+        "screenName": "File to run",
+        "dbColumnNames": ["Games.FileToRun"],
+        "dbTableNames": ["Games"],
+        "dbSelect": "Games.FileToRun AS [Games.FileToRun]",
+        "dbIdentifiers": ["Games.FileToRun", "FileToRun"],
+        "dbType": "Memo/Hyperlink (255)",
+        "defaultWidth": 250,
+        "sortable": True,
+        "filterable": True,
+        "textAlignment": "left",
+        "comment": "File to Run within Filename if Filename is an archive containing more than one compatible emulator file"
+    },
+    {
+        "id": "filename_index",
+        "groupName": "Filenames",
+        "screenName": "Filename index",
+        "dbColumnNames": ["Games.FilenameIndex"],
+        "dbTableNames": ["Games"],
+        "dbSelect": "Games.FilenameIndex AS [Games.FilenameIndex]",
+        "dbIdentifiers": ["Games.FilenameIndex", "FilenameIndex"],
+        "dbType": "Long Integer",
+        "defaultWidth": 250,
+        "sortable": True,
+        "filterable": True,
+        "textAlignment": "left",
+        "comment": "Image Index inside Game file"
+    },
 ]
 
 def usableColumn_getBySlice(i_startPos=None, i_endPos=None):
