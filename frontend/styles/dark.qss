@@ -23,11 +23,13 @@ QToolBar
 
 QToolButton
 {
-    /*
+    padding: 4px 4px 7px 4px;
+    font-size: 16px;
+
 	background-color: #444;
     color: #fff;
 
-    /* Detailed raised 3D border *\/
+    /* Detailed raised 3D border */
     border-top-style: solid;
     border-top-width: 1px;
     border-top-color: #666;
@@ -40,8 +42,37 @@ QToolButton
     border-bottom-style: solid;
     border-bottom-width: 2px;
     border-bottom-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #444, stop: 1 #222);
-    */
 }
+QToolButton:pressed
+{
+    color: #4f4;
+
+    /* Simple sunken 3D border */
+    /*
+    border-width: 2px;
+    border-style: inset;
+    border-color: #333 #555 #555 #333;
+    */
+
+    /* Detailed sunken 3D border */
+    border-top-style: solid;
+    border-top-width: 2px;
+    border-top-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #444, stop: 1 #222);
+    border-left-style: solid;
+    border-left-width: 2px;
+    border-left-color: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 0, stop: 0 #444, stop: 1 #222);
+    border-right-style: solid;
+    border-right-width: 2px;
+    border-right-color: #666;
+    border-bottom-style: solid;
+    border-bottom-width: 2px;
+    border-bottom-color: #666;
+}
+QToolButton:disabled
+{
+    color: #666;
+}
+
 
 .ColumnNameBar, .ColumnFilterBar, .SqlFilterBar
 {

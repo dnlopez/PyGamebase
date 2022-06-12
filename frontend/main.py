@@ -122,6 +122,28 @@ settings.loadViewSettings()
 g_filterHistory = [""]
 g_filterHistory_pos = 1
 
+def filterHistory_add(i_sqlWhereExpression):
+    """
+    Params:
+     i_sqlWhereExpression:
+      (str)
+    """
+    # If expression is the same as the last history item at the current position,
+    # do nothing
+    global g_filterHistory
+    global g_filterHistory_pos
+    if g_filterHistory[g_filterHistory_pos - 1] == i_sqlWhereExpression:
+        return
+
+    # Else truncate history at current position and append new item
+    del(g_filterHistory[g_filterHistory_pos:])
+    g_filterHistory.append(i_sqlWhereExpression)
+    g_filterHistory_pos += 1
+
+    # Update back/forward toolbar buttons
+    toolbar_back_toolButton.setEnabled(True)
+    toolbar_forward_toolButton.setEnabled(False)
+
 def filterHistory_goBack():
     global g_filterHistory_pos
 
@@ -146,6 +168,10 @@ def filterHistory_goBack():
     # Refilter
     tableView.refilter(sqlWhereExpression, columnNameBar.sort_operations)
 
+    # Update back/forward toolbar buttons
+    toolbar_back_toolButton.setEnabled(g_filterHistory_pos > 1)
+    toolbar_forward_toolButton.setEnabled(True)
+
 def filterHistory_goForward():
     global g_filterHistory_pos
 
@@ -169,6 +195,10 @@ def filterHistory_goForward():
 
     # Refilter
     tableView.refilter(sqlWhereExpression, columnNameBar.sort_operations)
+
+    # Update back/forward toolbar buttons
+    toolbar_forward_toolButton.setEnabled(g_filterHistory_pos < len(g_filterHistory))
+    toolbar_back_toolButton.setEnabled(True)
 
 # + }}}
 
@@ -542,10 +572,24 @@ viewMenu_saveLayout.triggered.connect(viewMenu_saveLayout_onTriggered)
 # + Toolbar {{{
 
 toolbar = QToolBar()
-toolbar_back_action = toolbar.addAction(QIcon(QApplication.style().standardIcon(QStyle.SP_ArrowLeft)), "Back")
-toolbar_back_action.triggered.connect(filterHistory_goBack)
-toolbar_forward_action = toolbar.addAction(QIcon(QApplication.style().standardIcon(QStyle.SP_ArrowRight)), "Forward")
-toolbar_forward_action.triggered.connect(filterHistory_goForward)
+
+toolbar_back_toolButton = QToolButton()
+#toolbar_back_toolButton.setArrowType(Qt.LeftArrow)
+toolbar_back_toolButton.setToolButtonStyle(Qt.ToolButtonTextOnly)
+toolbar_back_toolButton.setText("◀")
+toolbar_back_toolButton.setToolTip("Go back in filter")
+toolbar_back_toolButton.clicked.connect(filterHistory_goBack)
+toolbar_back_toolButton.setEnabled(False)
+toolbar_back_action2 = toolbar.addWidget(toolbar_back_toolButton)
+toolbar_forward_toolButton = QToolButton()
+#toolbar_forward_toolButton.setArrowType(Qt.RightArrow)
+toolbar_forward_toolButton.setToolButtonStyle(Qt.ToolButtonTextOnly)
+toolbar_forward_toolButton.setText("▶")
+toolbar_forward_toolButton.setToolTip("Go forward in filter")
+toolbar_forward_toolButton.clicked.connect(filterHistory_goForward)
+toolbar_forward_toolButton.setEnabled(False)
+toolbar_forward_action2 = toolbar.addWidget(toolbar_forward_toolButton)
+
 toolbar.setVisible(settings.viewSettings["toolbarVisible"])
 mainWindow.layout.addWidget(toolbar)
 
@@ -675,14 +719,7 @@ def columnFilterBar_onEditingFinished(i_modified, i_columnId):
         if not tableView.refilter(sqlWhereExpression, columnNameBar.sort_operations):
             return
 
-        # If expression is different from the last history item at the current position,
-        # truncate history at current position and append new item
-        global g_filterHistory
-        global g_filterHistory_pos
-        if g_filterHistory[g_filterHistory_pos - 1] != sqlWhereExpression:
-            del(g_filterHistory[g_filterHistory_pos:])
-            g_filterHistory.append(sqlWhereExpression)
-            g_filterHistory_pos += 1
+        filterHistory_add(sqlWhereExpression)
 columnFilterBar.editingFinished.connect(columnFilterBar_onEditingFinished)
 
 def columnFilterBar_onRequestHorizontalScroll(i_dx):
@@ -708,14 +745,7 @@ def sqlFilterBar_onEditingFinished(i_modified):
         if not tableView.refilter(sqlWhereExpression, columnNameBar.sort_operations):
             return
 
-        # If expression is different from the last history item at the current position,
-        # truncate history at current position and append new item
-        global g_filterHistory
-        global g_filterHistory_pos
-        if g_filterHistory[g_filterHistory_pos - 1] != sqlWhereExpression:
-            del(g_filterHistory[g_filterHistory_pos:])
-            g_filterHistory.append(sqlWhereExpression)
-            g_filterHistory_pos += 1
+        filterHistory_add(sqlWhereExpression)
 sqlFilterBar.editingFinished.connect(sqlFilterBar_onEditingFinished)
 
 # + }}}
