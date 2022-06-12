@@ -216,9 +216,9 @@ mainWindow.resize(800, 600)
 mainWindow.move(QApplication.desktop().rect().center() - mainWindow.rect().center())
 mainWindow.move(QApplication.desktop().rect().center() - mainWindow.rect().center())
 if hasattr(gamebase.adapter, "config_title"):
-    mainWindow.setWindowTitle(gamebase.adapter.config_title + " - GameBase")
+    mainWindow.setWindowTitle(gamebase.adapter.config_title + " - PyGamebase")
 else:
-    mainWindow.setWindowTitle(param_gamebaseAdapterFilePath + " - GameBase")
+    mainWindow.setWindowTitle(param_gamebaseAdapterFilePath + " - PyGamebase")
 
 frontend.mainWindow = mainWindow
 
