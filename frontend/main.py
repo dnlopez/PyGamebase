@@ -358,6 +358,9 @@ actionGroup.addAction(filterMenu_filterFormat_sql_action)
 filterMenu.addSeparator()
 
 filterMenu_filterFormat_copySql_action = filterMenu.addAction("C&opy SQL")
+def filterMenu_filterFormat_copySql_onTriggered():
+    QGuiApplication.clipboard().setText(columnFilterBar.getSqlWhereExpression())
+filterMenu_filterFormat_copySql_action.triggered.connect(filterMenu_filterFormat_copySql_onTriggered)
 
 viewMenu = menuBar.addMenu("&View")
 viewMenu_toolbar_action = viewMenu.addAction("&Toolbar")
