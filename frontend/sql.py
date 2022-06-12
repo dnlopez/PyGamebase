@@ -41,6 +41,12 @@ def tokenizeWhereExpr(i_text):
        1:
         (str)
         The characters of the token.
+       2:
+        (int)
+        The start position of the token in i_text.
+       3:
+        (int)
+        The (non-inclusive) end position of the token in i_text.
     """
     i_text += " "
 
@@ -54,64 +60,64 @@ def tokenizeWhereExpr(i_text):
 
         match = re.match(r"([0-9]+\.[0-9]+|[0-9]+\.|\.[0-9]+)", i_text[textPos:], re.IGNORECASE)
         if match:
-            tokens.append(("float", match.group(1)))
+            tokens.append(("float", match.group(1), textPos, textPos + match.end(1)))
             textPos += match.end(1)
             continue
 
         match = re.match(r"([0-9]+)[^A-Z0-9_]", i_text[textPos:], re.IGNORECASE)
         if match:
-            tokens.append(("integer", match.group(1)))
+            tokens.append(("integer", match.group(1), textPos, textPos + match.end(1)))
             textPos += match.end(1)
             continue
 
         match = re.match(r"(NULL)[^A-Z0-9_]", i_text[textPos:], re.IGNORECASE)
         if match:
-            tokens.append(("keyword", match.group(1)))
+            tokens.append(("keyword", match.group(1), textPos, textPos + match.end(1)))
             textPos += match.end(1)
             continue
 
         match = re.match(r"(AND|OR)[^A-Z0-9_]", i_text[textPos:], re.IGNORECASE)
         if match:
-            tokens.append(("operator", match.group(1)))
+            tokens.append(("operator", match.group(1), textPos, textPos + match.end(1)))
             textPos += match.end(1)
             continue
 
         match = re.match(r"(REGEXP|LIKE|IS NOT|IS|ESCAPE|BETWEEN)[^A-Z0-9_]", i_text[textPos:], re.IGNORECASE)
         if match:
-            tokens.append(("operator", match.group(1)))
+            tokens.append(("operator", match.group(1), textPos, textPos + match.end(1)))
             textPos += match.end(1)
             continue
 
         #match = re.match(r"(<=|>=|<|>|==|=|!=|<>|~)[^<>=!~]", i_text[textPos:])
         match = re.match(r"(<=|>=|<|>|==|=|!=|<>|~)", i_text[textPos:])
         if match:
-            tokens.append(("operator", match.group(1)))
+            tokens.append(("operator", match.group(1), textPos, textPos + match.end(1)))
             textPos += match.end(1)
             continue
 
         #match = re.match(r"([A-Z0-9_]+.[A-Z0-9_]+|[A-Z0-9_]+)[^A-Z0-9_.]", i_text[textPos:], re.IGNORECASE)
         match = re.match(r"([A-Z0-9_]+\.[A-Z0-9_]+|[A-Z0-9_]+)", i_text[textPos:], re.IGNORECASE)
         if match:
-            tokens.append(("identifier", match.group(1)))
+            tokens.append(("identifier", match.group(1), textPos, textPos + match.end(1)))
             textPos += match.end(1)
             continue
 
         #match = re.match(r"([A-Z0-9_]+)[^A-Z0-9_]", i_text[textPos:], re.IGNORECASE)
         match = re.match(r"([A-Z0-9_]+)", i_text[textPos:], re.IGNORECASE)
         if match:
-            tokens.append(("identifier", match.group(1)))
+            tokens.append(("identifier", match.group(1), textPos, textPos + match.end(1)))
             textPos += match.end(1)
             continue
 
         match = re.match(r"\(", i_text[textPos:])
         if match:
-            tokens.append(("(", match.group(0)))
+            tokens.append(("(", match.group(0), textPos, textPos + match.end(0)))
             textPos += match.end(0)
             continue
 
         match = re.match(r"\)", i_text[textPos:])
         if match:
-            tokens.append((")", match.group(0)))
+            tokens.append((")", match.group(0), textPos, textPos + match.end(0)))
             textPos += match.end(0)
             continue
 
@@ -132,8 +138,9 @@ def tokenizeWhereExpr(i_text):
                     endPos += 1
             if i_text[endPos] != "'":
                 return "Couldn't find end of string at pos: " + str(endPos)
-            tokens.append(("string", i_text[textPos + 1:endPos].replace("''", "'")))
-            textPos = endPos + 1
+            endPos += 1
+            tokens.append(("string", i_text[textPos:endPos], textPos, endPos))
+            textPos = endPos
             continue
 
         return "No recognized word at pos: " + str(textPos)
@@ -175,6 +182,68 @@ def initializeOperatorTable():
     global operators
     operators = copy.deepcopy(initialOperators)
 
+class AstNode():
+    def __init__(self, i_token):
+        """
+        Params:
+         i_token:
+          (tuple)
+        """
+        self.token = i_token
+
+class ValueNode(AstNode):
+    def __init__(self, i_token):
+        """
+        Params:
+         i_token:
+          (tuple)
+          A token (as produced by tokenizeWhereExpr()) which must be of one of the following types (as specified in the first element of the tuple):
+           "integer"
+           "float"
+           "keyword"
+           "identifier"
+           "string"
+        """
+        super().__init__(i_token)
+
+        self.type = i_token[0]
+        if self.type == "integer":
+            self.value = int(i_token[1])
+        elif self.type == "float":
+            self.value = float(i_token[1])
+        elif self.type == "keyword":
+            self.value = i_token[1]
+        elif self.type == "identifier":
+            self.value = i_token[1]
+        elif self.type == "string":
+            self.value = i_token[1][1:-1].replace("''", "'")
+        else:
+            if __debug__:
+                raise AssertionError("invalid token type")
+
+    def __repr__(self):
+        if self.type == "string":
+            return "'" + self.value.replace("'", "''") + "'"
+        else:
+            return str(self.value)
+
+class OperatorNode(AstNode):
+    def __init__(self, i_token):
+        """
+        Params:
+         i_token:
+          (tuple)
+          A token (as produced by tokenizeWhereExpr()) which must be of the following types (as specified in the first element of the tuple):
+           "operator"
+        """
+        super().__init__(i_token)
+
+        self.operation = i_token[1].upper()
+        self.operands = []
+
+    def __repr__(self):
+        return "" + self.operation + "(" + ", ".join([str(operand)  for operand in self.operands]) + ")"
+
 def parseExpression(i_tokens):
     """
     Params:
@@ -191,10 +260,12 @@ def parseExpression(i_tokens):
     return parseOperations(lhs, i_tokens, 0)
 
 def parseValue(i_tokens):
-    value = i_tokens.pop(0)
-    if value[0] == "operator":
+    token = i_tokens.pop(0)
+    if token[0] == "operator":
         raise RuntimeError("unexpected operator")
-    elif value[0] == "(":
+    elif token[0] == ")":
+        raise RuntimeError("unexpected close parenthesis")
+    elif token[0] == "(":
         # Parse subexpression
         subParse = parseExpression(i_tokens)
         # Validate presence of closing parenthesis
@@ -203,25 +274,26 @@ def parseValue(i_tokens):
             return "unclosed parenthesis"
         i_tokens.pop(0)
         return subParse
-    else:
-        return value
+    else: # if token[0] == "integer" or token[0] == "float" or token[0] == "keyword" or token[0] == "identifier" or token[0] == "string"
+        return ValueNode(token)
 
 def parseOperations(i_lhs, i_tokens, i_precedingPrecedence):
     # If no more tokens
     # or if next operator is of equal precedence or a step down from what caller had,
     # return to caller so they can bind
     while len(i_tokens) > 0:
-        op1 = i_tokens[0]
-        if op1[0] != "operator":# and op1[0] != "conjunction":
+        if i_tokens[0][0] != "operator":
             # syntax error
             break
-        op1Precedence = operators[op1[1]]["precedence"]
+        
+        op1 = OperatorNode(i_tokens[0])
+        op1Precedence = operators[op1.operation]["precedence"]
         if op1Precedence <= i_precedingPrecedence:
             break
 
         #
-        if "onStart" in operators[op1[1]]:
-            operators[op1[1]]["onStart"](i_tokens)
+        if "onStart" in operators[op1.operation]:
+            operators[op1.operation]["onStart"](i_tokens)
 
         # Else if next operator is of higher precedence than what caller had,
         # get it and next value and recurse
@@ -230,12 +302,12 @@ def parseOperations(i_lhs, i_tokens, i_precedingPrecedence):
         rhs = parseOperations(rhs, i_tokens, op1Precedence)
 
         #
-        if "onEnd" in operators[op1[1]]:
-            operators[op1[1]]["onEnd"](i_tokens)
+        if "onEnd" in operators[op1.operation]:
+            operators[op1.operation]["onEnd"](i_tokens)
 
         # Bind
-        i_lhs = { "op": op1,
-                  "children": [i_lhs, rhs] }
+        op1.operands = [i_lhs, rhs]
+        i_lhs = op1
 
     return i_lhs
 
@@ -244,10 +316,11 @@ def parseOperations(i_lhs, i_tokens, i_precedingPrecedence):
 # + Postprocess {{{
 
 def flattenOperator(i_node, i_operatorName):
+    # TODO make this non-destructive
     """
     Params:
      i_node:
-      (dict)
+      (AstNode)
       As returned from parseExpression()
      i_operatorName:
       (str)
@@ -255,26 +328,27 @@ def flattenOperator(i_node, i_operatorName):
        "AND"
        "OR"
     """
-    if type(i_node) != dict:
+    # If this isn't an operator
+    # then there's nothing to flatten
+    if not isinstance(i_node, OperatorNode):
         return i_node
 
-    flattenedChildren = [flattenOperator(child, i_operatorName)  for child in i_node["children"]]
-    if i_node["op"][1].upper() != i_operatorName.upper():
-        return { "op": i_node["op"],
-                 "children": flattenedChildren }
+    flattenedChildren = [flattenOperator(child, i_operatorName)  for child in i_node.operands]
+    if i_node.operation != i_operatorName.upper():
+        i_node.operands = flattenedChildren
+        return i_node
 
     newOperands = []
     for flattenedChild in flattenedChildren:
-        if type(flattenedChild) != dict:
-            newOperands.append(flattenedChild)
-        elif flattenedChild["op"][1].upper() != i_operatorName.upper():
-            newOperands.append(flattenedChild)
+        if isinstance(flattenedChild, OperatorNode) and flattenedChild.operation == i_operatorName.upper():
+            newOperands.extend(flattenedChild.operands)
         else:
-            newOperands.extend(flattenedChild["children"])
-    return { "op": i_node["op"],
-             "children": newOperands }
+            newOperands.append(flattenedChild)
+    i_node.operands = newOperands
         
+    return i_node
 
+#initializeOperatorTable()
 #parsed = parseExpression(tokenized)
 #import pdb
 #pdb.run("parseExpression(tokenized)")
@@ -295,7 +369,7 @@ def interpretColumnOperation(i_node):
     """
     Params:
      i_node:
-      (dict)
+      (AstNode)
 
     Returns:
      (tuple)
@@ -319,50 +393,50 @@ def interpretColumnOperation(i_node):
         "Uridium"
         "Uri%"
     """
-    if type(i_node) != dict or "op" not in i_node:
+    if not isinstance(i_node, OperatorNode):
         return None, None, None
-    operator = i_node["op"][1]
+    operation = i_node.operation
 
     # Scan operands,
     # and attempt to pick out one and only one identifier token to be the column name,
     # and one and only one token of another type to be the value
     columnName = None
     value = None
-    for child in i_node["children"]:
+    for child in i_node.operands:
         # If the operand is itself a child operator
-        if type(child) == dict:
+        if isinstance(child, OperatorNode):
             # If it's an 'ESCAPE' operator (an adjunct to 'LIKE'),
             # pull the actual value (as opposed to the escape character) from out of it
-            if "op" in child and child["op"] == ("operator", "ESCAPE"):
-                value = child["children"][0][1]  # TODO unescape?
+            if child.operation == "ESCAPE":
+                value = child.operands[0].value  # TODO unescape?
             # If it's an 'AND' operator beneath a 'BETWEEN',
             # assemble the two values with a tilde between them
-            elif operator == "BETWEEN" and child["op"] == ("operator", "AND"):
-                value = child["children"][0][1] + "~" + child["children"][1][1]
+            elif operation == "BETWEEN" and child.operation == "AND":
+                value = child.operands[0].value + "~" + child.operands[1].value
             # If it's some other child operator,
             # don't know how to deal with this so far
             else:
                 return None, None, None
         #
-        elif type(child) == tuple:
+        else: # isinstance(child, ValueNode):
             # If it's an identifier,
             # consider it the column name,
             # but fail if we already have one
-            if child[0] == "identifier":
+            if child.type == "identifier":
                 if columnName != None:
                     return None, None, None
-                columnName = child[1]
+                columnName = child.value
             # Else if it's not an identifier,
             # consider it the value,
             # but fail if we already have one
             else:
                 if value != None:
                     return None, None, None
-                value = child[1]
+                value = child.value
 
-    if operator == None or columnName == None or value == None:
+    if operation == None or columnName == None or value == None:
         return None, None, None
-    return operator, columnName, value
+    return operation, columnName, value
 
 def sqlWhereExpressionToColumnFilters(i_whereExpression, i_skipFailures=False):
     """
@@ -406,8 +480,8 @@ def sqlWhereExpressionToColumnFilters(i_whereExpression, i_skipFailures=False):
     parsed = flattenOperator(parsed, "OR")
 
     # Get or simulate a top-level OR array from the input parse tree
-    if "op" in parsed and parsed["op"] == ("operator", "OR"):
-        orExpressions = parsed["children"]
+    if isinstance(parsed, OperatorNode) and parsed.operation == "OR":
+        orExpressions = parsed.operands
     else:
         orExpressions = [parsed]
 
@@ -417,8 +491,8 @@ def sqlWhereExpressionToColumnFilters(i_whereExpression, i_skipFailures=False):
     for orExpressionNo, orExpression in enumerate(orExpressions):
 
         # Get or simulate a second-level AND array from the input parse tree
-        if "op" in orExpression and orExpression["op"] == ("operator", "AND"):
-            andExpressions = orExpression["children"]
+        if isinstance(orExpression, OperatorNode) and orExpression.operation == "AND":
+            andExpressions = parsed.operands
         else:
             andExpressions = [orExpression]
 
@@ -437,7 +511,7 @@ def sqlWhereExpressionToColumnFilters(i_whereExpression, i_skipFailures=False):
                 if i_skipFailures:
                     continue
                 else:
-                    label_statusbar.setText("Failed to interpret column")
+                    label_statusbar.setText("Failed to interpret column")  # TODO
                     return None
 
             # If the column name actually corresponds to a database field
