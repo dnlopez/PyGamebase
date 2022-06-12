@@ -365,8 +365,12 @@ class GameTableView(QTableView):
         #self.horizontalHeader().resizeSection(3, 50)
         self.horizontalHeader().hide()
 
-        self.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel)
         self.setHorizontalScrollMode(QAbstractItemView.ScrollPerPixel)
+        self.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel)
+
+        # For scroll wheel
+        self.singleStepSize = 30
+        self.verticalScrollBar().setSingleStep(self.singleStepSize)
 
         # + Context menu {{{
 
@@ -445,7 +449,19 @@ class GameTableView(QTableView):
         self.resize_lastMouseY = None
         self.resize_selectedRowTopY = None
 
-        #self.verticalScrollBar().setSingleStep(30)
+    def alignItemToTop(self, i_on):
+        """
+        Params:
+         i_on:
+          (bool)
+        """
+        if i_on:
+            self.setVerticalScrollMode(QAbstractItemView.ScrollPerItem)
+        else:
+            self.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel)
+            # Reassert singleStepSize (for scroll wheel)
+            # since otherwise it gets lost when turning this off
+            self.verticalScrollBar().setSingleStep(self.singleStepSize)
 
     doneQuery = Signal(int)
     # Emitted when

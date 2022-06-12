@@ -785,7 +785,7 @@ def detailPane_show():
         splitter.setSizes([topPaneHeight, splitter.geometry().height() - topPaneHeight])
         # Switch table view scroll mode so that an item will stay aligned at the top,
         # to fit neatly into the area we resized above
-        tableView.setVerticalScrollMode(QAbstractItemView.ScrollPerItem)
+        tableView.alignItemToTop(True)
     else:
         splitter.setSizes([splitter_lastPosition, splitter.geometry().width() - splitter_lastPosition])
 
@@ -793,7 +793,7 @@ def detailPane_hide():
     # Hide detail pane
     splitter.setSizes([splitter.geometry().height(), 0])
     # Stop forcibly aligning an item to the top of the table view
-    tableView.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel)
+    tableView.alignItemToTop(False)
     # Give focus to the component next in line, ie. the table view
     tableView.setFocus(Qt.OtherFocusReason)
 detailPane.requestClose.connect(detailPane_hide)
