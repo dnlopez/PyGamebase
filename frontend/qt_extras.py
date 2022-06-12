@@ -274,6 +274,7 @@ class PlainTextViewer(QWidget):
         # + Toolbar {{{
 
         self.toolbar = QWidget()
+        self.toolbar.setProperty("class", "toolbar")
         self.toolbar_layout = QHBoxLayout(self.toolbar)
         self.toolbar_layout.setContentsMargins(0, 0, 0, 0)
 
