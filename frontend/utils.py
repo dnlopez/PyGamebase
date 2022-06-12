@@ -592,36 +592,289 @@ class Gemus():
             if len(nameAndValue) >= 2:
                 self.properties[nameAndValue[0]] = nameAndValue[1]
 
-    def fieldIs(self, i_fieldName, i_value):
+    # + Get value {{{
+
+    def get(self, i_keyName, i_caseSensitive = False):
         """
+        Get the value of a Gemus field ("key=value" pair).
+
         Params:
-         i_fieldName:
+         i_keyName:
+          (str)
+         i_caseSensitive:
+          Either (bool)
+           True:
+            The case of i_keyName must match with the case of the Gemus key.
+          or unspecified
+           Use default of False.
+
+        Returns:
+         Either (str)
+          The value of the field.
+         or (None)
+          A Gemus field does not exist with the given key name.
+        """
+        # If don't care about case, normalize i_keyName
+        normalizedInputPropertyName = i_keyName
+        if not i_caseSensitive:
+            normalizedInputPropertyName = normalizedInputPropertyName.upper()
+
+        # For each Gemus property
+        for propertyName in self.properties.keys():
+            # If don't care about case, normalize the Gemus property name
+            normalizedPropertyName = propertyName
+            if not i_caseSensitive:
+                normalizedPropertyName = normalizedPropertyName.upper()
+
+            # If they match, return the value
+            if normalizedPropertyName == normalizedInputPropertyName:
+                return self.properties[propertyName]
+
+        return None
+
+    # + }}}
+
+    # + Comparisons {{{
+
+    def fieldIs(self, i_keyName, i_value, i_caseSensitive = False):
+        """
+        Test whether a Gemus field exists and its value entirely matches some string.
+
+        Similar to, in GEMUS
+         <name> = <value>
+         <name> CONTAINS(<value>)
+         <name> CONTAINS(<value>||<value>||<value>)
+
+        Params:
+         i_keyName:
           (str)
          i_value:
-          (str)
+          Either (str)
+           String to match with.
+          or (list)
+           Multiple strings to match with.
+         i_caseSensitive:
+          Either (bool)
+           True:
+            The case of i_keyName must match with the case of the Gemus key
+            and the case of i_value must match with the case of the Gemus value.
+          or unspecified
+           Use default of False.
 
         Returns:
          (bool)
+         True:
+          The Gemus field exists
+          and its value entirely matches at least one of the given strings.
         """
-        return i_fieldName in self.properties and self.properties[i_fieldName] == i_value
+        # If passed a list (not a str),
+        # recurse for all strings
+        if not isinstance(i_value, str):
+            return any(self.fieldIs(i_keyName, value, i_caseSensitive)  for value in i_value)
+        # Else if passed a str
+        else:
+            # Get Gemus field value
+            # and if it doesn't exist, return False
+            gemusValue = self.get(i_keyName, i_caseSensitive)
+            if gemusValue == None:
+                return False
 
-    def fieldContains(self, i_fieldName, i_value):
+            # If don't care about case, normalize the values
+            if not i_caseSensitive:
+                i_value = i_value.upper()
+                gemusValue = gemusValue.upper()
+
+            # Test for complete match
+            return gemusValue == i_value
+
+    def fieldContains(self, i_keyName, i_value, i_caseSensitive = False):
         """
+        Test whether a Gemus field exists and its value contains a substring.
+
+        Similar to, in GEMUS
+         Key_<name> CONTAINS(*<value>*)
+         Key_<name> CONTAINS(*<value>*||*<value>*||*<value>*)
+
         Params:
-         i_fieldName:
+         i_keyName:
           (str)
          i_value:
-          (str)
+          Either (str)
+           Subtring to look for.
+          or (list)
+           Multiple subtrings to look for.
+         i_caseSensitive:
+          Either (bool)
+           True:
+            The case of i_keyName must match with the case of the Gemus key
+            and the case of i_value must match with the case of the Gemus value.
+          or unspecified
+           Use default of False.
 
         Returns:
-          (bool)
+         (bool)
+         True:
+          The Gemus field exists
+          and its value contains at least one of the given substrings.
         """
-        return i_fieldName in self.properties and self.properties[i_fieldName].find(i_value) != -1
+        # If passed a list (not a str),
+        # recurse for all strings
+        if not isinstance(i_value, str):
+            return any(self.fieldContains(i_keyName, value, i_caseSensitive)  for value in i_value)
+        # Else if passed a str
+        else:
+            # Get Gemus field value
+            # and if it doesn't exist, return False
+            gemusValue = self.get(i_keyName, i_caseSensitive)
+            if gemusValue == None:
+                return False
 
-    def fieldIsOneOf(self, i_fieldName, i_values):
+            # If don't care about case, normalize the values
+            if not i_caseSensitive:
+                i_value = i_value.upper()
+                gemusValue = gemusValue.upper()
+
+            # Test for substring match
+            return gemusValue.find(i_value) != -1
+
+    def fieldStartsWith(self, i_keyName, i_value, i_caseSensitive = False):
+        """
+        Test whether a Gemus field exists and its value starts with one or more strings.
+
+        Similar to, in GEMUS
+         Key_<name> CONTAINS(<value>*)
+         Key_<name> CONTAINS(<value>*||<value>*||<value>*)
+
+        Params:
+         i_keyName:
+          (str)
+         i_value:
+          Either (str)
+           Prefix to look for.
+          or (list)
+           Multiple prefixes to look for.
+         i_caseSensitive:
+          Either (bool)
+           True:
+            The case of i_keyName must match with the case of the Gemus key
+            and the case of i_value must match with the case of the Gemus value.
+          or unspecified
+           Use default of False.
+
+        Returns:
+         (bool)
+         True:
+          The Gemus field exists
+          and its value starts with at least one of the given prefixes.
+        """
+        # If passed a list (not a str),
+        # recurse for all strings
+        if not isinstance(i_value, str):
+            return all(self.fieldStartsWith(i_keyName, value, i_caseSensitive)  for value in i_value)
+        # Else if passed a str
+        else:
+            # Get Gemus field value
+            # and if it doesn't exist, return False
+            gemusValue = self.get(i_keyName, i_caseSensitive)
+            if gemusValue == None:
+                return False
+
+            # If don't care about case, normalize the values
+            if not i_caseSensitive:
+                i_value = i_value.upper()
+                gemusValue = gemusValue.upper()
+
+            # Test for starting with
+            return gemusValue.startswith(i_value)
+
+    def fieldEndsWith(self, i_keyName, i_value, i_caseSensitive = False):
+        """
+        Test whether a Gemus field exists and its value ends with one or more strings.
+
+        Similar to, in GEMUS
+         Key_<name> CONTAINS(*<value>)
+         Key_<name> CONTAINS(*<value>||*<value>||*<value>)
+
+        Params:
+         i_keyName:
+          (str)
+         i_value:
+          Either (str)
+           Suffix to look for.
+          or (list)
+           Multiple suffixes to look for.
+         i_caseSensitive:
+          Either (bool)
+           True:
+            The case of i_keyName must match with the case of the Gemus key
+            and the case of i_value must match with the case of the Gemus value.
+          or unspecified
+           Use default of False.
+
+        Returns:
+         (bool)
+         True:
+          The Gemus field exists
+          and its value ends with at least one of the given suffixes.
+        """
+        # If passed a list (not a str),
+        # recurse for all strings
+        if not isinstance(i_value, str):
+            return all(self.fieldEndsWith(i_keyName, value, i_caseSensitive)  for value in i_value)
+        # Else if passed a str
+        else:
+            # Get Gemus field value
+            # and if it doesn't exist, return False
+            gemusValue = self.get(i_keyName, i_caseSensitive)
+            if gemusValue == None:
+                return False
+
+            # If don't care about case, normalize the values
+            if not i_caseSensitive:
+                i_value = i_value.upper()
+                gemusValue = gemusValue.upper()
+
+            # Test for ending with
+            return gemusValue.endswith(i_value)
+
+    def fieldNotEmpty(self, i_keyName, i_caseSensitive = False):
+        """
+        Test whether a Gemus field exists and its value is not empty.
+
+        Similar to, in GEMUS
+         Key_<name> CONTAINS(*)
+
+        Params:
+         i_keyName:
+          (str)
+         i_caseSensitive:
+          Either (bool)
+           True:
+            The case of i_keyName must match with the case of the Gemus key.
+          or unspecified
+           Use default of False.
+
+        Returns:
+         (bool)
+         True:
+          The Gemus field exists and
+          its value contains some characters other than whitespace.
+        """
+        # Get Gemus field value
+        # and if it doesn't exist, return False
+        gemusValue = self.get(i_keyName, i_caseSensitive)
+        if gemusValue == None:
+            return False
+
+        # Strip whitespace, then test whether empty
+        return gemusValue.strip() != ""
+
+
+    # Deprecated, use fieldIs()
+    def fieldIsOneOf(self, i_keyName, i_values):
         """
         Params:
-         i_fieldName:
+         i_keyName:
           (str)
          i_values:
           (list of str)
@@ -630,40 +883,13 @@ class Gemus():
          (bool)
         """
         for value in i_values:
-            if self.fieldIs(i_fieldName, value):
+            if self.fieldIs(i_keyName, value):
                 return True
         return False
 
-    def get(self, i_fieldName, i_caseSensitive=None):
-        """
-        Params:
-         i_fieldName:
-          (str)
-         i_caseSensitive:
-          Either (bool)
-          or (None)
-           Use default of false.
+    # + }}}
 
-        Returns:
-         Either (str)
-         or (None)
-        """
-        # If don't care about case, normalize the name
-        normalizedInputPropertyName = i_fieldName
-        if not i_caseSensitive:
-            normalizedInputPropertyName = normalizedInputPropertyName.upper()
-
-        for propertyName in self.properties.keys():
-            # If don't care about case, normalize the name
-            normalizedPropertyName = propertyName
-            if not i_caseSensitive:
-                normalizedPropertyName = normalizedPropertyName.upper()
-
-            # Compare them
-            if normalizedPropertyName == normalizedInputPropertyName:
-                return self.properties[propertyName]
-
-        return None
+# + }}}
 
 # + }}}
 
