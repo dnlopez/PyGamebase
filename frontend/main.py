@@ -991,12 +991,9 @@ if not "tableColumns" in settings.viewSettings:
         { "id": "programmer",
           "width": 250,
         },
-        { "id": "parent_genre",
-          "width": 150,
+        { "id": "genre_combined",
+          "width": 200,
         },
-        { "id": "genre",
-          "width": 150,
-        }
     ]
 
 for initialColumn in settings.viewSettings["tableColumns"]:
