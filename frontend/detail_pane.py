@@ -749,12 +749,13 @@ class DetailPaneVisibleItemsTableView(QTableView):
             if self.reorder_rowNo != None and i_event.button() == Qt.MouseButton.LeftButton:
                 newPosition = detailPaneItems_move(self.reorder_rowNo, self.reorder_dropBeforeRowNo)
 
+                self.invalidateAllData()
+
                 # Stop reordering
                 self.reorder_rowNo = None
 
                 #
                 self.reorderIndicator_widget.hide()
-                self.repaint()
 
                 #
                 if newPosition != -1:
@@ -768,6 +769,9 @@ class DetailPaneVisibleItemsTableView(QTableView):
         return False
 
     # + }}}
+
+    def invalidateAllData(self):
+        self.model().dataChanged.emit(self.model().index(0, 0), self.model().index(0, len(g_detailPaneItems) - 1))
 
 # + + }}}
 
@@ -873,9 +877,9 @@ class DetailPaneItems(QWidget):
         rowNoToMove = self.visibleItemsTableView.selectionModel().currentIndex().row()
         if rowNoToMove > 0:
             newPosition = detailPaneItems_move(rowNoToMove, rowNoToMove - 1)
+            self.visibleItemsTableView.invalidateAllData()
 
             #
-            self.visibleItemsTableView.repaint()
             self.visibleItemsTableView.selectionModel().setCurrentIndex(self.visibleItemsTableView.selectionModel().model().index(newPosition, 0), QItemSelectionModel.ClearAndSelect | QItemSelectionModel.Rows)
             self.change.emit()
 
@@ -883,9 +887,9 @@ class DetailPaneItems(QWidget):
         rowNoToMove = self.visibleItemsTableView.selectionModel().currentIndex().row()
         if rowNoToMove < len(g_detailPaneItems) - 1:
             newPosition = detailPaneItems_move(rowNoToMove, rowNoToMove + 2)
+            self.visibleItemsTableView.invalidateAllData()
 
             #
-            self.visibleItemsTableView.repaint()
             self.visibleItemsTableView.selectionModel().setCurrentIndex(self.visibleItemsTableView.selectionModel().model().index(newPosition, 0), QItemSelectionModel.ClearAndSelect | QItemSelectionModel.Rows)
             self.change.emit()
 
