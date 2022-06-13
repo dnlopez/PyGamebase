@@ -518,32 +518,33 @@ def sqlWhereExpressionToColumnFilters(i_whereExpression, i_skipFailures=False):
             usableColumn = columns.usableColumn_getByDbIdentifier(columnName)
             if usableColumn != None:
                 widgetText = None
+                strValue = str(value)
                 if operator == "LIKE":
                     # If have percent sign at beginning and end and nowhere else
-                    if len(value) >= 2 and value[0] == "%" and value[-1] == "%" and value[1:-1].find("%") == -1:
-                        widgetText = value[1:-1]
+                    if len(strValue) >= 2 and strValue[0] == "%" and strValue[-1] == "%" and strValue[1:-1].find("%") == -1:
+                        widgetText = strValue[1:-1]
                     else:
-                        widgetText = value
+                        widgetText = strValue
                 elif operator == "REGEXP":
-                    widgetText = "/" + value + "/"
+                    widgetText = "/" + strValue + "/"
                 elif operator == "BETWEEN":
-                    widgetText = value
+                    widgetText = strValue
                 elif operator == "IS":
-                    widgetText = "=" + value
+                    widgetText = "=" + strValue
                 elif operator == "IS NOT":
-                    widgetText = "<>" + value
+                    widgetText = "<>" + strValue
                 elif operator == "=" or operator == "==":
-                    widgetText = "=" + value
+                    widgetText = "=" + strValue
                 elif operator == "<":
-                    widgetText = "<" + value
+                    widgetText = "<" + strValue
                 elif operator == "<=":
-                    widgetText = "<=" + value
+                    widgetText = "<=" + strValue
                 elif operator == ">":
-                    widgetText = ">" + value
+                    widgetText = ">" + strValue
                 elif operator == ">=":
-                    widgetText = ">=" + value
+                    widgetText = ">=" + strValue
                 elif operator == "<>" or operator == "!=":
-                    widgetText = "<>" + value
+                    widgetText = "<>" + strValue
 
                 # Save widget text in output dict
                 if widgetText != None:
