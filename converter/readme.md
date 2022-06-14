@@ -3,7 +3,7 @@ _PyGamebase converter_ is a helper app for converting databases from their typic
 
 # Usage
 
-Start the application by running `python converter.py`.
+Start the application by running `python3 converter.py`.
 
 The application has three tab pages corresponding to common Gamebase setup steps. The steps are independent actions and you don't have to run them all (though the later tab pages do use some settings entered on the previous ones). If you click the button 'Try and auto-fill everything by choosing a GameBase folder...' and direct it to your Gamebase folder, it will try and fill in as many boxes as possible across all three tabs automatically, with some light guessing.
 

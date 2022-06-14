@@ -7,7 +7,7 @@ This frontend works with Gamebase databases in SQLite format. Since Gamebase dat
 
 # Running the frontend
 
-Enter the 'frontend' folder and run `python pygamebase.py <adapter file path>`.
+Enter the 'frontend' folder and run `python3 main.py <adapter file path>`.
 
 If you omit the adapter file you will be prompted with a file selector.
 
