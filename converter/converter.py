@@ -301,7 +301,7 @@ def step1_go_button_onClicked():
     log_plainTextEdit.appendPlainText("*** Running...")
     log_plainTextEdit.appendPlainText("")
     def onOutput(i_line):
-        log_plainTextEdit.appendPlainText(i_line)
+        log_plainTextEdit.appendPlainText(i_line.rstrip("\r"))
     def onDone(i_exitCode):
         log_plainTextEdit.appendPlainText("")
         log_plainTextEdit.appendPlainText("*** Process exited with code " + str(i_exitCode))
@@ -400,7 +400,7 @@ def step2_go_button_onClicked():
     log_plainTextEdit.appendPlainText("*** Running...")
     log_plainTextEdit.appendPlainText("")
     def onOutput(i_line):
-        log_plainTextEdit.appendPlainText(i_line)
+        log_plainTextEdit.appendPlainText(i_line.rstrip("\r"))
     def onDone(i_exitCode):
         log_plainTextEdit.appendPlainText("")
         log_plainTextEdit.appendPlainText("*** Process exited with code " + str(i_exitCode))
