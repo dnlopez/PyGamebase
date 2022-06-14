@@ -128,7 +128,10 @@ def convertMdbToSqlite(i_mdbFilePath, i_sqliteFilePath, i_mdbToolsExeDirPath):
     # Run SQL in sqlite
     print("Creating SQLite database...")
     sys.stdout.flush()
-    db = sqlite3.connect("file:" + i_sqliteFilePath + "?mode=rwc", uri=True)
+    if sys.version_info.major >= 3:
+        db = sqlite3.connect("file:" + i_sqliteFilePath + "?mode=rwc", uri=True)
+    else:
+        db = sqlite3.connect(i_sqliteFilePath)
     db.executescript(sql)
     db.close()
     print("Done.")
