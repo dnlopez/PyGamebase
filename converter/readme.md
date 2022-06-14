@@ -39,4 +39,4 @@ This step is written directly into the converter application and there is no sep
 
 # Next steps
 
-See the [frontend's readme](../frontend/readme.md) and proceed to launch the frontend with your adapter file.
+See the [frontend's readme](../frontend/readme.md) (or better still the full [User guide](http://htmlpreview.github.io/?https://github.com/dnlopez/PyGamebase/blob/master/frontend/docs/user_guide.html)) and proceed to launch the frontend with your adapter file.
