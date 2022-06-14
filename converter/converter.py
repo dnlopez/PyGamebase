@@ -18,6 +18,121 @@ from PySide2.QtGui import *
 
 scriptDirPath = os.path.dirname(os.path.realpath(__file__))
 
+
+# + Quoting for different shells {{{
+
+# + + Single argument {{{
+
+import shlex
+if hasattr(shlex, "quote"):
+    quoteArgumentForBash = shlex.quote  # since Python 3.3
+else:
+    import pipes
+    quoteArgumentForBash = pipes.quote  # before Python 3.3
+
+def quoteArgumentForWindowsCmd(i_arg):
+    return i_arg.replace("^", "^^") \
+                .replace("(", "^(") \
+                .replace(")", "^)") \
+                .replace("%", "^%") \
+                .replace("!", "^!") \
+                .replace('"', '^"') \
+                .replace('<', "^<") \
+                .replace('>', "^>") \
+                .replace('&', "^&") \
+                .replace(" ", '" "')
+
+import platform
+if platform.system() == "Windows":
+    quoteArgumentForNativeShell = quoteArgumentForWindowsCmd
+else:
+    quoteArgumentForNativeShell = quoteArgumentForBash
+
+# + + }}}
+
+# + }}}
+
+import dan.streams
+class AsyncQTimerSubprocess:
+    def __init__(self, i_commandAndArguments, i_onOutput, i_onDone=None):
+        """
+        Params:
+         i_commandAndArguments:
+          Either (str)
+           Command line to run in a shell
+          or (list of str)
+           Components of command line to run in a shell.
+           This function will take care of quoting/escaping individual elements if necessary.
+         i_onOutput:
+          (function)
+          Called when child program emits a line of output (on stdout or stderr).
+          Function has:
+           Params:
+            i_line:
+             (str)
+         i_onDone:
+          Either (function)
+           Called when child program exits
+           Function has:
+            Params:
+             i_exitCode:
+              (int)
+          or (None)
+           Don't use this callback.
+        """
+        # If i_commandAndArguments is not a string (and presumably is a list),
+        # convert it to one
+        if type(i_commandAndArguments) != str:
+            # Quote arguments if necessary before joining
+            i_commandAndArguments = [quoteArgumentForNativeShell(arg)  for arg in i_commandAndArguments]
+            i_commandAndArguments = " ".join(i_commandAndArguments)
+        #print("AsyncQTimerSubprocess running:")
+        #print(i_commandAndArguments)
+
+        # Start program
+        import subprocess
+        self.popen = subprocess.Popen(i_commandAndArguments,
+                                      shell=True,
+                                      #bufsize=1, text=True,
+                                      stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+        # Collect both its stdout and stderr streams in another thread
+        self.streamReader = dan.streams.NonblockingMultipleStreamReader({
+            "child_stdout": self.popen.stdout,
+            "child_stderr": self.popen.stderr
+        })
+
+        # Start a Qt timer with a small interval to run its callback during idle processing time
+        self.outputCheck_timer = QTimer()
+        self.outputCheck_timer.setInterval(30)
+        self.outputCheck_timer.timeout.connect(self.outputCheck_timer_onTimeout)
+        self.outputCheck_timer.start()
+
+        # Save callbacks
+        self.onOutput = i_onOutput
+        self.onDone = i_onDone
+
+    def outputCheck_timer_onTimeout(self):
+        """
+        Callback that runs during idle processing time
+        to handle process output
+        """
+        # Send any output to onOutput() callback
+        while True:
+            nextLine = self.streamReader.readLine(i_timeout = 0.0)
+            if nextLine == None:
+                break
+            self.onOutput(nextLine[1].decode("utf-8").rstrip("\n"))
+
+        # If process exited,
+        # stop timer and call onDone() callback
+        exitCode = self.popen.poll()
+        if exitCode != None:
+            self.outputCheck_timer.stop()
+            if self.onDone != None:
+                self.onDone(exitCode)
+
+
 # Create a Qt application
 # (or reuse old one if it already exists; ie. when re-running in REPL during development)
 if not QApplication.instance():
@@ -216,90 +331,19 @@ step1_vBoxLayout.addWidget(step1_go_button, 0, Qt.AlignHCenter)
 #
 
 
-import dan.streams
-class AsyncQTimerSubprocess:
-    def __init__(self, i_commandAndArguments, i_onOutput, i_onDone=None):
-        """
-        Params:
-         i_commandAndArguments:
-          Either (str)
-           Command line to run in a shell
-          or (list of str)
-           Components of command line to run in a shell.
-           This function will take care of quoting/escaping individual elements if necessary.
-         i_onOutput:
-          (function)
-          Called when child program emits a line of output (on stdout or stderr).
-          Function has:
-           Params:
-            i_line:
-             (str)
-         i_onDone:
-          Either (function)
-           Called when child program exits
-           Function has:
-            Params:
-             i_exitCode:
-              (int)
-          or (None)
-           Don't use this callback.
-        """
-        # If i_commandAndArguments is not a string (and presumably is a list),
-        # convert it to one
-        if type(i_commandAndArguments) != str:
-            # Quote arguments if necessary before joining
-            import shlex
-            i_commandAndArguments = [shlex.quote(arg)  for arg in i_commandAndArguments]
-            i_commandAndArguments = " ".join(i_commandAndArguments)
-
-        # Start program
-        import subprocess
-        self.popen = subprocess.Popen(i_commandAndArguments,
-                                      shell=True,
-                                      #bufsize=1, text=True,
-                                      stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-
-        # Collect both its stdout and stderr streams in another thread
-        self.streamReader = dan.streams.NonblockingMultipleStreamReader({
-            "child_stdout": self.popen.stdout,
-            "child_stderr": self.popen.stderr
-        })
-
-        # Start a Qt timer with a small interval to run its callback during idle processing time
-        self.outputCheck_timer = QTimer()
-        self.outputCheck_timer.setInterval(30)
-        self.outputCheck_timer.timeout.connect(self.outputCheck_timer_onTimeout)
-        self.outputCheck_timer.start()
-
-        # Save callbacks
-        self.onOutput = i_onOutput
-        self.onDone = i_onDone
-
-    def outputCheck_timer_onTimeout(self):
-        """
-        Callback that runs during idle processing time
-        to handle process output
-        """
-        # Send any output to onOutput() callback
-        while True:
-            nextLine = self.streamReader.readLine(i_timeout = 0.0)
-            if nextLine == None:
-                break
-            self.onOutput(nextLine[1].decode("utf-8").rstrip("\n"))
-
-        # If process exited,
-        # stop timer and call onDone() callback
-        exitCode = self.popen.poll()
-        if exitCode != None:
-            self.outputCheck_timer.stop()
-            if self.onDone != None:
-                self.onDone(exitCode)
-
 currentSubprocess = None
 def step1_go_button_onClicked():
+    # Assemble command
+    executableAndArgs = [scriptDirPath + os.sep + "utility_scripts" + os.sep + "mdb_to_sqlite.py", step1_accessDatabasePath_lineEdit.text(), step1_sqliteDatabasePath_lineEdit.text()]
+    if step1_mdbToolsExeDirPath_lineEdit.text() != "":
+        executableAndArgs += ["--mdbtools-exe-dir", step1_mdbToolsExeDirPath_lineEdit.text()]
+
+    # Start log
     log_plainTextEdit.clear()
-    log_plainTextEdit.appendPlainText("*** Running...")
+    log_plainTextEdit.appendPlainText("*** Running " + " ".join([quoteArgumentForNativeShell(arg)  for arg in executableAndArgs]) + "...")
     log_plainTextEdit.appendPlainText("")
+
+    # Run command
     def onOutput(i_line):
         log_plainTextEdit.appendPlainText(i_line.rstrip("\r"))
     def onDone(i_exitCode):
@@ -308,44 +352,7 @@ def step1_go_button_onClicked():
         global currentSubprocess
         currentSubprocess = None
     global currentSubprocess
-    executableAndArgs = [scriptDirPath + "/utility_scripts/mdb_to_sqlite.py", step1_accessDatabasePath_lineEdit.text(), step1_sqliteDatabasePath_lineEdit.text()]
-    if step1_mdbToolsExeDirPath_lineEdit.text() != "":
-        executableAndArgs += ["--mdbtools-exe-dir", step1_mdbToolsExeDirPath_lineEdit.text()]
     currentSubprocess = AsyncQTimerSubprocess(executableAndArgs, onOutput, onDone)
-
-"""
-import dan.streams
-#logUpdate_timer = None
-t = None
-def step1_go_button_onClicked():
-    # Start program
-    import subprocess
-    popen = subprocess.Popen("ping 192.168.2.1",
-                             shell=True,
-                             #bufsize=1, text=True,
-                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    streamReader = dan.streams.NonblockingMultipleStreamReader({
-        "child_stdout": popen.stdout,
-        "child_stderr": popen.stderr
-    })
-    def logUpdate_timer_onTimeout():
-        while True:
-            nextLine = streamReader.readLine(i_timeout = 0.0)
-            if nextLine == None:
-                return
-            log_plainTextEdit.appendPlainText(nextLine[1].decode("utf-8")[:-1])
-    global logUpdate_timer
-    logUpdate_timer = QTimer()
-    logUpdate_timer.setInterval(0)
-    logUpdate_timer.timeout.connect(logUpdate_timer_onTimeout)
-    logUpdate_timer.start()
-"""
-
-#popen.wait()
-
-# Return exit code and output
-#return (popen.returncode, output)
-
 step1_go_button.clicked.connect(step1_go_button_onClicked)
 
 step1_vBoxLayout.addStretch()
@@ -396,9 +403,26 @@ step2_vBoxLayout.addWidget(step2_fromPreviousTabs_label)
 step2_go_button = QPushButton("Go")
 step2_vBoxLayout.addWidget(step2_go_button, 0, Qt.AlignHCenter)
 def step2_go_button_onClicked():
+    # Assemble command
+    executableAndArgs = [scriptDirPath + os.sep + "utility_scripts" + os.sep + "fix_path_case.py", step1_sqliteDatabasePath_lineEdit.text()]
+    if step2_gamesFolderPath_lineEdit.text() != "":
+        executableAndArgs += ["--games", step2_gamesFolderPath_lineEdit.text()]
+    if step2_screenshotsFolderPath_lineEdit.text() != "":
+        executableAndArgs += ["--screenshots", step2_screenshotsFolderPath_lineEdit.text()]
+    if step2_musicFolderPath_lineEdit.text() != "":
+        executableAndArgs += ["--music", step2_musicFolderPath_lineEdit.text()]
+    if step2_photosFolderPath_lineEdit.text() != "":
+        executableAndArgs += ["--photos", step2_photosFolderPath_lineEdit.text()]
+    if step2_extrasFolderPath_lineEdit.text() != "":
+        executableAndArgs += ["--extras", step2_extrasFolderPath_lineEdit.text()]
+    executableAndArgs += ["--verbose"]
+
+    # Start log
     log_plainTextEdit.clear()
-    log_plainTextEdit.appendPlainText("*** Running...")
+    log_plainTextEdit.appendPlainText("*** Running " + " ".join([quoteArgumentForNativeShell(arg)  for arg in executableAndArgs]) + "...")
     log_plainTextEdit.appendPlainText("")
+
+    # Run command
     def onOutput(i_line):
         log_plainTextEdit.appendPlainText(i_line.rstrip("\r"))
     def onDone(i_exitCode):
@@ -406,23 +430,8 @@ def step2_go_button_onClicked():
         log_plainTextEdit.appendPlainText("*** Process exited with code " + str(i_exitCode))
         global currentSubprocess
         currentSubprocess = None
-
-    command = [scriptDirPath + "/utility_scripts/fix_path_case.py", step1_sqliteDatabasePath_lineEdit.text()]
-    if step2_gamesFolderPath_lineEdit.text() != "":
-        command += ["--games", step2_gamesFolderPath_lineEdit.text()]
-    if step2_screenshotsFolderPath_lineEdit.text() != "":
-        command += ["--screenshots", step2_screenshotsFolderPath_lineEdit.text()]
-    if step2_musicFolderPath_lineEdit.text() != "":
-        command += ["--music", step2_musicFolderPath_lineEdit.text()]
-    if step2_photosFolderPath_lineEdit.text() != "":
-        command += ["--photos", step2_photosFolderPath_lineEdit.text()]
-    if step2_extrasFolderPath_lineEdit.text() != "":
-        command += ["--extras", step2_extrasFolderPath_lineEdit.text()]
-
-    command += ["--verbose"]
-
     global currentSubprocess
-    currentSubprocess = AsyncQTimerSubprocess(command, onOutput, onDone)
+    currentSubprocess = AsyncQTimerSubprocess(executableAndArgs, onOutput, onDone)
 step2_go_button.clicked.connect(step2_go_button_onClicked)
 
 step2_vBoxLayout.addStretch()
