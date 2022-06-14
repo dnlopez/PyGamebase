@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Given a GameBase database (in SQLite format),
 # for all paths to external files recorded within it, specifically those to games, screenshots, music, photos and extras,
