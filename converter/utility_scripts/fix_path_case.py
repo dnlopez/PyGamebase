@@ -33,6 +33,7 @@ def fixPathCase(i_path, i_relativeTo):
      i_path:
       (str)
       May be absolute or relative.
+      Components must be separated by forward slashes.
      i_relativeTo:
       Either (str)
        If i_path is relative, treat it as relative to this directory.
@@ -54,7 +55,7 @@ def fixPathCase(i_path, i_relativeTo):
         i_relativeTo = "."
 
     #
-    components = i_path.split(os.sep)
+    components = i_path.split("/")
 
     # If the first path component is empty, it's an absolute path,
     # so don't use any relative prefix, to start the filesystem browsing and result path at root ("/")
@@ -64,8 +65,8 @@ def fixPathCase(i_path, i_relativeTo):
     # so use the selected relative-to directory as the relative prefix
     else:
         relativeBase = i_relativeTo
-        if relativeBase != "" and relativeBase[-1] != os.sep:
-            relativeBase += os.sep
+        if relativeBase != "" and relativeBase[-1] != "/":
+            relativeBase += "/"
 
     #
     currentSearchPath = ""
