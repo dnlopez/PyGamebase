@@ -44,6 +44,7 @@ def autoDetectByGamebaseFolderButton_onClicked():
     #file1Name = QFileDialog.getOpenFileName()
     dirPath = QFileDialog.getExistingDirectory(None, "Choose GameBase directory")
     if dirPath != "":
+        dirPath = QDir.toNativeSeparators(dirPath)
         step1_accessDatabasePath_lineEdit.setText("")
         step1_sqliteDatabasePath_lineEdit.setText("")
         step2_gamesFolderPath_lineEdit.setText("")
@@ -151,12 +152,14 @@ def makeLabelledEditField(i_label, i_tooltip=None, i_comment=None, i_browseFor=N
                 #file1Name = QFileDialog.getOpenFileName()
                 path = QFileDialog.getExistingDirectory(None, i_browseCaption)
                 if path != "":
+                    path = QDir.toNativeSeparators(path)
                     lineEdit.setText(path)
             pushButton_browse.clicked.connect(pushButton_browse_onClicked)
         elif i_browseFor == "file":
             def pushButton_browse_onClicked():
                 path, filter = QFileDialog.getOpenFileName(None, i_browseCaption)
                 if path != "":
+                    path = QDir.toNativeSeparators(path)
                     lineEdit.setText(path)
             pushButton_browse.clicked.connect(pushButton_browse_onClicked)
 
