@@ -225,30 +225,6 @@ frontend.mainWindow = mainWindow
 #mainWindow.setStyleSheet("* {background-color: white; }")
 
 # Application-wide keyboard shortcuts
-shortcut = QShortcut(QKeySequence("Ctrl+F"), mainWindow)
-shortcut.setContext(Qt.ApplicationShortcut)
-def ctrlFShortcut_onActivated():
-    if sqlFilterBar.isVisible():
-        sqlFilterBar.setFocus(Qt.ShortcutFocusReason)
-    else:
-        # If table view has the focus and the selected column is filterable,
-        # target that
-        selectedIndex = tableView.selectionModel().currentIndex()
-        selectedColumn = columns.tableColumn_getByPos(selectedIndex.column())
-        if tableView.hasFocus() and selectedColumn != None and selectedColumn["filterable"]:
-            targetColumn = selectedColumn
-        # Else target the first visible and filterable column
-        else:
-            for column in columns.tableColumn_getBySlice():
-                if column["filterable"]:
-                    targetColumn = column
-                    break
-
-        # Set focus to filter edit control
-        if targetColumn != None:
-            columnFilterBar.columnWidgets[targetColumn["id"]]["filterEdits"][0].setFocus(Qt.ShortcutFocusReason)
-shortcut.activated.connect(ctrlFShortcut_onActivated)
-
 shortcut = QShortcut(QKeySequence("Escape"), mainWindow)
 shortcut.setContext(Qt.ApplicationShortcut)
 def escShortcut_onActivated():
@@ -371,6 +347,35 @@ filterMenu_back_action.setShortcut(QKeySequence("Alt+Left"))
 filterMenu_forward_action = filterMenu.addAction("Go &forward")
 filterMenu_forward_action.triggered.connect(filterHistory_goForward)
 filterMenu_forward_action.setShortcut(QKeySequence("Alt+Right"))
+
+filterMenu.addSeparator()
+
+#shortcut = QShortcut(QKeySequence("Ctrl+F"), mainWindow)
+#shortcut.setContext(Qt.ApplicationShortcut)
+def ctrlFShortcut_onActivated():
+    if sqlFilterBar.isVisible():
+        sqlFilterBar.setFocus(Qt.ShortcutFocusReason)
+    else:
+        # If table view has the focus and the selected column is filterable,
+        # target that
+        selectedIndex = tableView.selectionModel().currentIndex()
+        selectedColumn = columns.tableColumn_getByPos(selectedIndex.column())
+        if tableView.hasFocus() and selectedColumn != None and selectedColumn["filterable"]:
+            targetColumn = selectedColumn
+        # Else target the first visible and filterable column
+        else:
+            for column in columns.tableColumn_getBySlice():
+                if column["filterable"]:
+                    targetColumn = column
+                    break
+
+        # Set focus to filter edit control
+        if targetColumn != None:
+            columnFilterBar.columnWidgets[targetColumn["id"]]["filterEdits"][0].setFocus(Qt.ShortcutFocusReason)
+#shortcut.activated.connect(ctrlFShortcut_onActivated)
+filterMenu_filterFormat_focus_action = filterMenu.addAction("Focus filter box")
+filterMenu_filterFormat_focus_action.triggered.connect(ctrlFShortcut_onActivated)
+filterMenu_filterFormat_focus_action.setShortcut(QKeySequence("Ctrl+F"))
 
 filterMenu.addSeparator()
 
