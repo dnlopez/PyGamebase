@@ -488,26 +488,37 @@ import utils
 
 # Frontend configuration
 '''
+    def normalizeAndQuotePath(i_path):
+        """
+        Params:
+         i_path:
+          (str)
+
+        Returns:
+         (str)
+        """
+        return '"' + i_path.replace('\\', r'/').replace('"', r'\"') + '"'
+
     if step3_gamebaseTitle_lineEdit.text() != "":
-        script += 'config_title = "' + step3_gamebaseTitle_lineEdit.text().replace('"', r'\"') + '"\n'
+        script += 'config_title = ' + normalizeAndQuotePath(step3_gamebaseTitle_lineEdit.text()) + '\n'
     if step1_sqliteDatabasePath_lineEdit.text() != "":
-        script += 'config_databaseFilePath = "' + step1_sqliteDatabasePath_lineEdit.text().replace('"', r'\"') + '"\n'
+        script += 'config_databaseFilePath = ' + normalizeAndQuotePath(step1_sqliteDatabasePath_lineEdit.text()) + '\n'
     if step2_screenshotsFolderPath_lineEdit.text() != "":
-        script += 'config_screenshotsBaseDirPath = "' + step2_screenshotsFolderPath_lineEdit.text().replace('"', r'\"') + '"\n'
+        script += 'config_screenshotsBaseDirPath = ' + normalizeAndQuotePath(step2_screenshotsFolderPath_lineEdit.text()) + '\n'
     if step2_photosFolderPath_lineEdit.text() != "":
-        script += 'config_photosBaseDirPath = "' + step2_photosFolderPath_lineEdit.text().replace('"', r'\"') + '"\n'
+        script += 'config_photosBaseDirPath = ' + normalizeAndQuotePath(step2_photosFolderPath_lineEdit.text()) + '\n'
     if step2_musicFolderPath_lineEdit.text() != "":
-        script += 'config_musicBaseDirPath = "' + step2_musicFolderPath_lineEdit.text().replace('"', r'\"') + '"\n'
+        script += 'config_musicBaseDirPath = ' + normalizeAndQuotePath(step2_musicFolderPath_lineEdit.text()) + '\n'
     if step2_extrasFolderPath_lineEdit.text() != "":
-        script += 'config_extrasBaseDirPath = "' + step2_extrasFolderPath_lineEdit.text().replace('"', r'\"') + '"\n'
+        script += 'config_extrasBaseDirPath = ' + normalizeAndQuotePath(step2_extrasFolderPath_lineEdit.text()) + '\n'
     script += '''\
 
 
 def runGame(i_gamePath, i_fileToRun = None, i_gameInfo = None):
     #print('runGame(' + pprint.pformat(i_gamePath) + ', ' + pprint.pformat(i_fileToRun) + ', ' + pprint.pformat(i_gameInfo) + ')')
 
-    gamesBaseDirPath = "''' + step2_gamesFolderPath_lineEdit.text().replace('"', r'\"') + '''"
-    tempDirPath = tempfile.gettempdir() + "/gamebase"
+    gamesBaseDirPath = ''' + normalizeAndQuotePath(step2_gamesFolderPath_lineEdit.text()) + '''
+    tempDirPath = tempfile.gettempdir() + "/" + "gamebase"
 
     # If file is a zip
     if utils.pathHasExtension(i_gamePath, ".ZIP"):
@@ -525,7 +536,7 @@ def runGame(i_gamePath, i_fileToRun = None, i_gameInfo = None):
         gameFiles = utils.moveElementToFront(gameFiles, i_fileToRun)
 
     #
-    command = ["''' + step3_emulatorExecutable_lineEdit.text().replace('"', r'\"') + '''"]
+    command = [''' + normalizeAndQuotePath(step3_emulatorExecutable_lineEdit.text()) + ''']
     command.extend(utils.joinPaths(tempDirPath, gameFiles))
     utils.shellStartTask(command)
 
