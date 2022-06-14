@@ -10,7 +10,12 @@
 # Python
 import os
 import os.path
+import sys
 
+
+def printAndFlush(i_str):
+    print(i_str)
+    sys.stdout.flush()
 
 #var testRelativeTo = null;
 #var testPath = "/mnt/Ve/games/Sinclair ZX Spectrum/Speccymania/SpeccyMania/Screenshots/L/labyrinth(Sinclair).gif";
@@ -76,7 +81,7 @@ def fixPathCase(i_path, i_relativeTo):
             # just append it to the result and continue
             dirEntries = os.listdir(relativeBase + currentSearchPath)
             if component in dirEntries:
-                #print("ok: " + component)
+                #printAndFlush("ok: " + component)
                 currentSearchPath += component
             # Else if the input component isn't found in the file system,
             # look for a match (or matches) by case-insensitive comparison
@@ -88,7 +93,7 @@ def fixPathCase(i_path, i_relativeTo):
 
                 for dirEntry in dirEntries:
                     if dirEntry.upper() == upperCasedComponent:
-                        #print("insensitively ok: " + component + " (-> " + dirEntries[dirEntryNo] + ")")
+                        #printAndFlush("insensitively ok: " + component + " (-> " + dirEntries[dirEntryNo] + ")")
 
                         # If found more than one match, throw
                         if insensitiveMatchCount > 0:
@@ -165,9 +170,9 @@ def fixFilename(i_basePath, i_filename):
         if e.args[0] == "No matches":
             stem, extension = os.path.splitext(fixedFilename)
             filenameWithExtraUnderscore = stem + "_" + extension
-            #print("trying: " + filenameWithExtraUnderscore)
+            #printAndFlush("trying: " + filenameWithExtraUnderscore)
             if os.path.exists(i_basePath + os.path.sep + filenameWithExtraUnderscore):
-                #print("found with underscore!")
+                #printAndFlush("found with underscore!")
                 fixedFilename = filenameWithExtraUnderscore
             else:
                 return [fixedFilename, "Not found"]
@@ -238,79 +243,89 @@ def fixFilenames(i_basePathForGames, i_basePathForScreenshots, i_basePathForSids
         #
         fixedFilename, errorDescription = fixFilename(i_basePath, i_row[i_columnNames.index(i_filenameFieldName)])
         if errorDescription[0:9] == "Not found":
-            print(errorDescription + ", for file: " + i_row[i_columnNames.index(i_filenameFieldName)])
+            printAndFlush(errorDescription + ", for file: " + i_row[i_columnNames.index(i_filenameFieldName)])
 
         if (fixedFilename == i_row[i_columnNames.index(i_filenameFieldName)]):
             return ""
 
-        #print("changing to: " + fixedFilename)
+        #printAndFlush("changing to: " + fixedFilename)
         return "UPDATE " + i_tableName + " SET " + i_filenameFieldName + " = '" + fixedFilename.replace("'", "''") + "' WHERE " + i_tableKeyFieldName + " = " + str(i_row[i_columnNames.index(i_tableKeyFieldName)]) + ';\n'
 
     # Fix fields Games.Filename, Games.ScrnshotFilename and Games.SidFilename
     if i_basePathForGames != None or i_basePathForScreenshots != None or i_basePathForSids != None:
         if i_verbose:
-            print("Reading table 'Games'")
+            printAndFlush("Reading table 'Games'")
         cursor = g_db.execute("SELECT * FROM Games")
         columnNames = [column[0]  for column in cursor.description]
         rows = cursor.fetchall()
 
         if i_basePathForGames != None:
             if i_verbose:
-                print("Fixing up field 'Games.Filename'")
-            for row in rows:
+                printAndFlush("Fixing up field 'Games.Filename'")
+            for rowNo, row in enumerate(rows):
                 combinedSql += fixFilenameAndUpdateDb(columnNames, row, "Games", "GA_Id", "Filename", i_basePathForGames)
+                if i_verbose and rowNo % 100 == 0:
+                    printAndFlush("Done " + str(rowNo) + "/" + str(len(rows)) + "...")
 
         if i_basePathForScreenshots != None:
             if i_verbose:
-                print("Fixing up field 'Games.ScrnshotFilename'")
-            for row in rows:
+                printAndFlush("Fixing up field 'Games.ScrnshotFilename'")
+            for rowNo, row in enumerate(rows):
                 combinedSql += fixFilenameAndUpdateDb(columnNames, row, "Games", "GA_Id", "ScrnshotFilename", i_basePathForScreenshots)
+                if i_verbose and rowNo % 100 == 0:
+                    printAndFlush("Done " + str(rowNo) + "/" + str(len(rows)) + "...")
 
         if i_basePathForSids != None:
             if i_verbose:
-                print("Fixing up field 'Games.SidFilename'")
-            for row in rows:
+                printAndFlush("Fixing up field 'Games.SidFilename'")
+            for rowNo, row in enumerate(rows):
                 combinedSql += fixFilenameAndUpdateDb(columnNames, row, "Games", "GA_Id", "SidFilename", i_basePathForSids)
+                if i_verbose and rowNo % 100 == 0:
+                    printAndFlush("Done " + str(rowNo) + "/" + str(len(rows)) + "...")
 
     # Fix field Musicians.Photo
     if i_basePathForPhotos != None:
         if i_verbose:
-            print("Reading table 'Musicians'")
+            printAndFlush("Reading table 'Musicians'")
         cursor = g_db.execute("SELECT * FROM Musicians")
         columnNames = [column[0]  for column in cursor.description]
         rows = cursor.fetchall()
 
         if i_verbose:
-            print("Fixing up field 'Musicians.Photo'")
-        for row in rows:
+            printAndFlush("Fixing up field 'Musicians.Photo'")
+        for rowNo, row in enumerate(rows):
             combinedSql += fixFilenameAndUpdateDb(columnNames, row, "Musicians", "MU_Id", "Photo", i_basePathForPhotos)
+            if i_verbose and rowNo % 100 == 0:
+                printAndFlush("Done " + str(rowNo) + "/" + str(len(rows)) + "...")
 
     # Fix field Extras.Path
     if i_basePathForExtras != None:
         if i_verbose:
-            print("Reading table 'Extras'")
+            printAndFlush("Reading table 'Extras'")
         cursor = g_db.execute("SELECT * FROM Extras")
         columnNames = [column[0]  for column in cursor.description]
         rows = cursor.fetchall()
 
         if i_verbose:
-            print("Fixing up field 'Extras.Path'")
-        for row in rows:
+            printAndFlush("Fixing up field 'Extras.Path'")
+        for rowNo, row in enumerate(rows):
             combinedSql += fixFilenameAndUpdateDb(columnNames, row, "Extras", "EX_Id", "Path", i_basePathForExtras)
+            if i_verbose and rowNo % 100 == 0:
+                printAndFlush("Done " + str(rowNo) + "/" + str(len(rows)) + "...")
 
     #
     combinedSql += "COMMIT TRANSACTION;";
 
     #
     if i_verbose:
-        print("SQL to be executed: ---")
-        print(combinedSql)
-        print("---")
+        printAndFlush("SQL to be executed: ---")
+        printAndFlush(combinedSql)
+        printAndFlush("---")
 
     # Execute
     if not i_dryRun:
         if i_verbose:
-            print("Executing SQL...")
+            printAndFlush("Executing SQL...")
         g_db.executescript(combinedSql)
 
 #openDb(g_config.databasePath);
@@ -525,35 +540,35 @@ Options:
         if arg[0] == "-":
             if arg == "-g" or arg == "--games":
                 if argNo >= len(sys.argv):
-                    print("ERROR: -g/--games requires a value.")
+                    printAndFlush("ERROR: -g/--games requires a value.")
                     sys.exit(-1)
                 gamesFilePath = sys.argv[argNo]
                 argNo += 1
 
             elif arg == "-s" or arg == "--screenshots":
                 if argNo >= len(sys.argv):
-                    print("ERROR: -s/--screenshots requires a value.")
+                    printAndFlush("ERROR: -s/--screenshots requires a value.")
                     sys.exit(-1)
                 screenshotsFilePath = sys.argv[argNo]
                 argNo += 1
 
             elif arg == "-m" or arg == "--music":
                 if argNo >= len(sys.argv):
-                    print("ERROR: -m/--music requires a value.")
+                    printAndFlush("ERROR: -m/--music requires a value.")
                     sys.exit(-1)
                 musicFilePath = sys.argv[argNo]
                 argNo += 1
 
             elif arg == "-p" or arg == "--photos":
                 if argNo >= len(sys.argv):
-                    print("ERROR: -m/--photos requires a value.")
+                    printAndFlush("ERROR: -m/--photos requires a value.")
                     sys.exit(-1)
                 photosFilePath = sys.argv[argNo]
                 argNo += 1
 
             elif arg == "-e" or arg == "--extras":
                 if argNo >= len(sys.argv):
-                    print("ERROR: -e/--extras requires a value.")
+                    printAndFlush("ERROR: -e/--extras requires a value.")
                     sys.exit(-1)
                 extrasFilePath = sys.argv[argNo]
                 argNo += 1
@@ -569,8 +584,8 @@ Options:
                 sys.exit(0)
 
             else:
-                print("ERROR: Unrecognised option: " + arg)
-                print("(Run with --help to show command usage.)")
+                printAndFlush("ERROR: Unrecognised option: " + arg)
+                printAndFlush("(Run with --help to show command usage.)")
                 sys.exit(-1)
 
         # Else if it's an argument
@@ -580,13 +595,13 @@ Options:
             elif param_sqliteFilePath == None:
                 param_sqliteFilePath = arg
             else:
-                print("ERROR: Too many arguments.")
-                print("(Run with --help to show command usage.)")
+                printAndFlush("ERROR: Too many arguments.")
+                printAndFlush("(Run with --help to show command usage.)")
                 sys.exit(-1)
 
     if databaseFilePath == None:
-        print("ERROR: Insufficient arguments.")
-        print("(Run with --help to show command usage.)")
+        printAndFlush("ERROR: Insufficient arguments.")
+        printAndFlush("(Run with --help to show command usage.)")
         sys.exit(-1)
 
     # + }}}
@@ -618,26 +633,26 @@ Options:
 
     #
     if verbose:
-        print("Option summary:")
-        print(" databaseFilePath: " + str(databaseFilePath))
-        print(" gamesFilePath: " + str(gamesFilePath))
-        print(" screenshotsFilePath: " + str(screenshotsFilePath))
-        print(" musicFilePath: " + str(musicFilePath))
-        print(" photosFilePath: " + str(photosFilePath))
-        print(" extrasFilePath: " + str(extrasFilePath))
+        printAndFlush("Option summary:")
+        printAndFlush(" databaseFilePath: " + str(databaseFilePath))
+        printAndFlush(" gamesFilePath: " + str(gamesFilePath))
+        printAndFlush(" screenshotsFilePath: " + str(screenshotsFilePath))
+        printAndFlush(" musicFilePath: " + str(musicFilePath))
+        printAndFlush(" photosFilePath: " + str(photosFilePath))
+        printAndFlush(" extrasFilePath: " + str(extrasFilePath))
 
     #
     if verbose:
-        print("Opening database...")
+        printAndFlush("Opening database...")
     openDb(databaseFilePath)
 
     if verbose:
-        print("Fixing file paths...")
+        printAndFlush("Fixing file paths...")
     fixFilenames(gamesFilePath, screenshotsFilePath, musicFilePath, photosFilePath, extrasFilePath, verbose, dryRun)
 
     if verbose:
-        print("Closing database...")
+        printAndFlush("Closing database...")
     closeDb()
 
     if verbose:
-        print("End of script.")
+        printAndFlush("End of script.")
