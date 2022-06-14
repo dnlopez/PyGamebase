@@ -7,6 +7,7 @@
     body {
         margin: 1em;
         line-height: 1.3;
+        font-family: sans-serif;
     }
 
     .code_identifier {
@@ -207,8 +208,7 @@
         <span class="name">gameInfo:</span>
         <div class="description">
           <span class="type">(dict)</span><br>
-          Supplementary information about the game.<br>
-          'Games' table record.
+          Supplementary information about the game, ie. the entire 'Games' table record.<br>
         </div>
       </div>
     </div>
@@ -238,16 +238,14 @@
         <span class="name">extraInfo:</span>
         <div class="description">
           <span class="type">(dict)</span><br>
-          Supplementary information about the extra.<br>
-          'Extras' table record.
+          Supplementary information about the extra, ie. the entire 'Extras' table record.<br>
         </div>
       </div>
       <div class="param">
         <span class="name">gameInfo:</span>
         <div class="description">
           <span class="type">(dict)</span><br>
-          Supplementary information about the game.<br>
-          'Games' table record.
+          Supplementary information about the game, ie. the entire 'Games' table record.<br>
         </div>
       </div>
     </div>
@@ -277,8 +275,7 @@
         <span class="name">gameInfo:</span>
         <div class="description">
           <span class="type">(dict)</span><br>
-          Supplementary information about the game.<br>
-          'Games' table record.
+          Supplementary information about the game, ie. the entire 'Games' table record.<br>
         </div>
       </div>
     </div>
@@ -310,21 +307,32 @@ Gamebase databases have a field called 'Gemus' with &lt;key&gt;=&lt;value&gt; da
 and then call methods such as:
 
 <p class="code_block">gemus.get("memory")
+if gemus.fieldNotEmpty("rom"):
 if gemus.fieldIs("rom", "swe"):
-if gemus.fieldIsOneOf("ram", ["512k", "1mb", "2mb", "4mb"]):</p>
+if gemus.fieldIsOneOf("ram", ["512k", "1mb", "2mb", "4mb"]):
+if gemus.fieldContains("languages", "spa"):</p>
+
+<h3>Keyboard input</h3>
+
+<p><span class="code_identifier">utils.typeOnKeyboard()</span> lets you send virtual keystrokes to the foreground application, for example to type a command into an emulator that loads a program. You must have installed the library <a href="https://pyautogui.readthedocs.io/en/latest/">PyAutoGUI</a> to use this function.
 
 
 <h2>Examples</h2>
 
-<p>The adapter files created by the converter program are very basic. You will find some more developed examples in the <a href="../example_adapter_files">example_adapter_files</a> directory. They are tailored to my own system so don't expect them to work entirely without modification; at the least you will have to modify some paths.
+<p>The adapter files created by the converter program are very basic. You will find some more developed examples in the <a href="../example_adapter_files">example_adapter_files</a> directory. They have been tailored to my own system so don't expect them to work entirely without modification; at the least you will have to modify some paths.
 
-<p>MSX.py features an extensive GEMUS script for choosing machine models, extensions and so on converted to Python.
+<p>MSX.py features an extensive GEMUS script for choosing machine models, extensions and so on that was converted (manually) to Python.
 
 <p>Various files (eg. Apple 2.py) include a function named '<span class="code_identifier">runGameWithMame()</span>' which shows the use of <span class="code_identifier">utils.allocateGameFilesToMameMediaSlots()</span> for dynamically assigning game files to the media options that MAME offers (eg. -cassette, -floppydisk1, -floppydisk2, ...) for a particular machine. The '<span class="code_identifier">availableDevices</span>' lists in this function were converted by hand from the output of "mame apple2e -listmedia" and "mame apple2gs -listmedia". Alternatively, the function <span class="code_identifier">utils.getMameMediaSlots()</span> can generate these on the fly (see amiga.py), but in spawning an extra MAME process, it will make your games slower to start.
 
 <p>Many files use the <span class="code_identifier">utils.popupMenu()</span> function to prompt the user with a menu in the frontend, typically for choosing an emulator.
 
-<p>keyboard typing
+
+<h2>Advanced Python usage</h2>
+
+<p>The directory containing your adapter file is added to sys.path so you could add your own utility modules there and import them too.
+
+<p>The frontend's own source directory is in sys.path so that you can import the helpers in the 'utils' module. Conceivably you could import the other application modules too and integrate with the frontend ever more tightly, though that would be entering the realms of the unsupported.
 
 </body>
 </html>

@@ -1,4 +1,4 @@
-_PyGamebase converter_ is a helper app for converting databases from their typical Microsoft Access (.mdb) format to the SQLite (version 3) format which PyGamebase understands. It can also create an initial adapter file for the Gamebase, as needed by the frontend.
+_PyGamebase converter_ is a helper app for converting databases from their typical Microsoft Access (.mdb) format to the SQLite (version 3) format which the PyGamebase frontend understands. It can also create an initial adapter file for the Gamebase, as needed by the frontend.
 
 
 # Usage
@@ -35,6 +35,6 @@ This step also uses the 'SQLite database file' setting from 'Step 1' and all of 
 This step is written directly into the converter application and there is no seperate command-line script for it at this time.
 
 
-# Next
+# Next steps
 
-Start the frontend
+See the [frontend's readme](../frontend/readme.md) and proceed to launch the frontend with your adapter file.
