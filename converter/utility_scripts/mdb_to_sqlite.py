@@ -18,6 +18,40 @@ import shlex
 import sqlite3
 
 
+# + Quoting for different shells {{{
+
+# + + Single argument {{{
+
+import shlex
+if hasattr(shlex, "quote"):
+    quoteArgumentForBash = shlex.quote  # since Python 3.3
+else:
+    import pipes
+    quoteArgumentForBash = pipes.quote  # before Python 3.3
+
+def quoteArgumentForWindowsCmd(i_arg):
+    return i_arg.replace("^", "^^") \
+                .replace("(", "^(") \
+                .replace(")", "^)") \
+                .replace("%", "^%") \
+                .replace("!", "^!") \
+                .replace('"', '^"') \
+                .replace('<', "^<") \
+                .replace('>', "^>") \
+                .replace('&', "^&") \
+                .replace(" ", '" "')
+
+import platform
+if platform.system() == "Windows":
+    quoteArgumentForNativeShell = quoteArgumentForWindowsCmd
+else:
+    quoteArgumentForNativeShell = quoteArgumentForBash
+
+# + + }}}
+
+# + }}}
+
+
 def convertMdbToSqlite(i_mdbFilePath, i_sqliteFilePath, i_mdbToolsExeDirPath):
     """
     Params:
@@ -47,7 +81,7 @@ def convertMdbToSqlite(i_mdbFilePath, i_sqliteFilePath, i_mdbToolsExeDirPath):
 
     # Get SQL to create the schema
     commandAndArgs = [i_mdbToolsExeDirPath + "mdb-schema", i_mdbFilePath, "sqlite"]
-    print("# " + " ".join(shlex.quote(arg)  for arg in commandAndArgs))
+    print("# " + " ".join(quoteArgumentForNativeShell(arg)  for arg in commandAndArgs))
     sys.stdout.flush()
     schema = subprocess.Popen(commandAndArgs, stdout=subprocess.PIPE).communicate()[0]
     #print(schema)
@@ -55,7 +89,7 @@ def convertMdbToSqlite(i_mdbFilePath, i_sqliteFilePath, i_mdbToolsExeDirPath):
 
     # Get the list of table names
     commandAndArgs = [i_mdbToolsExeDirPath + "mdb-tables", "-1", i_mdbFilePath]
-    print("# " + " ".join(shlex.quote(arg)  for arg in commandAndArgs))
+    print("# " + " ".join(quoteArgumentForNativeShell(arg)  for arg in commandAndArgs))
     sys.stdout.flush()
     tableNames = subprocess.Popen(commandAndArgs, stdout=subprocess.PIPE).communicate()[0]
     tableNames = tableNames.splitlines()
@@ -70,7 +104,7 @@ def convertMdbToSqlite(i_mdbFilePath, i_sqliteFilePath, i_mdbToolsExeDirPath):
     allInserts = ""
     for tableName in tableNames:
         commandAndArgs = [i_mdbToolsExeDirPath + "mdb-export", "-I", "sqlite", i_mdbFilePath, tableName.decode()]
-        print("# " + " ".join(shlex.quote(arg)  for arg in commandAndArgs))
+        print("# " + " ".join(quoteArgumentForNativeShell(arg)  for arg in commandAndArgs))
         sys.stdout.flush()
         inserts = subprocess.Popen(commandAndArgs, stdout=subprocess.PIPE).communicate()[0]
         # Investigating Python text encoding
