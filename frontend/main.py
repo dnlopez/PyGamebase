@@ -958,7 +958,7 @@ except Exception as e:
     import traceback
     print(traceback.format_exc())
     messageBox = qt_extras.ResizableMessageBox(QApplication.style().standardIcon(QStyle.SP_MessageBoxCritical), "Error")
-    messageBox.setText("<big><b>When opening database file:</b></big><p>\nWith path:<br>\n<br>\n" + gamebase.adapter.config_databaseFilePath + "<p>\nAn error occurred:<pre>" + "<br>\n".join(traceback.format_exception_only(e)) + "</pre>")
+    messageBox.setText("<big><b>When opening database file:</b></big><p>\nWith path:<br>\n<br>\n" + gamebase.adapter.config_databaseFilePath + "<p>\nAn error occurred:<pre>" + "<br>\n".join(traceback.format_exception_only(e.__class__, e)) + "</pre>")
     messageBox.resizeToContent()
     messageBox.exec()
     sys.exit(1)

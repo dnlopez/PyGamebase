@@ -600,7 +600,7 @@ class GameTableView(QTableView):
             print(traceback.format_exc())
 
             messageBox = qt_extras.ResizableMessageBox(QApplication.style().standardIcon(QStyle.SP_MessageBoxCritical), "Error")
-            messageBox.setText("<big><b>In SQL WHERE expression:</b></big><pre>" + "\n".join(traceback.format_exception_only(e)) + "</pre>")
+            messageBox.setText("<big><b>In SQL WHERE expression:</b></big><pre>" + "\n".join(traceback.format_exception_only(e.__class__, e)) + "</pre>")
             messageBox.resizeToContent()
             messageBox.exec()
 

@@ -1282,7 +1282,7 @@ def typeOnKeyboard(i_thingsToType):
     except ImportError as e:
         import traceback
         import frontend
-        frontend.messageBox("<b>You must install the Python library 'pyautogui' to use typeOnKeyboard().</b><br>\n<br>\n(" + "<br>\n".join(traceback.format_exception_only(e)).strip() + ")", "Error", "critical")
+        frontend.messageBox("<b>You must install the Python library 'pyautogui' to use typeOnKeyboard().</b><br>\n<br>\n(" + "<br>\n".join(traceback.format_exception_only(e.__class__, e)).strip() + ")", "Error", "critical")
         return
 
     pyautogui.PAUSE = 0

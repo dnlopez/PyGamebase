@@ -33,7 +33,7 @@ def loadPreferences():
                 preferences = json.loads(f.read().decode("utf-8"))
         except Exception as e:
             #import traceback
-            #print("Failed to read preferences file: " + "\n".join(traceback.format_exception_only(e)))
+            #print("Failed to read preferences file: " + "\n".join(traceback.format_exception_only(e.__class__, e)))
             pass
 
 def savePreferences():
@@ -67,7 +67,7 @@ def loadViewSettings():
                 viewSettings = json.loads(f.read().decode("utf-8"))
         except Exception as e:
             #import traceback
-            #print("Failed to read layout settings file: " + "\n".join(traceback.format_exception_only(e)))
+            #print("Failed to read layout settings file: " + "\n".join(traceback.format_exception_only(e.__class__, e)))
             pass
 
 def saveViewSettings():
