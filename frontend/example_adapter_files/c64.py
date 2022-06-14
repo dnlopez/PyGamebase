@@ -53,10 +53,11 @@ def runGameWithVice(i_gameFilePaths):
 
     # If there is more than one disk, make a flip list
     if len(diskFilePaths) > 0:
-        with open("/tmp/gamebase/fliplist.vfl", "w") as f:
+        tempDirPath = tempfile.gettempdir() + "/gamebase"
+        with open(tempDirPath + "/fliplist.vfl", "w") as f:
             f.write("# Vice fliplist file\n\nUNIT 8\n" + "\n".join(diskFilePaths) + "\n")
         executableAndArgs.append("-flipname")
-        executableAndArgs.append("/tmp/gamebase/fliplist.vfl")
+        executableAndArgs.append(tempDirPath + "/fliplist.vfl")
 
     # Fill up to 1 tape device with tapes
     if len(tapeFilePaths) > 0:
