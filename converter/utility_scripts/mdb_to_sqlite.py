@@ -79,13 +79,17 @@ def convertMdbToSqlite(i_mdbFilePath, i_sqliteFilePath, i_mdbToolsExeDirPath):
         if not i_mdbToolsExeDirPath.endswith(os.sep):
             i_mdbToolsExeDirPath += os.sep
 
+    mdbToolsOutputEncoding = "utf-8"
+    if platform.system() == "Windows":
+        mdbToolsOutputEncoding = "iso-8859-1"
+
     # Get SQL to create the schema
     commandAndArgs = [i_mdbToolsExeDirPath + "mdb-schema", i_mdbFilePath, "sqlite"]
     print("# " + " ".join(quoteArgumentForNativeShell(arg)  for arg in commandAndArgs))
     sys.stdout.flush()
     schema = subprocess.Popen(commandAndArgs, stdout=subprocess.PIPE).communicate()[0]
     #print(schema)
-    sql = schema.decode("utf-8")
+    sql = schema.decode(mdbToolsOutputEncoding)
 
     # Get the list of table names
     commandAndArgs = [i_mdbToolsExeDirPath + "mdb-tables", "-1", i_mdbFilePath]
@@ -113,7 +117,7 @@ def convertMdbToSqlite(i_mdbFilePath, i_sqliteFilePath, i_mdbToolsExeDirPath):
         #if len(inserts) > 637736:
         #    print inserts[637720:637750]
         #    print inserts[637720:637750].decode("utf-8")
-        sql += inserts.decode("utf-8")
+        sql += inserts.decode(mdbToolsOutputEncoding)
 
     # Append SQL to commit the transaction
     sql += "\n"
