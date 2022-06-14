@@ -404,7 +404,7 @@ step2_go_button = QPushButton("Go")
 step2_vBoxLayout.addWidget(step2_go_button, 0, Qt.AlignHCenter)
 def step2_go_button_onClicked():
     # Assemble command
-    executableAndArgs = [scriptDirPath + os.sep + "utility_scripts" + os.sep + "fix_path_case.py", step1_sqliteDatabasePath_lineEdit.text()]
+    executableAndArgs = [scriptDirPath + os.sep + "utility_scripts" + os.sep + "fix_paths.py", step1_sqliteDatabasePath_lineEdit.text()]
     if step2_gamesFolderPath_lineEdit.text() != "":
         executableAndArgs += ["--games", step2_gamesFolderPath_lineEdit.text()]
     if step2_screenshotsFolderPath_lineEdit.text() != "":

@@ -19,7 +19,9 @@ This tab page is a frontend for the Python script `utility_scripts/mdb_to_sqlite
 
 ## Step 2: Fix file paths in database
 
-A Gamebase database contains many paths to external files - games, screenshots, music, photos and extras - and in downloaded Gamebases you will often find that the case (ie. upper/lower) of these paths don't always fully match with the folder and file names that actually exist on disk. On Windows, where Gamebase started out, this doesn't matter, but on Unix filesystems and usually on Mac they need to match. Fill in the base paths to each of the above categories of file (if the Gamebase provides them - else leave that category blank), and click 'Go' - this will search through and change the paths in the SQLite database (as selected on the 'Step 1' tab) to match what actually exists on the disk.
+A Gamebase database contains many paths to external files - games, screenshots, music, photos and extras - and in downloaded Gamebases you will often find that the case (ie. upper/lower) of these paths don't always fully match with the folder and file names that actually exist on disk. On Windows, where Gamebase started out, this doesn't matter, but on Unix filesystems and usually on Mac they need to match. Fill in the base paths to each of the above categories of file (if the Gamebase provides them - else leave that category blank), and click 'Go' - this will search through and change the paths in the SQLite database (as selected on the 'Step 1' tab) to match what actually exists on the disk. It will also change all backslashes found in paths to forward slashes.
+
+You do not need to run this step if you are using Windows.
 
 This tab page is a frontend for the Python script `utility_scripts/fix_path_case.py`, which you could run instead to do the same thing from the command line.
 

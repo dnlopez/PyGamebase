@@ -5,6 +5,7 @@
 # check for the existence of the file on disk with case-insensitive path comparison (even though the file system may be case-sensitive),
 # and if found on disk with differing case to the path in the database,
 # update the path in the database to match that which exists on disk.
+# It will also change all backslashes found in paths to forward slashes.
 
 
 # Python
@@ -27,7 +28,7 @@ def printAndFlush(i_str):
 
 def fixPathCase(i_path, i_relativeTo):
     """
-    Correct the case of a path by comparing to actually existing directory entries in the local filesystem.
+    Correct the case of a path by comparing it to actually existing directory entries in the local filesystem.
 
     Params:
      i_path:
@@ -477,18 +478,19 @@ def fixFilenames(i_basePathForGames, i_basePathForScreenshots, i_basePathForSids
 if __name__ == "__main__":
     # + Parse command line {{{
 
-    COMMAND_NAME = "fix_path_case.py"
+    COMMAND_NAME = "fix_paths.py"
 
     def printUsage(i_outputStream):
         i_outputStream.write('''\
 ''' + COMMAND_NAME + ''', by Daniel Lopez, 03/05/2022
-GameBase fix path case utility.
+GameBase fix paths utility.
 
 Given a GameBase database (in SQLite format),
 for all paths to external files recorded within it, specifically those to games, screenshots, music, photos and extras,
 check for the existence of the file on disk with case-insensitive path comparison (even though the file system may be case-sensitive),
 and if found on disk with differing case to the path in the database,
 update the path in the database to match that which exists on disk.
+Also, change all backslashes found in paths to forward slashes.
 
 Usage:
 ======
