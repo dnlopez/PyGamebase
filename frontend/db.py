@@ -194,16 +194,16 @@ def getGameRecord(i_gameId, i_includeRelatedGameNames=False):
         gamesColumnNames = [row["name"]  for row in g_dbSchema["Games"]]
         if "CloneOf" in gamesColumnNames:
             fromTerms.append("LEFT JOIN Games AS CloneOf_Games ON Games.CloneOf = CloneOf_Games.GA_Id")
-            selectTerms.append("CloneOf_Games.Name AS CloneOf_Name")
+            selectTerms.append("CloneOf_Games.Name AS [Games.CloneOf_Name]")
         if "Prequel" in gamesColumnNames:
             fromTerms.append("LEFT JOIN Games AS Prequel_Games ON Games.Prequel = Prequel_Games.GA_Id")
-            selectTerms.append("Prequel_Games.Name AS Prequel_Name")
+            selectTerms.append("Prequel_Games.Name AS [Games.Prequel_Name]")
         if "Sequel" in gamesColumnNames:
             fromTerms.append("LEFT JOIN Games AS Sequel_Games ON Games.Sequel = Sequel_Games.GA_Id")
-            selectTerms.append("Sequel_Games.Name AS Sequel_Name")
+            selectTerms.append("Sequel_Games.Name AS [Games.Sequel_Name]")
         if "Related" in gamesColumnNames:
             fromTerms.append("LEFT JOIN Games AS Related_Games ON Games.Related = Related_Games.GA_Id")
-            selectTerms.append("Related_Games.Name AS Related_Name")
+            selectTerms.append("Related_Games.Name AS [Games.Related_Name]")
 
     # For all other tables connected to Games
     # that are present in this database

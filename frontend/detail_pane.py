@@ -145,6 +145,14 @@ class DetailPane(QWidget):
     #   The URL of the link hovered over
     #   "": A URL has been unhovered
 
+    requestGameNavigation = Signal(int)
+    # Emitted when
+    #  User clicks in the detail view on a link to another game
+    #
+    # Params:
+    #  i_gameId:
+    #   (int)
+
     def populate(self, i_gameId):
         """
         Params:
@@ -241,36 +249,40 @@ class DetailPane(QWidget):
                 html += '\n\n'
 
             elif item == "Related games":
-                html += '  <div id="related">\n'
+                if ("Games.CloneOf_Name" in gameRow and gameRow["Games.CloneOf_Name"] != None) or \
+                   ("Games.Prequel_Name" in gameRow and gameRow["Games.Prequel_Name"] != None) or \
+                   ("Games.Sequel_Name" in gameRow and gameRow["Games.Sequel_Name"] != None) or \
+                   ("Games.Related_Name" in gameRow and gameRow["Games.Related_Name"] != None):
+                    html += '  <div id="related">\n'
 
-                # If there are related games,
-                # insert links to the originals
-                if "Games.CloneOf_Name" in gameRow and gameRow["Games.CloneOf_Name"] != None:
-                    html += '    <p style="white-space: pre-wrap;">'
-                    html += 'Clone of: '
-                    html += '<a href="game:///' + str(gameRow["Games.CloneOf"]) + '">' + gameRow["Games.CloneOf_Name"] + '</a>'
-                    html += '</p>\n'
+                    # If there are related games,
+                    # insert links to the originals
+                    if "Games.CloneOf_Name" in gameRow and gameRow["Games.CloneOf_Name"] != None:
+                        html += '    <p style="white-space: pre-wrap;">'
+                        html += 'Clone of: '
+                        html += '<a href="game:///' + str(gameRow["Games.CloneOf"]) + '">' + gameRow["Games.CloneOf_Name"] + '</a>'
+                        html += '</p>\n'
 
-                if "Games.Prequel_Name" in gameRow and gameRow["Games.Prequel_Name"] != None:
-                    html += '    <p style="white-space: pre-wrap;">'
-                    html += 'Prequel: '
-                    html += '<a href="game:///' + str(gameRow["Games.Prequel"]) + '">' + gameRow["Games.Prequel_Name"] + '</a>'
-                    html += '</p>\n'
+                    if "Games.Prequel_Name" in gameRow and gameRow["Games.Prequel_Name"] != None:
+                        html += '    <p style="white-space: pre-wrap;">'
+                        html += 'Prequel: '
+                        html += '<a href="game:///' + str(gameRow["Games.Prequel"]) + '">' + gameRow["Games.Prequel_Name"] + '</a>'
+                        html += '</p>\n'
 
-                if "Games.Sequel_Name" in gameRow and gameRow["Games.Sequel_Name"] != None:
-                    html += '    <p style="white-space: pre-wrap;">'
-                    html += 'Sequel: '
-                    html += '<a href="game:///' + str(gameRow["Games.Sequel"]) + '">' + gameRow["Games.Sequel_Name"] + '</a>'
-                    html += '</p>\n'
+                    if "Games.Sequel_Name" in gameRow and gameRow["Games.Sequel_Name"] != None:
+                        html += '    <p style="white-space: pre-wrap;">'
+                        html += 'Sequel: '
+                        html += '<a href="game:///' + str(gameRow["Games.Sequel"]) + '">' + gameRow["Games.Sequel_Name"] + '</a>'
+                        html += '</p>\n'
 
-                if "Games.Related_Name" in gameRow and gameRow["Games.Related_Name"] != None:
-                    html += '    <p style="white-space: pre-wrap;">'
-                    html += 'Related: '
-                    html += '<a href="game:///' + str(gameRow["Games.Related"]) + '">' + gameRow["Games.Related_Name"] + '</a>'
-                    html += '</p>\n'
+                    if "Games.Related_Name" in gameRow and gameRow["Games.Related_Name"] != None:
+                        html += '    <p style="white-space: pre-wrap;">'
+                        html += 'Related: '
+                        html += '<a href="game:///' + str(gameRow["Games.Related"]) + '">' + gameRow["Games.Related_Name"] + '</a>'
+                        html += '</p>\n'
 
-                html += '  </div>'
-                html += '\n\n'
+                    html += '  </div>'
+                    html += '\n\n'
 
             elif item == "Memo text":
                 # Insert memo text
@@ -441,7 +453,7 @@ class DetailPane(QWidget):
                         gameId = url[8:]
                         gameId = urllib.parse.unquote(gameId)
                         gameId = int(gameId)
-                        tableView.selectGameWithId(gameId)
+                        self.parent().parent().requestGameNavigation.emit(gameId)
 
                     # Else if it's a normal link,
                     # open it with the default browser

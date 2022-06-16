@@ -870,6 +870,10 @@ def detailPane_onLinkHovered(i_url):
         label_statusbar.setText(i_url)
 detailPane.linkHovered.connect(detailPane_onLinkHovered)
 
+def detailPane_onRequestGameNavigation(i_gameId):
+    tableView.selectGameWithId(i_gameId)
+detailPane.requestGameNavigation.connect(detailPane_onRequestGameNavigation)
+
 # + + Layout {{{
 
 g_detailPaneItems = None
