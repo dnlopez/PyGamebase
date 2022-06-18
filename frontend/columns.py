@@ -1242,6 +1242,7 @@ g_tableColumns = []
 # Type: TableColumn
 #  (dict)
 #  Has keys:
+#   id
 #   headingName:
 #    (str)
 #    Used in
@@ -1250,6 +1251,9 @@ g_tableColumns = []
 #   width:
 #    (int)
 #    In pixels
+#   sortable
+#   filterable
+#   (sometimes) textAlignment
 
 # + + New column accessors {{{
 

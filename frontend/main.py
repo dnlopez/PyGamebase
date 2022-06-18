@@ -957,7 +957,7 @@ if not hasattr(gamebase.adapter, "config_databaseFilePath"):
     sys.exit(1)
 
 try:
-    db.openDb(gamebase.normalizeDirPathFromAdapter(gamebase.adapter.config_databaseFilePath))
+    db.openDb("md", gamebase.normalizeDirPathFromAdapter(gamebase.adapter.config_databaseFilePath))
 except Exception as e:
     import traceback
     print(traceback.format_exc())

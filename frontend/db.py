@@ -24,56 +24,80 @@ def sqliteRowToDict(i_row):
     """
     return { keyName: i_row[keyName]  for keyName in i_row.keys() }
 
-g_db = None
-g_db_gamesColumnNames = None
-#  (list of str)
-g_dbSchema = {}
+# Open a temporary database
+g_db = sqlite3.connect("")
+# (sqlite3.Connection)
 
-def openDb(i_dbFilePath):
+# Add REGEXP function
+def functionRegex(i_pattern, i_value):
+    #print("functionRegex(" + i_value + ", " + i_pattern + ")")
+    #c_pattern = re.compile(r"\b" + i_pattern.lower() + r"\b")
+    compiledPattern = re.compile(i_pattern)
+    return compiledPattern.search(str(i_value)) is not None
+g_db.create_function("REGEXP", 2, functionRegex)
+
+g_openDatabases = {}
+# (dict)
+# Dictionary has:
+#  Keys:
+#   (str)
+#   Schema name
+#   ie. the alias specified in the ATTACH command
+#  Values:
+#   (dict)
+#   Dictionary has specific key-value properties:
+#    dbFilePath:
+#     (str)
+#    schema:
+#     (dict)
+
+def openDb(i_schemaName, i_dbFilePath):
     """
     Params:
+     i_schemaName:
+      (str)
      i_dbFilePath:
       (str)
     """
-    global g_db
-    #g_db = sqlite3.connect(gamebase.config_databaseFilePath)
-    #print("file:" + gamebase.config_databaseFilePath + "?mode=ro")
-    g_db = sqlite3.connect("file:" + i_dbFilePath + "?mode=ro", uri=True)
+    if not os.path.isfile(i_dbFilePath):
+        raise RuntimeError("file doesn't exist")
 
-    # Add REGEXP function
-    def functionRegex(i_pattern, i_value):
-        #print("functionRegex(" + i_value + ", " + i_pattern + ")")
-        #c_pattern = re.compile(r"\b" + i_pattern.lower() + r"\b")
-        compiledPattern = re.compile(i_pattern)
-        return compiledPattern.search(str(i_value)) is not None
-    g_db.create_function("REGEXP", 2, functionRegex)
+    dbInfo = {
+        "dbFilePath": i_dbFilePath
+    }
+
+    # Attach database
+    cursor = g_db.execute("ATTACH DATABASE '" + i_dbFilePath.replace("'", "''") + "' AS " + i_schemaName)
 
     # Get names of tables
-    cursor = g_db.execute("SELECT name FROM sqlite_master WHERE type = 'table'")
+    cursor = g_db.execute("SELECT name FROM " + i_schemaName + ".sqlite_master WHERE type = 'table'")
     rows = cursor.fetchall()
     dbTableNames = [row[0]  for row in rows]
 
     # Get info about tables
+    dbInfo["schema"] = {}
     g_db.row_factory = sqlite3.Row
-    global g_dbSchema
     for tableName in ["Games", "Years", "Genres", "PGenres", "Publishers", "Developers", "Programmers", "Languages", "Crackers", "Artists", "Licenses", "Rarities", "Musicians"]:
         if tableName in dbTableNames:
-            cursor = g_db.execute("PRAGMA table_info(" + tableName + ")")
+            cursor = g_db.execute("PRAGMA " + i_schemaName + ".table_info(" + tableName + ")")
             rows = cursor.fetchall()
             rows = [sqliteRowToDict(row)  for row in rows]
-            g_dbSchema[tableName] = rows
+            dbInfo["schema"][tableName] = rows
 
     # Only use the columns that the database actually has
-    columns.filterColumnsByDb(dbTableNames, g_dbSchema)
+    columns.filterColumnsByDb(dbTableNames, dbInfo["schema"])
 
-    # Get columns in Games table
-    global g_db_gamesColumnNames
-    g_db_gamesColumnNames = [row["name"]  for row in g_dbSchema["Games"]]
+    #
+    g_openDatabases[i_schemaName] = dbInfo
 
-def closeDb():
-    global g_db
-    g_db.close()
-    g_db = None
+def closeDb(i_schemaName):
+    """
+    Params:
+     i_schemaName:
+      (str)
+    """
+    cursor = g_db.execute("DETACH DATABASE " + i_schemaName)
+    del(g_openDatabases[i_schemaName])
 
 def getJoinTermsToTable(i_tableName, io_tableConnections):
     """
@@ -187,6 +211,8 @@ def getGameRecord(i_gameId, i_includeRelatedGameNames=False):
     Returns:
      (dict)
     """
+    dbInfo = g_openDatabases[list(g_openDatabases.keys())[0]]
+
     # From Games table, select all fields
     fromTerms = [
         "Games"
@@ -196,14 +222,14 @@ def getGameRecord(i_gameId, i_includeRelatedGameNames=False):
     ]
     fullyQualifiedFieldNames = True
     if fullyQualifiedFieldNames:
-        for field in g_dbSchema["Games"]:
+        for field in dbInfo["schema"]["Games"]:
             selectTerms.append("Games." + field["name"] + " AS [Games." + field["name"] + "]")
     else:
         selectTerms.append("Games.*")
 
     #
     if i_includeRelatedGameNames:
-        gamesColumnNames = [row["name"]  for row in g_dbSchema["Games"]]
+        gamesColumnNames = [row["name"]  for row in dbInfo["schema"]["Games"]]
         if "CloneOf" in gamesColumnNames:
             fromTerms.append("LEFT JOIN Games AS CloneOf_Games ON Games.CloneOf = CloneOf_Games.GA_Id")
             selectTerms.append("CloneOf_Games.Name AS [Games.CloneOf_Name]")
@@ -220,13 +246,13 @@ def getGameRecord(i_gameId, i_includeRelatedGameNames=False):
     # For all other tables connected to Games
     # that are present in this database
     tableConnections = copy.deepcopy(connectionsFromGamesTable)
-    tableNames = [tableName  for tableName in tableConnections.keys()  if tableName in g_dbSchema.keys()]
+    tableNames = [tableName  for tableName in tableConnections.keys()  if tableName in dbInfo["schema"].keys()]
     for tableName in tableNames:
         # Join to it
         fromTerms += getJoinTermsToTable(tableName, tableConnections)
         # Select all fields from it
         if fullyQualifiedFieldNames:
-            for field in g_dbSchema[tableName]:
+            for field in dbInfo["schema"][tableName]:
                 selectTerms.append(tableName + "." + field["name"] + " AS [" + tableName + "." + field["name"] + "]")
         else:
             selectTerms.append(tableName + ".*")
