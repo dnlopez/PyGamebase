@@ -163,6 +163,18 @@ connectionsFromGamesTable = {
     },
 }
 
+# + Run queries {{{
+
+def getGameList(i_sqlText):
+    """
+    Params:
+     i_sqlText:
+      (str)
+
+    Returns:
+     (sqlite3.Cursor)
+    """
+    return g_db.execute(i_sqlText)
 
 def getGameRecord(i_gameId, i_includeRelatedGameNames=False):
     """
@@ -249,6 +261,7 @@ def getExtrasRecords(i_gameId):
     rows = [sqliteRowToDict(row)  for row in rows]
     return rows
 
+# + }}}
 
 import collections
 class DbRecordDict(collections.UserDict):

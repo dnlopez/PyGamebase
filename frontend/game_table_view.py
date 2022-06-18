@@ -551,7 +551,7 @@ class GameTableView(QTableView):
         # Execute
         #print(sqlText)
         try:
-            cursor = db.g_db.execute(sqlText)
+            cursor = db.getGameList(sqlText)
         except sqlite3.OperationalError as e:
             # TODO if i_whereExpressionMightUseNonVisibleColumns and error was 'no such column', maybe retry with SELECT * and all tables (see getGameRecord())
             raise
