@@ -365,6 +365,8 @@ def flattenOperator(i_node, i_operatorName):
 
 import columns
 
+# + + For column filters {{{
+
 def interpretColumnOperation(i_node):
     """
     Params:
@@ -466,7 +468,7 @@ def sqlWhereExpressionToColumnFilters(i_whereExpression, i_skipFailures=False):
       Failed to get SQL expression into the simple column filter bar-compatible form.
       Perhaps it is too complex for that UI, too complex for the simple SQL parser, etc.
     """
-    # Tokenize, parse and postprocess it
+    # Tokenize, parse and postprocess WHERE expression
     tokenized = tokenizeWhereExpr(i_whereExpression)
     if len(tokenized) == 0:
         return []
@@ -555,7 +557,52 @@ def sqlWhereExpressionToColumnFilters(i_whereExpression, i_skipFailures=False):
 
     return oredRows
 
-def sqlWhereExpressionToTableNamesAndSelects(i_whereExpression):
+# + + }}}
+
+# + + For freeform SQL filtering {{{
+
+def sqlWhereExpressionToColumnIdentifiers(i_whereExpression):
+    """
+    Parse SQL WHERE expression
+    and get parts of it that look like column names or expressions.
+
+    Params:
+     i_sqlWhereExpression:
+      (str)
+
+    Returns:
+     (list of str)
+    """
+    # Tokenize and parse WHERE expression
+    tokenized = tokenizeWhereExpr(i_whereExpression)
+    if len(tokenized) == 0:
+        return []
+    initializeOperatorTable()
+    parsed = parseExpression(tokenized)
+    #print(parsed)
+    if parsed == None:
+        label_statusbar.setText("Failed to parse")
+        return None
+
+    # Collect and return column identifiers
+    def collectColumnIdentifiers(i_node):
+        """
+        Returns:
+         (list of str)
+        """
+        columnIdentifiers = []
+
+        if isinstance(i_node, OperatorNode):
+            for operand in i_node.operands:
+                columnIdentifiers += collectColumnIdentifiers(operand)
+        else: # isinstance(child, ValueNode):
+            if i_node.type == "identifier":
+                columnIdentifiers.append(i_node.value)
+
+        return columnIdentifiers
+    return collectColumnIdentifiers(parsed)
+
+def sqlWhereExpressionToTableNamesAndSelectTerms(i_whereExpression):
     """
     Parse SQL WHERE expression
     and get database table names and select terms needed to get the columns being referenced in it.
@@ -572,23 +619,19 @@ def sqlWhereExpressionToTableNamesAndSelects(i_whereExpression):
        Table names
       1:
        (set)
-       Identifiers
+       SQL SELECT terms
     """
-    try:
-        oredRows = sqlWhereExpressionToColumnFilters(i_whereExpression, True)
-    except:
-        return []
-    if oredRows == None:
-        return []
+    columnIdentifiers = sqlWhereExpressionToColumnIdentifiers(i_whereExpression)
 
     dbTableNames = set()
-    dbSelects = set()
-    for oredRow in oredRows:
-        for andedFieldId in oredRow.keys():
-            usableColumn = columns.usableColumn_getById(andedFieldId)
-            for dbTableName in usableColumn["dbTableNames"]:
-                dbTableNames.add(dbTableName)
-            dbSelects.add(usableColumn["dbSelect"])
-    return dbTableNames, dbSelects
+    dbSelectTerms = set()
+    for columnIdentifier in columnIdentifiers:
+        usableColumn = columns.usableColumn_getByDbIdentifier(columnIdentifier)
+        for dbTableName in usableColumn["dbTableNames"]:
+            dbTableNames.add(dbTableName)
+        dbSelectTerms.add(usableColumn["dbSelect"])
+    return dbTableNames, dbSelectTerms
+
+# + + }}}
 
 # + }}}
