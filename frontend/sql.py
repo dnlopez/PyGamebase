@@ -602,36 +602,6 @@ def sqlWhereExpressionToColumnIdentifiers(i_whereExpression):
         return columnIdentifiers
     return collectColumnIdentifiers(parsed)
 
-def sqlWhereExpressionToTableNamesAndSelectTerms(i_whereExpression):
-    """
-    Parse SQL WHERE expression
-    and get database table names and select terms needed to get the columns being referenced in it.
-
-    Params:
-     i_sqlWhereExpression:
-      (str)
-
-    Returns:
-     (tuple)
-     Tuple has elements:
-      0:
-       (set)
-       Table names
-      1:
-       (set)
-       SQL SELECT terms
-    """
-    columnIdentifiers = sqlWhereExpressionToColumnIdentifiers(i_whereExpression)
-
-    dbTableNames = set()
-    dbSelectTerms = set()
-    for columnIdentifier in columnIdentifiers:
-        usableColumn = columns.usableColumn_getByDbIdentifier(columnIdentifier)
-        for dbTableName in usableColumn["dbTableNames"]:
-            dbTableNames.add(dbTableName)
-        dbSelectTerms.add(usableColumn["dbSelect"])
-    return dbTableNames, dbSelectTerms
-
 # + + }}}
 
 # + }}}

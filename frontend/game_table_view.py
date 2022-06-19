@@ -511,7 +511,8 @@ class GameTableView(QTableView):
 
         #  If needed, parse WHERE expression for column names and add those too
         if i_whereExpressionMightUseNonVisibleColumns:
-            parsedNeededTableNames, parsedNeededSelects = sql.sqlWhereExpressionToTableNamesAndSelectTerms(i_whereExpression)
+            columnIdentifiers = sql.sqlWhereExpressionToColumnIdentifiers(i_whereExpression)
+            parsedNeededTableNames, parsedNeededSelects = columns.columnIdentifiersToTableNamesAndSelectTerms(columnIdentifiers)
             neededTableNames = neededTableNames.union(parsedNeededTableNames)
             neededSelectTerms = neededSelectTerms.union(parsedNeededSelects)
 

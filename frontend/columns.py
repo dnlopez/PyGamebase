@@ -1232,6 +1232,34 @@ def usableColumn_getByDbIdentifier(i_identifier):
                     return usableColumn
     return None
 
+def columnIdentifiersToTableNamesAndSelectTerms(i_columnIdentifiers):
+    """
+    Given some column identifiers,
+    get the database table names and select terms needed to get the columns being referenced in it.
+
+    Params:
+     i_columnIdentifiers:
+      (list of str)
+
+    Returns:
+     (tuple)
+     Tuple has elements:
+      0:
+       (set)
+       Table names
+      1:
+       (set)
+       SQL SELECT terms
+    """
+    dbTableNames = set()
+    dbSelectTerms = set()
+    for columnIdentifier in i_columnIdentifiers:
+        usableColumn = usableColumn_getByDbIdentifier(columnIdentifier)
+        for dbTableName in usableColumn["dbTableNames"]:
+            dbTableNames.add(dbTableName)
+        dbSelectTerms.add(usableColumn["dbSelect"])
+    return dbTableNames, dbSelectTerms
+
 # + }}}
 
 # + In GUI table view {{{
