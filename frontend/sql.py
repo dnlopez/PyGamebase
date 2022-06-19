@@ -36,6 +36,7 @@ def tokenizeWhereExpr(i_text):
          "keyword"
          "operator"
          "identifier"
+         "."
          "("
          ")"
          "string"
@@ -96,18 +97,16 @@ def tokenizeWhereExpr(i_text):
             textPos += match.end(1)
             continue
 
-        #match = re.match(r"([A-Z0-9_]+.[A-Z0-9_]+|[A-Z0-9_]+)[^A-Z0-9_.]", i_text[textPos:], re.IGNORECASE)
-        match = re.match(r"([A-Z0-9_]+\.[A-Z0-9_]+|[A-Z0-9_]+)", i_text[textPos:], re.IGNORECASE)
+        match = re.match(r'(".*?"|\[.*?\]|`.*?`|[A-Z0-9_]+)', i_text[textPos:], re.IGNORECASE)
         if match:
             tokens.append(("identifier", match.group(1), textPos, textPos + match.end(1)))
             textPos += match.end(1)
             continue
 
-        #match = re.match(r"([A-Z0-9_]+)[^A-Z0-9_]", i_text[textPos:], re.IGNORECASE)
-        match = re.match(r"([A-Z0-9_]+)", i_text[textPos:], re.IGNORECASE)
+        match = re.match(r"\.", i_text[textPos:])
         if match:
-            tokens.append(("identifier", match.group(1), textPos, textPos + match.end(1)))
-            textPos += match.end(1)
+            tokens.append((".", match.group(0), textPos, textPos + match.end(0)))
+            textPos += match.end(0)
             continue
 
         match = re.match(r"\(", i_text[textPos:])
@@ -257,6 +256,36 @@ def parseExpression(i_tokens):
     lhs = parseValue(i_tokens)
     return parseOperations(lhs, i_tokens, 0)
 
+def unquoteString(i_str):
+    """
+    Params:
+     i_str:
+      (str)
+
+    Returns:
+     (str)
+    """
+    if not ((i_str.startswith("'") and i_str.endswith("'"))):
+        return i_str
+
+    return i_str[1:-1].replace("''", "'")
+
+def unquoteIdentifier(i_str):
+    """
+    Params:
+     i_str:
+      (str)
+
+    Returns:
+     (str)
+    """
+    if not ((i_str.startswith('"') and i_str.endswith('"')) or \
+            (i_str.startswith("[") and i_str.endswith("]")) or \
+            (i_str.startswith("`") and i_str.endswith("`"))):
+        return i_str
+
+    return i_str[1:-1]
+
 def parseValue(i_tokens):
     token = i_tokens.pop(0)
     if token[0] == "operator":
@@ -279,9 +308,15 @@ def parseValue(i_tokens):
     elif token[0] == "keyword":
         return ValueNode(token, "keyword", token[1])
     elif token[0] == "identifier":
-        return ValueNode(token, "identifier", token[1])
+        valueNode = ValueNode(token, "identifier", unquoteIdentifier(token[1]))
+        # TODO store parsed sub-identifiers as arrays
+        while len(i_tokens) >= 2 and i_tokens[0][0] == "." and i_tokens[1][0] == "identifier":
+            token = i_tokens.pop(0)
+            token = i_tokens.pop(0)
+            valueNode.value += "." + unquoteIdentifier(token[1])
+        return valueNode
     elif token[0] == "string":
-        return ValueNode(token, "string", token[1][1:-1].replace("''", "'"))
+        return ValueNode(token, "string", unquoteString(token[1]))
 
 def parseOperations(i_lhs, i_tokens, i_precedingPrecedence):
     # If no more tokens
