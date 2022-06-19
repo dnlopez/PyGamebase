@@ -567,8 +567,8 @@ def sqlWhereExpressionToColumnFilters(i_whereExpression, i_skipFailures=False):
                     return None
 
             # If the column name actually corresponds to a database field
-            usableColumn = columns.usableColumn_getByDbIdentifier(columnName)
-            if usableColumn != None:
+            tableColumnSpec = columns.tableColumnSpec_getByDbIdentifier(columnName)
+            if tableColumnSpec != None:
                 widgetText = None
                 strValue = str(value)
                 if operator == "LIKE":
@@ -600,7 +600,7 @@ def sqlWhereExpressionToColumnFilters(i_whereExpression, i_skipFailures=False):
 
                 # Save widget text in output dict
                 if widgetText != None:
-                    andedFields[usableColumn["id"]] = widgetText
+                    andedFields[tableColumnSpec["id"]] = widgetText
 
         #
         oredRows.append(andedFields)

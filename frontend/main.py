@@ -467,11 +467,11 @@ class TableColumnsMenu(qt_extras.StayOpenMenu):
         self.aboutToShow.connect(self.onAboutToShow)
 
     def populateMenu(self):
-        # Add all the usable columns
-        for usableColumn in columns.usableColumn_getBySlice():
-            self.addActionForColumn(usableColumn, usableColumn["menuPath"])
+        # Add all the table column specs
+        for tableColumnSpec in columns.tableColumnSpec_getBySlice():
+            self.addActionForColumn(tableColumnSpec, tableColumnSpec["menuPath"])
 
-    def addActionForColumn(self, i_usableColumn, i_menuPath):
+    def addActionForColumn(self, i_tableColumnSpec, i_menuPath):
         # If the column is in a submenu
         if len(i_menuPath) > 1:
             # If don't have the next submenu yet,
@@ -483,19 +483,19 @@ class TableColumnsMenu(qt_extras.StayOpenMenu):
             else:
                 submenu = self.submenus[i_menuPath[0]]
             # Pass on to the submenu
-            submenu.addActionForColumn(i_usableColumn, i_menuPath[1:])
+            submenu.addActionForColumn(i_tableColumnSpec, i_menuPath[1:])
 
         # Else if the column is in this menu
         else:
             # Create action and save it in self.actions under the column id
-            columnId = i_usableColumn["id"]
+            columnId = i_tableColumnSpec["id"]
             action = self.addAction(i_menuPath[0])
             self.actions[columnId] = action
             #
-            if "tooltip" in i_usableColumn:
-                action.setToolTip(i_usableColumn["tooltip"])
-            elif "mdbComment" in i_usableColumn:
-                action.setToolTip(i_usableColumn["mdbComment"])
+            if "tooltip" in i_tableColumnSpec:
+                action.setToolTip(i_tableColumnSpec["tooltip"])
+            elif "mdbComment" in i_tableColumnSpec:
+                action.setToolTip(i_tableColumnSpec["mdbComment"])
             action.setCheckable(True)
             action.setChecked(columns.tableColumn_getById(columnId) != None)
             action.triggered.connect(functools.partial(self.action_onTriggered, columnId))

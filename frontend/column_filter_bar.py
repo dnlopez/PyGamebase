@@ -315,7 +315,7 @@ class ColumnFilterBar(QWidget):
             andTerms = []
 
             for column in columns.tableColumn_getBySlice():
-                usableColumn = columns.usableColumn_getById(column["id"])
+                tableColumnSpec = columns.tableColumnSpec_getById(column["id"])
                 if column["filterable"]:
                     value = self.columnWidgets[column["id"]]["filterEdits"][filterRowNo].text()
                     value = value.strip()
@@ -323,7 +323,7 @@ class ColumnFilterBar(QWidget):
                         # If range operator
                         betweenValues = value.split("~")
                         if len(betweenValues) == 2 and stringLooksLikeNumber(betweenValues[0]) and stringLooksLikeNumber(betweenValues[1]):
-                            andTerms.append(usableColumn["dbIdentifiers"][0] + " BETWEEN " + betweenValues[0] + " AND " + betweenValues[1])
+                            andTerms.append(tableColumnSpec["dbIdentifiers"][0] + " BETWEEN " + betweenValues[0] + " AND " + betweenValues[1])
 
                         # Else if regular expression
                         elif len(value) > 2 and value.startswith("/") and value.endswith("/"):
@@ -335,7 +335,7 @@ class ColumnFilterBar(QWidget):
                             value = "'" + value + "'"
 
                             #
-                            andTerms.append(usableColumn["dbIdentifiers"][0] + " REGEXP " + value)
+                            andTerms.append(tableColumnSpec["dbIdentifiers"][0] + " REGEXP " + value)
                             # Format value as a string
                             value = value.replace("'", "''")
                             value = "'" + value + "'"
@@ -361,7 +361,7 @@ class ColumnFilterBar(QWidget):
                                 value = "'" + value + "'"
 
                             #
-                            andTerms.append(usableColumn["dbIdentifiers"][0] + " " + operator + " " + value)
+                            andTerms.append(tableColumnSpec["dbIdentifiers"][0] + " " + operator + " " + value)
 
                         # Else if a LIKE expression (contains an unescaped %)
                         elif value.replace("\\%", "").find("%") != -1:
@@ -370,7 +370,7 @@ class ColumnFilterBar(QWidget):
                             value = "'" + value + "'"
 
                             #
-                            andTerm = usableColumn["dbIdentifiers"][0] + " LIKE " + value
+                            andTerm = tableColumnSpec["dbIdentifiers"][0] + " LIKE " + value
                             if value.find("\\%") != -1:
                                 andTerm += " ESCAPE '\\'"
                             andTerms.append(andTerm)
@@ -384,7 +384,7 @@ class ColumnFilterBar(QWidget):
                             value = "'" + value + "'"
 
                             #
-                            andTerms.append(usableColumn["dbIdentifiers"][0] + " LIKE " + value)
+                            andTerms.append(tableColumnSpec["dbIdentifiers"][0] + " LIKE " + value)
 
             if len(andTerms) > 0:
                 andGroups.append(andTerms)

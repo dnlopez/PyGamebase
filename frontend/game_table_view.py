@@ -272,15 +272,15 @@ class MyTableModel(QAbstractTableModel):
             pass
         #
         else:
-            usableColumn = columns.usableColumn_getById(column["id"])
+            tableColumnSpec = columns.tableColumnSpec_getById(column["id"])
             # Enum field
-            if "type" in usableColumn and usableColumn["type"] == "enum":
+            if "type" in tableColumnSpec and tableColumnSpec["type"] == "enum":
                 if i_role == MyTableModel.FilterRole:
-                    return self.parent().dbRows[i_index.row()][usableColumn["dbIdentifiers"][0]]
+                    return self.parent().dbRows[i_index.row()][tableColumnSpec["dbIdentifiers"][0]]
                 elif i_role == Qt.DisplayRole:
-                    value = self.parent().dbRows[i_index.row()][usableColumn["dbIdentifiers"][0]]
-                    if value in usableColumn["enumMap"]:
-                        value = str(value) + ": " + usableColumn["enumMap"][value]
+                    value = self.parent().dbRows[i_index.row()][tableColumnSpec["dbIdentifiers"][0]]
+                    if value in tableColumnSpec["enumMap"]:
+                        value = str(value) + ": " + tableColumnSpec["enumMap"][value]
                     return value
                 elif i_role == Qt.TextAlignmentRole:
                     if column["textAlignment"] == "center":
@@ -288,11 +288,11 @@ class MyTableModel(QAbstractTableModel):
                     elif column["textAlignment"] == "left":
                         return Qt.AlignLeft
             # Game ID field
-            if "type" in usableColumn and usableColumn["type"] == "gameId":
+            if "type" in tableColumnSpec and tableColumnSpec["type"] == "gameId":
                 if i_role == MyTableModel.FilterRole:
-                    return self.parent().dbRows[i_index.row()][usableColumn["dbIdentifiers"][0]]
+                    return self.parent().dbRows[i_index.row()][tableColumnSpec["dbIdentifiers"][0]]
                 elif i_role == Qt.DisplayRole:
-                    value = self.parent().dbRows[i_index.row()][usableColumn["dbIdentifiers"][0]]
+                    value = self.parent().dbRows[i_index.row()][tableColumnSpec["dbIdentifiers"][0]]
                     if value == 0:
                         return ""
                     return ">" + str(value)
@@ -304,7 +304,7 @@ class MyTableModel(QAbstractTableModel):
             # Other ordinary text field
             else:
                 if i_role == Qt.DisplayRole or i_role == MyTableModel.FilterRole:
-                    return self.parent().dbRows[i_index.row()][usableColumn["dbIdentifiers"][0]]
+                    return self.parent().dbRows[i_index.row()][tableColumnSpec["dbIdentifiers"][0]]
                 elif i_role == Qt.TextAlignmentRole:
                     if column["textAlignment"] == "center":
                         return Qt.AlignCenter
@@ -502,12 +502,12 @@ class GameTableView(QTableView):
         #  For all visible table columns,
         #  collect tables that need to be joined to and the SELECT expression
         for tableColumn in columns.tableColumn_getBySlice():
-            usableColumn = columns.usableColumn_getById(tableColumn["id"])
-            if "dbTableNames" in usableColumn:
-                for dbTableName in usableColumn["dbTableNames"]:
+            tableColumnSpec = columns.tableColumnSpec_getById(tableColumn["id"])
+            if "dbTableNames" in tableColumnSpec:
+                for dbTableName in tableColumnSpec["dbTableNames"]:
                     neededTableNames.add(dbTableName)
-            if "dbSelect" in usableColumn:
-                neededSelectTerms.add(usableColumn["dbSelect"])
+            if "dbSelect" in tableColumnSpec:
+                neededSelectTerms.add(tableColumnSpec["dbSelect"])
 
         #  If needed, parse WHERE expression for column names and add those too
         if i_whereExpressionMightUseNonVisibleColumns:
@@ -542,8 +542,8 @@ class GameTableView(QTableView):
 
             orderByTerms = []
             for columnId, direction in i_sortOperations:
-                usableColumn = columns.usableColumn_getById(columnId)
-                term = usableColumn["dbIdentifiers"][0]
+                tableColumnSpec = columns.tableColumnSpec_getById(columnId)
+                term = tableColumnSpec["dbIdentifiers"][0]
                 if direction == -1:
                     term += " DESC"
                 orderByTerms.append(term)
@@ -734,11 +734,11 @@ class GameTableView(QTableView):
                 frontend_utils.openInDefaultApplication(photoFullPath)
 
         else:
-            usableColumn = columns.usableColumn_getById(columnId)
-            if "type" in usableColumn and usableColumn["type"] == "gameId":
+            tableColumnSpec = columns.tableColumnSpec_getById(columnId)
+            if "type" in tableColumnSpec and tableColumnSpec["type"] == "gameId":
                 # Get the target game ID
                 rowNo = i_modelIndex.row()
-                gameId = self.dbRows[rowNo][self.dbColumnNames.index(usableColumn["dbIdentifiers"][0])]
+                gameId = self.dbRows[rowNo][self.dbColumnNames.index(tableColumnSpec["dbIdentifiers"][0])]
                 if gameId != 0:
                     self.selectGameWithId(gameId)
 

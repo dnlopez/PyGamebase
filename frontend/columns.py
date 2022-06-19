@@ -1,64 +1,67 @@
 
-# + Usable {{{
+# + Table column specs {{{
 
-# g_usableColumns:
-#  (list)
-#  Each element is:
-#   (dict)
-#   Dict has specific key-value properties:
-#    id:
-#     (str)
-#     A unique internal identifier for the column.
-#    menuPath:
-#     (list of str)
-#     Path under which to show this column in column selection menus.
-#     All components except the last are submenu names, and the last component is the actual menu item name.
-#    headingName:
-#     (str)
-#     The text that will appear in the heading for this column.
-#    dbColumnNames:
-#     (list of str)
-#     Fully-qualified (ie. "<table name>.<column name>") names of columns that all must exist in the database
-#     for this to be a usable column.
-#    dbTableNames:
-#     (list of str)
-#     Names of tables that all must exist in the database for this to be a usable column,
-#     and which will be joined to when doing a database query to get the information for this column.
-#    dbSelect:
-#     (str)
-#     The term to add to the SELECT clause to get the data for this column.
-#     It should end with an "AS ..." alias for predictable referencing in filters and so on.
-#     For a simple column select (as opposed to an expression) use "AS [<table name>.<column name>]".
-#    dbIdentifiers:
-#     (list of str)
-#     Identifiers which can be used to refer to this column in the WHERE clause.
-#     The first of these should be the fully qualified (for a simple column select) or otherwise chosen (for an expression)
-#     name given after "AS" in 'dbSelect'.
-#     Further identifiers may be shorter, still valid alternatives, eg. "<column name>" alone.
-#     These alternatives will consequently be recognised if used in an expression on the  SQL filter bar.
-#    defaultWidth:
-#     (int)
-#     Initial width for the column in pixels.
-#    sortable:
-#     (bool)
-#     True: Give the column a visible heading which can be clicked to sort by it.
-#    filterable:
-#     (bool)
-#     True: Give the column a filter box under its heading.
-#    textAlignment:
-#     (str)
-#     How to align text in the column.
-#     One of
-#      "left"
-#      "center"
-#    mdbType:
-#     (str)
-#     As exported from a GameBase 64 MDB file. Not currently used by this program.
-#    mdbComment:
-#     (str)
-#     As exported from a GameBase 64 MDB file. Not currently used by this program.
+# g_tableColumnSpecs:
+#  (list of TableColumnSpec)
+#
+# type: TableColumnSpec
+#  (dict)
+#  Dict has specific key-value properties:
+#   id:
+#    (str)
+#    A unique internal identifier for the column.
+#   menuPath:
+#    (list of str)
+#    Path under which to show this column in column selection menus.
+#    All components except the last are submenu names, and the last component is the actual menu item name.
+#   headingName:
+#    (str)
+#    The text that will appear in the heading for this column.
+#   dbTableNames:
+#    (list of str)
+#    Names of tables,
+#    that must all exist in the database, for the value of this column spec to be able to be assembled from it.
+#    These tables will be joined to when doing a database query to get the information for this column.
+#   dbColumnNames:
+#    (list of str)
+#    Fully-qualified (ie. "<table name>.<column name>") names of columns,
+#    that must all exist in the database, for the value of this column spec to be able to be assembled from it.
+#   dbSelect:
+#    (str)
+#    The term to add to the SELECT clause to assemble a value for this column spec,
+#    which will be used when the presence in the database of everything named by dbTableNames and dbColumnNames implies that this is possible.
+#    It should end with an "AS ..." alias for predictable referencing in filters and so on.
+#    For a simple, single database column select (as opposed to an expression) use "AS [<table name>.<column name>]".
+#   dbIdentifiers:
+#    (list of str)
+#    Identifiers which can be used to refer to this column in the WHERE clause.
+#    The first of these should be the fully qualified (for a simple column select) or otherwise chosen (for an expression)
+#    name given after "AS" in 'dbSelect'.
+#    Further identifiers may be shorter, still valid alternatives, eg. "<column name>" alone.
+#    These alternatives will consequently be recognised if used in an expression on the  SQL filter bar.
+#   defaultWidth:
+#    (int)
+#    Initial width for the column in pixels.
+#   sortable:
+#    (bool)
+#    True: Give the column a visible heading which can be clicked to sort by it.
+#   filterable:
+#    (bool)
+#    True: Give the column a filter box under its heading.
+#   textAlignment:
+#    (str)
+#    How to align text in the column.
+#    One of
+#     "left"
+#     "center"
+#   mdbType:
+#    (str)
+#    As exported from a GameBase 64 MDB file. Not currently used by this program.
+#   mdbComment:
+#    (str)
+#    As exported from a GameBase 64 MDB file. Not currently used by this program.
 
-g_usableColumns = [
+g_tableColumnSpecs = [
     # Launch
     {
         "id": "detail",
@@ -1184,7 +1187,7 @@ g_usableColumns = [
     },
 ]
 
-def usableColumn_getBySlice(i_startPos=None, i_endPos=None):
+def tableColumnSpec_getBySlice(i_startPos=None, i_endPos=None):
     """
     Params:
      i_startPos, i_endPos:
@@ -1192,26 +1195,26 @@ def usableColumn_getBySlice(i_startPos=None, i_endPos=None):
       or (None)
 
     Returns:
-     (list of UsableColumn)
+     (list of TableColumnSpec)
     """
-    return g_usableColumns[i_startPos:i_endPos]
+    return g_tableColumnSpecs[i_startPos:i_endPos]
 
-def usableColumn_getById(i_id):
+def tableColumnSpec_getById(i_id):
     """
     Params:
      i_id:
       (str)
 
     Returns:
-     Either (UsableColumn)
+     Either (TableColumnSpec)
      or (None)
     """
-    columns = [column  for column in g_usableColumns  if column["id"] == i_id]
+    columns = [column  for column in g_tableColumnSpecs  if column["id"] == i_id]
     if len(columns) == 0:
         return None
     return columns[0]
 
-def usableColumn_getByDbIdentifier(i_identifier):
+def tableColumnSpec_getByDbIdentifier(i_identifier):
     """
     Params:
      i_identifier:
@@ -1222,14 +1225,14 @@ def usableColumn_getByDbIdentifier(i_identifier):
        "Games.Name"
 
     Returns:
-     Either (UsableColumn)
+     Either (TableColumnSpec)
      or (None)
     """
-    for usableColumn in g_usableColumns:
-        if "dbIdentifiers" in usableColumn:
-            for dbIdentifier in usableColumn["dbIdentifiers"]:
+    for tableColumnSpec in g_tableColumnSpecs:
+        if "dbIdentifiers" in tableColumnSpec:
+            for dbIdentifier in tableColumnSpec["dbIdentifiers"]:
                 if dbIdentifier == i_identifier:
-                    return usableColumn
+                    return tableColumnSpec
     return None
 
 def columnIdentifiersToTableNamesAndSelectTerms(i_columnIdentifiers):
@@ -1254,15 +1257,15 @@ def columnIdentifiersToTableNamesAndSelectTerms(i_columnIdentifiers):
     dbTableNames = set()
     dbSelectTerms = set()
     for columnIdentifier in i_columnIdentifiers:
-        usableColumn = usableColumn_getByDbIdentifier(columnIdentifier)
-        for dbTableName in usableColumn["dbTableNames"]:
+        tableColumnSpec = tableColumnSpec_getByDbIdentifier(columnIdentifier)
+        for dbTableName in tableColumnSpec["dbTableNames"]:
             dbTableNames.add(dbTableName)
-        dbSelectTerms.add(usableColumn["dbSelect"])
+        dbSelectTerms.add(tableColumnSpec["dbSelect"])
     return dbTableNames, dbSelectTerms
 
 # + }}}
 
-# + In GUI table view {{{
+# + Currently visible table columns {{{
 
 g_tableColumns = []
 # (list of TableColumn)
@@ -1293,12 +1296,12 @@ def tableColumn_add(i_id, i_width=None, i_beforeColumnId=None):
      i_id:
       (str)
       ID of column to add to the table view.
-      Details of it should exist in g_usableColumns.
+      Details of it should exist in g_tableColumnSpecs.
      i_width:
       Either (int)
        Width for new column in pixels
       or (None)
-       Use default width from g_usableColumns.
+       Use default width from g_tableColumnSpecs.
      i_beforeColumnId:
       Either (str)
        ID of column already present in the table view to insert this column before.
@@ -1308,24 +1311,24 @@ def tableColumn_add(i_id, i_width=None, i_beforeColumnId=None):
     Returns:
      Either (TableColumn)
      or (None)
-      The given i_id does not correspond to a usable column (it may not exist in the current Gamebase database).
+      The given i_id does not correspond to a usable table column spec (it may not exist in the current Gamebase database).
     """
-    usableColumn = usableColumn_getById(i_id)
-    if usableColumn == None:
+    tableColumnSpec = tableColumnSpec_getById(i_id)
+    if tableColumnSpec == None:
         return None
 
     newTableColumn = {
-        "id": usableColumn["id"],
-        "headingName": usableColumn["headingName"],
-        "sortable": usableColumn["sortable"],
-        "filterable": usableColumn["filterable"]
+        "id": tableColumnSpec["id"],
+        "headingName": tableColumnSpec["headingName"],
+        "sortable": tableColumnSpec["sortable"],
+        "filterable": tableColumnSpec["filterable"]
     }
     if i_width != None:
         newTableColumn["width"] = i_width
     else:
-        newTableColumn["width"] = usableColumn["defaultWidth"]
-    if "textAlignment" in usableColumn:
-        newTableColumn["textAlignment"] = usableColumn["textAlignment"]
+        newTableColumn["width"] = tableColumnSpec["defaultWidth"]
+    if "textAlignment" in tableColumnSpec:
+        newTableColumn["textAlignment"] = tableColumnSpec["textAlignment"]
 
     # Either append column at end or insert it before i_beforeColumnId
     if i_beforeColumnId == None:
@@ -1351,7 +1354,7 @@ def tableColumn_toggle(i_id, i_addBeforeColumnId=None):
      i_id:
       (str)
       ID of column to toggle the visibility of.
-      Details of it should exist in g_usableColumns.
+      Details of it should exist in g_tableColumnSpecs.
      i_addBeforeColumnId:
       If the column is to be shown
       Either (str)
@@ -1479,16 +1482,16 @@ def tableColumn_idToPos(i_id):
 def filterColumnsByDb(i_dbTableNames, i_dbSchema):
     """
     """
-    # Remove columns from g_usableColumns that rely on tables and columns that don't exist in the database
-    global g_usableColumns
-    def validateUsableColumn(i_usableColumn):
+    # Remove columns from g_tableColumnSpecs that rely on tables and columns that don't exist in the database
+    global g_tableColumnSpecs
+    def validateTableColumnSpec(i_tableColumnSpec):
         rv = True
-        if "dbTableNames" in i_usableColumn:
-            for dbTableName in i_usableColumn["dbTableNames"]:
+        if "dbTableNames" in i_tableColumnSpec:
+            for dbTableName in i_tableColumnSpec["dbTableNames"]:
                 if not (dbTableName in i_dbTableNames):
                     rv = False
-        if "dbColumnNames" in i_usableColumn:
-            for dbColumnName in i_usableColumn["dbColumnNames"]:
+        if "dbColumnNames" in i_tableColumnSpec:
+            for dbColumnName in i_tableColumnSpec["dbColumnNames"]:
                 tableName, columnName = dbColumnName.split(".")
                 if not (tableName in i_dbSchema.keys()):
                     rv = False
@@ -1497,8 +1500,8 @@ def filterColumnsByDb(i_dbTableNames, i_dbSchema):
                     if not (columnName in columnNames):
                         rv = False
         return rv
-    g_usableColumns = [column  for column in g_usableColumns  if validateUsableColumn(column)]
+    g_tableColumnSpecs = [column  for column in g_tableColumnSpecs  if validateTableColumnSpec(column)]
 
-    # Remove columns from g_tableColumns that don't exist in g_usableColumns
+    # Remove columns from g_tableColumns that don't exist in g_tableColumnSpecs
     global g_tableColumns
-    g_tableColumns = [column  for column in g_tableColumns  if usableColumn_getById(column["id"])]
+    g_tableColumns = [column  for column in g_tableColumns  if tableColumnSpec_getById(column["id"])]

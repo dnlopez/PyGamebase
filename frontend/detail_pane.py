@@ -83,7 +83,7 @@ class DetailPane(QWidget):
 
         self.margin.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Expanding)
         #self.margin.setFixedWidth(columns.tableColumn_getByPos(0)["width"])
-        self.margin.setFixedWidth(columns.usableColumn_getById("detail")["defaultWidth"])
+        self.margin.setFixedWidth(columns.tableColumnSpec_getById("detail")["defaultWidth"])
 
         class MyWebEngineView(QWebEngineView):
             def __init__(self, i_parent=None):
