@@ -8,7 +8,7 @@ import pprint
 
 
 #whereExpr = r"(a = 'b' AND Games.Name REGEXP 'a.i' AND Developers.Developer LIKE '%know%' ESCAPE '\') OR (Games.Name LIKE '%n''s%' ESCAPE '\' AND Publishers.Publisher LIKE '%ny%' ESCAPE '\') OR rrr=sss"
-#whereExpr = r"(a = 'b' AND [Games.Name] REGEXP 'a.i' AND [Developers.Developer] LIKE '%know%' ESCAPE '\') OR (Games.Name LIKE '%n''s%' ESCAPE '\' AND Publishers.Publisher LIKE '%ny%' ESCAPE '\') OR rrr=sss"
+#whereExpr = "(a = 'b' AND [Games.Name] REGEXP 'a.i' AND [Developers].[Developer] LIKE '%know%' ESCAPE '\') OR (\"Games.Name\" LIKE '%n''s%' ESCAPE '\' AND `Publishers`.\"Publisher\" LIKE '%ny%' ESCAPE '\') OR rrr=sss"
 #whereExpr = r"(Year >= 1986)"
 #whereExpr = r"a AND b OR c AND d"
 #whereExpr = r"(a OR b) AND c AND d"
@@ -193,34 +193,31 @@ class AstNode():
         self.token = i_token
 
 class ValueNode(AstNode):
-    def __init__(self, i_token):
+    def __init__(self, i_token, i_type, i_value):
         """
         Params:
          i_token:
           (tuple)
-          A token (as produced by tokenizeWhereExpr()) which must be of one of the following types (as specified in the first element of the tuple):
+         i_type:
+          (str)
+          One of
            "integer"
            "float"
            "keyword"
            "identifier"
            "string"
+         i_value:
+          If i_type is "integer"
+           (int)
+          Else if i_type is "float"
+           (float)
+          Else if i_type is "keyword", "identifier" or "string"
+           (str)
         """
         super().__init__(i_token)
 
-        self.type = i_token[0]
-        if self.type == "integer":
-            self.value = int(i_token[1])
-        elif self.type == "float":
-            self.value = float(i_token[1])
-        elif self.type == "keyword":
-            self.value = i_token[1]
-        elif self.type == "identifier":
-            self.value = i_token[1]
-        elif self.type == "string":
-            self.value = i_token[1][1:-1].replace("''", "'")
-        else:
-            if __debug__:
-                raise AssertionError("invalid token type")
+        self.type = i_type
+        self.value = i_value
 
     def __repr__(self):
         if self.type == "string":
@@ -275,8 +272,16 @@ def parseValue(i_tokens):
             return "unclosed parenthesis"
         i_tokens.pop(0)
         return subParse
-    else: # if token[0] == "integer" or token[0] == "float" or token[0] == "keyword" or token[0] == "identifier" or token[0] == "string"
-        return ValueNode(token)
+    elif token[0] == "integer":
+        return ValueNode(token, "integer", int(token[1]))
+    elif token[0] == "float":
+        return ValueNode(token, "float", float(token[1]))
+    elif token[0] == "keyword":
+        return ValueNode(token, "keyword", token[1])
+    elif token[0] == "identifier":
+        return ValueNode(token, "identifier", token[1])
+    elif token[0] == "string":
+        return ValueNode(token, "string", token[1][1:-1].replace("''", "'"))
 
 def parseOperations(i_lhs, i_tokens, i_precedingPrecedence):
     # If no more tokens
