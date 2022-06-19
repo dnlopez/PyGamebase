@@ -224,9 +224,9 @@ class ValueNode(AstNode):
 
     def __repr__(self):
         if self.type == "string":
-            return "'" + self.value.replace("'", "''") + "'"
+            return "V:'" + self.value.replace("'", "''") + "'"
         else:
-            return str(self.value)
+            return "V:" + str(self.value)
 
 class OperatorNode(AstNode):
     def __init__(self, i_token):
