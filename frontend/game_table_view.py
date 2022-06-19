@@ -497,7 +497,7 @@ class GameTableView(QTableView):
 
         # Determine what extra fields to select
         neededTableNames = set()
-        neededSelects = set()
+        neededSelectTerms = set()
 
         #  For all visible table columns,
         #  collect tables that need to be joined to and the SELECT expression
@@ -507,13 +507,13 @@ class GameTableView(QTableView):
                 for dbTableName in usableColumn["dbTableNames"]:
                     neededTableNames.add(dbTableName)
             if "dbSelect" in usableColumn:
-                neededSelects.add(usableColumn["dbSelect"])
+                neededSelectTerms.add(usableColumn["dbSelect"])
 
         #  If needed, parse WHERE expression for column names and add those too
         if i_whereExpressionMightUseNonVisibleColumns:
             parsedNeededTableNames, parsedNeededSelects = sql.sqlWhereExpressionToTableNamesAndSelectTerms(i_whereExpression)
             neededTableNames = neededTableNames.union(parsedNeededTableNames)
-            neededSelects = neededSelects.union(parsedNeededSelects)
+            neededSelectTerms = neededSelectTerms.union(parsedNeededSelects)
 
         # Add the extra fromTerms
         tableConnections = copy.deepcopy(db.connectionsFromGamesTable)
@@ -521,10 +521,10 @@ class GameTableView(QTableView):
             fromTerms += db.getJoinTermsToTable(neededTableName, tableConnections)
 
         # Add the extra selectTerms
-        for neededSelect in neededSelects:
-            if neededSelect == "Games.GA_Id" or neededSelect == "GA_Id":  # TODO use a set for this too
+        for neededSelectTerm in neededSelectTerms:
+            if neededSelectTerm == "Games.GA_Id" or neededSelectTerm == "GA_Id":  # TODO use a set for this too
                 continue
-            selectTerms.append(neededSelect)
+            selectTerms.append(neededSelectTerm)
 
         # SELECT
         sqlText = "SELECT " + ", ".join(selectTerms)
