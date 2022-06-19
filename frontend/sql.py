@@ -376,24 +376,27 @@ def interpretColumnOperation(i_node):
     Returns:
      (tuple)
      Tuple has elements:
-      0:
-       (str)
-       Operator name
-       eg.
-        "="
-        "LIKE"
-      1:
-       (str)
-       DB column identifier
-       eg.
-        "Games.Name"
-        "Name"
-      2:
-       (str)
-       Value
-       eg.
-        "Uridium"
-        "Uri%"
+      Either
+       0:
+        (str)
+        Operator name
+        eg.
+         "="
+         "LIKE"
+       1:
+        (str)
+        DB column identifier
+        eg.
+         "Games.Name"
+         "Name"
+       2:
+        (str)
+        Value
+        eg.
+         "Uridium"
+         "Uri%"
+      or
+       (None, None, None)
     """
     if not isinstance(i_node, OperatorNode):
         return None, None, None
