@@ -8,6 +8,7 @@ import pprint
 
 
 #whereExpr = r"(a = 'b' AND Games.Name REGEXP 'a.i' AND Developers.Developer LIKE '%know%' ESCAPE '\') OR (Games.Name LIKE '%n''s%' ESCAPE '\' AND Publishers.Publisher LIKE '%ny%' ESCAPE '\') OR rrr=sss"
+#whereExpr = r"(a = 'b' AND [Games.Name] REGEXP 'a.i' AND [Developers.Developer] LIKE '%know%' ESCAPE '\') OR (Games.Name LIKE '%n''s%' ESCAPE '\' AND Publishers.Publisher LIKE '%ny%' ESCAPE '\') OR rrr=sss"
 #whereExpr = r"(Year >= 1986)"
 #whereExpr = r"a AND b OR c AND d"
 #whereExpr = r"(a OR b) AND c AND d"
@@ -143,7 +144,7 @@ def tokenizeWhereExpr(i_text):
             textPos = endPos
             continue
 
-        return "No recognized word at pos: " + str(textPos)
+        return "Unrecognized token at pos: " + str(textPos)
 
     return tokens
 
@@ -316,7 +317,6 @@ def parseOperations(i_lhs, i_tokens, i_precedingPrecedence):
 # + Postprocess {{{
 
 def flattenOperator(i_node, i_operatorName):
-    # TODO make this non-destructive
     """
     Params:
      i_node:
@@ -333,20 +333,27 @@ def flattenOperator(i_node, i_operatorName):
     if not isinstance(i_node, OperatorNode):
         return i_node
 
+    # Recurse to flatten the children,
+    # and then if this operator's operation isn't the one we're trying to flatten,
+    # just return this node with those flattened children
     flattenedChildren = [flattenOperator(child, i_operatorName)  for child in i_node.operands]
     if i_node.operation != i_operatorName.upper():
-        i_node.operands = flattenedChildren
-        return i_node
+        newNode = copy.copy(i_node)
+        newNode.operands = flattenedChildren
+        return newNode
 
+    # Else if this operator's operation is the one we're trying to flatten,
+    # for any child which is the same operator,
+    # move their operands up into our own operand array
     newOperands = []
     for flattenedChild in flattenedChildren:
         if isinstance(flattenedChild, OperatorNode) and flattenedChild.operation == i_operatorName.upper():
             newOperands.extend(flattenedChild.operands)
         else:
             newOperands.append(flattenedChild)
-    i_node.operands = newOperands
-        
-    return i_node
+    newNode = copy.copy(i_node)
+    newNode.operands = newOperands
+    return newNode
 
 #initializeOperatorTable()
 #parsed = parseExpression(tokenized)
