@@ -84,8 +84,33 @@ def openDb(i_schemaName, i_dbFilePath):
             rows = [sqliteRowToDict(row)  for row in rows]
             dbInfo["schema"][tableName] = rows
 
-    # Only use the columns that the database actually has
-    columns.filterColumnsByDb(dbTableNames, dbInfo["schema"])
+    # Note which table column specs can be realized from this database
+    fulfillableColumnIds = set()
+    def validateTableColumnSpec(i_dbSchema, i_dbTableNames, i_tableColumnSpec):
+        rv = True
+        if "dbTableNames" in i_tableColumnSpec:
+            for dbTableName in i_tableColumnSpec["dbTableNames"]:
+                if not (dbTableName in i_dbTableNames):
+                    rv = False
+        if "dbColumnNames" in i_tableColumnSpec:
+            for dbColumnName in i_tableColumnSpec["dbColumnNames"]:
+                tableName, columnName = dbColumnName.split(".")
+                if not (tableName in i_dbSchema.keys()):
+                    rv = False
+                else:
+                    columnNames = [row["name"]  for row in i_dbSchema[tableName]]
+                    if not (columnName in columnNames):
+                        rv = False
+        if rv == False:
+            print("Missing column: " + i_tableColumnSpec["id"])
+        return rv
+    for tableColumnSpec in columns.g_tableColumnSpecs:
+        if validateTableColumnSpec(dbInfo["schema"], dbTableNames, tableColumnSpec):
+            fulfillableColumnIds.add(tableColumnSpec["id"])
+    dbInfo["fulfillableColumnIds"] = fulfillableColumnIds
+
+    ## Only use the columns that the database actually has
+    #columns.filterColumnsByDb(dbTableNames, dbInfo["schema"])
 
     #
     g_openDatabases[i_schemaName] = dbInfo
@@ -98,6 +123,46 @@ def closeDb(i_schemaName):
     """
     cursor = g_db.execute("DETACH DATABASE " + i_schemaName)
     del(g_openDatabases[i_schemaName])
+
+
+def tableColumnSpecToTableNamesAndSelectTerms(i_tableColumnSpec, i_schemaName):
+    """
+    Given a table column spec,
+    get the (real or placeholder) SELECT and FROM (table name) terms to use in an SQL statement to get information for that column from a given database.
+
+    Params:
+     i_tableColumnSpec:
+      (columns.TableColumnSpec)
+     i_schemaName:
+      (str)
+
+    Returns:
+     (tuple)
+     Tuple has elements:
+      0:
+       (set)
+       Table names
+      1:
+       (set)
+       SQL SELECT terms
+    """
+    dbTableNames = set()
+    dbSelectTerms = set()
+
+    if i_tableColumnSpec["id"] in g_openDatabases[i_schemaName]["fulfillableColumnIds"]:
+        if "dbTableNames" in i_tableColumnSpec:
+            for dbTableName in i_tableColumnSpec["dbTableNames"]:
+                dbTableNames.add(dbTableName)
+        if "dbSelect" in i_tableColumnSpec:
+            dbSelectTerms.add(i_tableColumnSpec["dbSelect"])
+    else:
+        if "dbSelectPlaceholder" in i_tableColumnSpec:
+            dbSelectTerms.add(i_tableColumnSpec["dbSelectPlaceholder"])
+
+    return (dbTableNames, dbSelectTerms)
+
+
+# + Gamebase-specified schema {{{
 
 def getJoinTermsToTable(i_tableName, io_tableConnections):
     """
@@ -186,6 +251,8 @@ connectionsFromGamesTable = {
         "fromTerm": "LEFT JOIN Musicians ON Games.MU_Id = Musicians.MU_Id"
     },
 }
+
+# + }}}
 
 # + Run queries {{{
 

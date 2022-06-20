@@ -224,6 +224,16 @@ class ValueNode(AstNode):
         else:
             return "V:" + str(self.value)
 
+    def toSqlString(self):
+        """
+        Returns:
+         (str)
+        """
+        if self.type == "string":
+            return "'" + self.value.replace("'", "''") + "'"
+        else:
+            return str(self.value)
+
 class OperatorNode(AstNode):
     def __init__(self, i_token):
         """
@@ -240,6 +250,13 @@ class OperatorNode(AstNode):
 
     def __repr__(self):
         return "" + self.operation + "(" + ", ".join([str(operand)  for operand in self.operands]) + ")"
+
+    def toSqlString(self):
+        """
+        Returns:
+         (str)
+        """
+        return "(" + (" " + self.operation + " ").join([operand.toSqlString()  for operand in self.operands]) + ")"
 
 def parseExpression(i_tokens):
     """
@@ -666,6 +683,94 @@ def sqlWhereExpressionToColumnIdentifiers(i_whereExpression):
 
         return columnIdentifiers
     return collectColumnIdentifiers(parsed)
+
+import db
+def normalizeSqlWhereExpressionToTableNamesAndSelectTerms(i_whereExpression, i_schemaName):
+    """
+    Parse SQL WHERE expression
+    and both get and normalize parts of it that look like column names or expressions.
+
+    Params:
+     i_whereExpression:
+      (str)
+     i_schemaName:
+      (str)
+
+    Returns:
+     (tuple)
+     Tuple has elements:
+      Either
+       0:
+        (str)
+        Normalized SQL WHERE expression
+       1:
+        (set)
+        Table names
+       2:
+        (set)
+        SQL SELECT terms
+      or
+       (None, None, None)
+       i_whereExpression was empty, [...]
+    """
+    # Tokenize and parse WHERE expression
+    tokenized = tokenizeWhereExpr(i_whereExpression)
+    if len(tokenized) == 0:
+        return None, None, None
+    initializeOperatorTable()
+    parsed = parseExpression(tokenized)
+    #print(parsed)
+    if parsed == None:
+        label_statusbar.setText("Failed to parse")
+        return None, None, None
+
+    # Collect and return column identifiers
+    def normalizeIdentifiersAndCollectTableNamesAndSelectTerms(i_schemaName, io_node):
+        """
+        Params:
+         i_schemaName:
+          (str)
+         io_node:
+          (dict)
+
+        Returns:
+         Function return value:
+          (tuple)
+          Tuple has elements:
+           0:
+            (set)
+            Table names
+           1:
+            (set)
+            SQL SELECT terms
+         io_node:
+          Identifier names may be modified
+        """
+        neededTableNames = set()
+        neededSelectTerms = set()
+
+        if isinstance(io_node, OperatorNode):
+            for operand in io_node.operands:
+                newNeededTableNames, newNeededSelectTerms = normalizeIdentifiersAndCollectTableNamesAndSelectTerms(i_schemaName, operand)
+                neededTableNames |= newNeededTableNames
+                neededSelectTerms |= newNeededSelectTerms
+        else: # isinstance(child, ValueNode):
+            if io_node.type == "identifier":
+                # If recognize the column,
+                # normalize the identifier, modifying the node
+                tableColumnSpec = columns.tableColumnSpec_getByDbIdentifier(io_node.value)
+                if tableColumnSpec != None:
+                    # Normalize identifier name in the parsed SQL
+                    io_node.value = '"' + tableColumnSpec["dbIdentifiers"][0] + '"'
+                    # Collect needed FROM and SELECT terms
+                    newNeededTableNames, newNeededSelectTerms = db.tableColumnSpecToTableNamesAndSelectTerms(tableColumnSpec, i_schemaName)
+                    neededTableNames |= newNeededTableNames
+                    neededSelectTerms |= newNeededSelectTerms
+
+        return neededTableNames, neededSelectTerms
+
+    neededTableNames, neededSelectTerms = normalizeIdentifiersAndCollectTableNamesAndSelectTerms(i_schemaName, parsed)
+    return (parsed.toSqlString(), neededTableNames, neededSelectTerms)
 
 # + + }}}
 

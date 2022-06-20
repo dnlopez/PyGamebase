@@ -32,6 +32,12 @@
 #    which will be used when the presence in the database of everything named by dbTableNames and dbColumnNames implies that this is possible.
 #    It should end with an "AS ..." alias for predictable referencing in filters and so on.
 #    For a simple, single database column select (as opposed to an expression) use "AS [<table name>.<column name>]".
+#   dbSelectPlaceholder:
+#    (str)
+#    The term to add to the SELECT clause to assemble a fallback value for this column spec,
+#    which will be used when the absence of something in the database named by dbTableNames and dbColumnNames implies that this is not possible.
+#    Normally this fallback value could be NULL. It could also possibly be a string like 'Unknown'.
+#    It should end with the "AS ..." alias as dbSelect does.
 #   dbIdentifiers:
 #    (list of str)
 #    Identifiers which can be used to refer to this column in the WHERE clause.
@@ -79,6 +85,7 @@ g_tableColumnSpecs = [
         "dbColumnNames": ["Games.Filename"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.Filename AS [Games.Filename]",
+        "dbSelectPlaceholder": "NULL AS [Games.Filename]",
         "dbIdentifiers": ["Games.Filename", "Filename"],
         "defaultWidth": 35,
         "sortable": False,
@@ -92,6 +99,7 @@ g_tableColumnSpecs = [
         "dbColumnNames": ["Games.SidFilename"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.SidFilename AS [Games.SidFilename]",
+        "dbSelectPlaceholder": "NULL AS [Games.SidFilename]",
         "dbIdentifiers": ["Games.SidFilename", "SidFilename"],
         "defaultWidth": 35,
         "sortable": False,
@@ -109,6 +117,7 @@ g_tableColumnSpecs = [
         "dbColumnNames": ["Games.ScrnshotFilename"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.ScrnshotFilename AS [Games.ScrnshotFilename]",
+        "dbSelectPlaceholder": "NULL AS [Games.ScrnshotFilename]",
         "dbIdentifiers": ["Games.ScrnshotFilename", "ScrnshotFilename"],
         "defaultWidth": 320,
         "sortable": False,
@@ -121,6 +130,7 @@ g_tableColumnSpecs = [
         "dbColumnNames": ["Games.ScrnshotFilename"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.ScrnshotFilename AS [Games.ScrnshotFilename]",
+        "dbSelectPlaceholder": "NULL AS [Games.ScrnshotFilename]",
         "dbIdentifiers": ["Games.ScrnshotFilename", "ScrnshotFilename"],
         "defaultWidth": 320,
         "sortable": False,
@@ -133,6 +143,7 @@ g_tableColumnSpecs = [
         "dbColumnNames": ["Games.ScrnshotFilename"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.ScrnshotFilename AS [Games.ScrnshotFilename]",
+        "dbSelectPlaceholder": "NULL AS [Games.ScrnshotFilename]",
         "dbIdentifiers": ["Games.ScrnshotFilename", "ScrnshotFilename"],
         "defaultWidth": 320,
         "sortable": False,
@@ -145,6 +156,7 @@ g_tableColumnSpecs = [
         "dbColumnNames": ["Games.ScrnshotFilename"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.ScrnshotFilename AS [Games.ScrnshotFilename]",
+        "dbSelectPlaceholder": "NULL AS [Games.ScrnshotFilename]",
         "dbIdentifiers": ["Games.ScrnshotFilename", "ScrnshotFilename"],
         "defaultWidth": 320,
         "sortable": False,
@@ -157,6 +169,7 @@ g_tableColumnSpecs = [
         "dbColumnNames": ["Games.ScrnshotFilename"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.ScrnshotFilename AS [Games.ScrnshotFilename]",
+        "dbSelectPlaceholder": "NULL AS [Games.ScrnshotFilename]",
         "dbIdentifiers": ["Games.ScrnshotFilename", "ScrnshotFilename"],
         "defaultWidth": 320,
         "sortable": False,
@@ -169,6 +182,7 @@ g_tableColumnSpecs = [
         "dbColumnNames": ["Games.ScrnshotFilename"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.ScrnshotFilename AS [Games.ScrnshotFilename]",
+        "dbSelectPlaceholder": "NULL AS [Games.ScrnshotFilename]",
         "dbIdentifiers": ["Games.ScrnshotFilename", "ScrnshotFilename"],
         "defaultWidth": 320,
         "sortable": False,
@@ -181,6 +195,7 @@ g_tableColumnSpecs = [
         "dbColumnNames": ["Games.ScrnshotFilename"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.ScrnshotFilename AS [Games.ScrnshotFilename]",
+        "dbSelectPlaceholder": "NULL AS [Games.ScrnshotFilename]",
         "dbIdentifiers": ["Games.ScrnshotFilename", "ScrnshotFilename"],
         "defaultWidth": 320,
         "sortable": False,
@@ -193,6 +208,7 @@ g_tableColumnSpecs = [
         "dbColumnNames": ["Games.ScrnshotFilename"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.ScrnshotFilename AS [Games.ScrnshotFilename]",
+        "dbSelectPlaceholder": "NULL AS [Games.ScrnshotFilename]",
         "dbIdentifiers": ["Games.ScrnshotFilename", "ScrnshotFilename"],
         "defaultWidth": 320,
         "sortable": False,
@@ -205,6 +221,7 @@ g_tableColumnSpecs = [
         "dbColumnNames": ["Games.ScrnshotFilename"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.ScrnshotFilename AS [Games.ScrnshotFilename]",
+        "dbSelectPlaceholder": "NULL AS [Games.ScrnshotFilename]",
         "dbIdentifiers": ["Games.ScrnshotFilename", "ScrnshotFilename"],
         "defaultWidth": 320,
         "sortable": False,
@@ -217,6 +234,7 @@ g_tableColumnSpecs = [
         "dbColumnNames": ["Games.ScrnshotFilename"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.ScrnshotFilename AS [Games.ScrnshotFilename]",
+        "dbSelectPlaceholder": "NULL AS [Games.ScrnshotFilename]",
         "dbIdentifiers": ["Games.ScrnshotFilename", "ScrnshotFilename"],
         "defaultWidth": 320,
         "sortable": False,
@@ -231,6 +249,7 @@ g_tableColumnSpecs = [
         "dbColumnNames": ["Games.ScrnshotFilename"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.ScrnshotFilename AS [Games.ScrnshotFilename]",
+        "dbSelectPlaceholder": "NULL AS [Games.ScrnshotFilename]",
         "dbIdentifiers": ["Games.ScrnshotFilename", "ScrnshotFilename"],
         "defaultWidth": 320,
         "sortable": False,
@@ -243,6 +262,7 @@ g_tableColumnSpecs = [
         "dbColumnNames": ["Games.ScrnshotFilename"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.ScrnshotFilename AS [Games.ScrnshotFilename]",
+        "dbSelectPlaceholder": "NULL AS [Games.ScrnshotFilename]",
         "dbIdentifiers": ["Games.ScrnshotFilename", "ScrnshotFilename"],
         "defaultWidth": 320,
         "sortable": False,
@@ -255,6 +275,7 @@ g_tableColumnSpecs = [
         "dbColumnNames": ["Games.ScrnshotFilename"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.ScrnshotFilename AS [Games.ScrnshotFilename]",
+        "dbSelectPlaceholder": "NULL AS [Games.ScrnshotFilename]",
         "dbIdentifiers": ["Games.ScrnshotFilename", "ScrnshotFilename"],
         "defaultWidth": 320,
         "sortable": False,
@@ -267,6 +288,7 @@ g_tableColumnSpecs = [
         "dbColumnNames": ["Games.ScrnshotFilename"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.ScrnshotFilename AS [Games.ScrnshotFilename]",
+        "dbSelectPlaceholder": "NULL AS [Games.ScrnshotFilename]",
         "dbIdentifiers": ["Games.ScrnshotFilename", "ScrnshotFilename"],
         "defaultWidth": 320,
         "sortable": False,
@@ -279,6 +301,7 @@ g_tableColumnSpecs = [
         "dbColumnNames": ["Games.ScrnshotFilename"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.ScrnshotFilename AS [Games.ScrnshotFilename]",
+        "dbSelectPlaceholder": "NULL AS [Games.ScrnshotFilename]",
         "dbIdentifiers": ["Games.ScrnshotFilename", "ScrnshotFilename"],
         "defaultWidth": 320,
         "sortable": False,
@@ -291,6 +314,7 @@ g_tableColumnSpecs = [
         "dbColumnNames": ["Games.ScrnshotFilename"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.ScrnshotFilename AS [Games.ScrnshotFilename]",
+        "dbSelectPlaceholder": "NULL AS [Games.ScrnshotFilename]",
         "dbIdentifiers": ["Games.ScrnshotFilename", "ScrnshotFilename"],
         "defaultWidth": 320,
         "sortable": False,
@@ -303,6 +327,7 @@ g_tableColumnSpecs = [
         "dbColumnNames": ["Games.ScrnshotFilename"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.ScrnshotFilename AS [Games.ScrnshotFilename]",
+        "dbSelectPlaceholder": "NULL AS [Games.ScrnshotFilename]",
         "dbIdentifiers": ["Games.ScrnshotFilename", "ScrnshotFilename"],
         "defaultWidth": 320,
         "sortable": False,
@@ -315,6 +340,7 @@ g_tableColumnSpecs = [
         "dbColumnNames": ["Games.ScrnshotFilename"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.ScrnshotFilename AS [Games.ScrnshotFilename]",
+        "dbSelectPlaceholder": "NULL AS [Games.ScrnshotFilename]",
         "dbIdentifiers": ["Games.ScrnshotFilename", "ScrnshotFilename"],
         "defaultWidth": 320,
         "sortable": False,
@@ -327,6 +353,7 @@ g_tableColumnSpecs = [
         "dbColumnNames": ["Games.ScrnshotFilename"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.ScrnshotFilename AS [Games.ScrnshotFilename]",
+        "dbSelectPlaceholder": "NULL AS [Games.ScrnshotFilename]",
         "dbIdentifiers": ["Games.ScrnshotFilename", "ScrnshotFilename"],
         "defaultWidth": 320,
         "sortable": False,
@@ -339,6 +366,7 @@ g_tableColumnSpecs = [
         "dbColumnNames": ["Games.ScrnshotFilename"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.ScrnshotFilename AS [Games.ScrnshotFilename]",
+        "dbSelectPlaceholder": "NULL AS [Games.ScrnshotFilename]",
         "dbIdentifiers": ["Games.ScrnshotFilename", "ScrnshotFilename"],
         "defaultWidth": 320,
         "sortable": False,
@@ -353,6 +381,7 @@ g_tableColumnSpecs = [
         "dbColumnNames": ["Games.Name"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.Name AS [Games.Name]",
+        "dbSelectPlaceholder": "NULL AS [Games.Name]",
         "dbIdentifiers": ["Games.Name", "Name"],
         "defaultWidth": 250,
         "sortable": True,
@@ -368,6 +397,7 @@ g_tableColumnSpecs = [
         "dbColumnNames": ["Games.YE_Id", "Years.Year"],
         "dbTableNames": ["Years"],
         "dbSelect": "Years.Year AS [Years.Year]",
+        "dbSelectPlaceholder": "NULL AS [Years.Year]",
         "dbIdentifiers": ["Years.Year", "Year"],
         "defaultWidth": 75,
         "sortable": True,
@@ -385,6 +415,7 @@ g_tableColumnSpecs = [
         "dbColumnNames": ["Games.PU_Id", "Publishers.Publisher"],
         "dbTableNames": ["Publishers"],
         "dbSelect": "Publishers.Publisher AS [Publishers.Publisher]",
+        "dbSelectPlaceholder": "NULL AS [Publishers.Publisher]",
         "dbIdentifiers": ["Publishers.Publisher", "Publisher"],
         "defaultWidth": 250,
         "sortable": True,
@@ -399,6 +430,7 @@ g_tableColumnSpecs = [
         "dbColumnNames": ["Games.DE_Id", "Developers.Developer"],
         "dbTableNames": ["Developers"],
         "dbSelect": "Developers.Developer AS [Developers.Developer]",
+        "dbSelectPlaceholder": "NULL AS [Developers.Developer]",
         "dbIdentifiers": ["Developers.Developer", "Developer"],
         "defaultWidth": 250,
         "sortable": True,
@@ -413,6 +445,7 @@ g_tableColumnSpecs = [
         "dbColumnNames": ["Games.PR_Id", "Programmers.Programmer"],
         "dbTableNames": ["Programmers"],
         "dbSelect": "Programmers.Programmer AS [Programmers.Programmer]",
+        "dbSelectPlaceholder": "NULL AS [Programmers.Programmer]",
         "dbIdentifiers": ["Programmers.Programmer", "Programmer"],
         "defaultWidth": 250,
         "sortable": True,
@@ -427,6 +460,7 @@ g_tableColumnSpecs = [
         "dbColumnNames": ["Games.AR_Id", "Artists.Artist"],
         "dbTableNames": ["Artists"],
         "dbSelect": "Artists.Artist AS [Artists.Artist]",
+        "dbSelectPlaceholder": "NULL AS [Artists.Artist]",
         "dbIdentifiers": ["Artists.Artist", "Artist"],
         "defaultWidth": 250,
         "sortable": True,
@@ -441,6 +475,7 @@ g_tableColumnSpecs = [
         "dbColumnNames": ["Games.MU_Id", "Musicians.Musician"],
         "dbTableNames": ["Musicians"],
         "dbSelect": "Musicians.Musician AS [Musicians.Musician]",
+        "dbSelectPlaceholder": "NULL AS [Musicians.Musician]",
         "dbIdentifiers": ["Musicians.Musician", "Musician"],
         "defaultWidth": 150,
         "sortable": True,
@@ -455,6 +490,7 @@ g_tableColumnSpecs = [
         "dbColumnNames": ["Games.MU_Id", "Musicians.Photo"],
         "dbTableNames": ["Musicians"],
         "dbSelect": "Musicians.Photo AS [Musicians.Photo]",
+        "dbSelectPlaceholder": "NULL AS [Musicians.Photo]",
         "dbIdentifiers": ["Musicians.Photo", "Photo"],
         "defaultWidth": 100,
         "sortable": True,
@@ -470,6 +506,7 @@ g_tableColumnSpecs = [
         "dbColumnNames": ["Games.MU_Id", "Musicians.Grp"],
         "dbTableNames": ["Musicians"],
         "dbSelect": "Musicians.Grp AS [Musicians.Grp]",
+        "dbSelectPlaceholder": "NULL AS [Musicians.Grp]",
         "dbIdentifiers": ["Musicians.Grp", "Grp"],
         "defaultWidth": 150,
         "sortable": True,
@@ -484,6 +521,7 @@ g_tableColumnSpecs = [
         "dbColumnNames": ["Games.MU_Id", "Musicians.Nick"],
         "dbTableNames": ["Musicians"],
         "dbSelect": "Musicians.Nick AS [Musicians.Nick]",
+        "dbSelectPlaceholder": "NULL AS [Musicians.Nick]",
         "dbIdentifiers": ["Musicians.Nick", "Nick"],
         "defaultWidth": 150,
         "sortable": True,
@@ -500,6 +538,7 @@ g_tableColumnSpecs = [
         "dbColumnNames": ["Games.GE_Id", "Genres.Genre", "Genres.PG_Id", "PGenres.ParentGenre"],
         "dbTableNames": ["Genres", "PGenres"],
         "dbSelect": "(PGenres.ParentGenre || ' : ' || Genres.Genre) AS GenreCombined",
+        "dbSelectPlaceholder": "NULL AS GenreCombined",
         "dbIdentifiers": ["GenreCombined"],
         "defaultWidth": 100,
         "sortable": True,
@@ -513,6 +552,7 @@ g_tableColumnSpecs = [
         "dbColumnNames": ["Games.GE_Id", "Genres.PG_Id", "PGenres.ParentGenre"],
         "dbTableNames": ["PGenres"],
         "dbSelect": "PGenres.ParentGenre AS [PGenres.ParentGenre]",
+        "dbSelectPlaceholder": "NULL AS [PGenres.ParentGenre]",
         "dbIdentifiers": ["PGenres.ParentGenre", "ParentGenre"],
         "defaultWidth": 150,
         "sortable": True,
@@ -527,6 +567,7 @@ g_tableColumnSpecs = [
         "dbColumnNames": ["Games.GE_Id", "Genres.Genre"],
         "dbTableNames": ["Genres"],
         "dbSelect": "Genres.Genre AS [Genres.Genre]",
+        "dbSelectPlaceholder": "NULL AS [Genres.Genre]",
         "dbIdentifiers": ["Genres.Genre", "Genre"],
         "defaultWidth": 150,
         "sortable": True,
@@ -542,6 +583,7 @@ g_tableColumnSpecs = [
         "dbColumnNames": ["Games.Control"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.Control AS [Games.Control]",
+        "dbSelectPlaceholder": "NULL AS [Games.Control]",
         "dbIdentifiers": ["Games.Control", "Control"],
         "type": "enum",
         "enumMap": {
@@ -571,6 +613,7 @@ g_tableColumnSpecs = [
         "dbColumnNames": ["Games.PlayersFrom", "Games.PlayersTo", "Games.PlayersSim"],
         "dbTableNames": ["Games"],
         "dbSelect": "iif(Games.PlayersFrom == Games.PlayersTo, Games.PlayersFrom, Games.PlayersFrom || ' - ' || Games.PlayersTo) || iif(Games.PlayersSim, ' (simultaneous)', '') AS Players",
+        "dbSelectPlaceholder": "NULL AS Players",
         "dbIdentifiers": ["Players"],
         "defaultWidth": 100,
         "sortable": True,
@@ -585,6 +628,7 @@ g_tableColumnSpecs = [
         "dbColumnNames": ["Games.PlayersFrom"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.PlayersFrom AS [Games.PlayersFrom]",
+        "dbSelectPlaceholder": "NULL AS [Games.PlayersFrom]",
         "dbIdentifiers": ["Games.PlayersFrom", "PlayersFrom"],
         "defaultWidth": 100,
         "sortable": True,
@@ -600,6 +644,7 @@ g_tableColumnSpecs = [
         "dbColumnNames": ["Games.PlayersTo"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.PlayersTo AS [Games.PlayersTo]",
+        "dbSelectPlaceholder": "NULL AS [Games.PlayersTo]",
         "dbIdentifiers": ["Games.PlayersTo", "PlayersTo"],
         "defaultWidth": 100,
         "sortable": True,
@@ -615,6 +660,7 @@ g_tableColumnSpecs = [
         "dbColumnNames": ["Games.PlayersSim"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.PlayersSim AS [Games.PlayersSim]",
+        "dbSelectPlaceholder": "NULL AS [Games.PlayersSim]",
         "dbIdentifiers": ["Games.PlayersSim", "PlayersSim"],
         "defaultWidth": 100,
         "sortable": True,
@@ -632,6 +678,7 @@ g_tableColumnSpecs = [
         "dbColumnNames": ["Games.V_Trainers"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.V_Trainers AS [Games.V_Trainers]",
+        "dbSelectPlaceholder": "NULL AS [Games.V_Trainers]",
         "dbIdentifiers": ["Games.V_Trainers", "V_Trainers"],
         "defaultWidth": 250,
         "sortable": True,
@@ -647,6 +694,7 @@ g_tableColumnSpecs = [
         "dbColumnNames": ["Games.Adult"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.Adult AS [Games.Adult]",
+        "dbSelectPlaceholder": "NULL AS [Games.Adult]",
         "dbIdentifiers": ["Games.Adult", "Adult"],
         "defaultWidth": 250,
         "sortable": True,
@@ -662,6 +710,7 @@ g_tableColumnSpecs = [
         "dbColumnNames": ["Games.V_LoadingScreen"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.V_LoadingScreen AS [Games.V_LoadingScreen]",
+        "dbSelectPlaceholer": "NULL AS [Games.V_LoadingScreen]",
         "dbIdentifiers": ["Games.V_LoadingScreen", "V_LoadingScreen"],
         "defaultWidth": 250,
         "sortable": True,
@@ -676,6 +725,7 @@ g_tableColumnSpecs = [
         "dbColumnNames": ["Games.V_HighScoreSaver"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.V_HighScoreSaver AS [Games.V_HighScoreSaver]",
+        "dbSelectPlaceholder": "NULL AS [Games.V_HighScoreSaver]",
         "dbIdentifiers": ["Games.V_HighScoreSaver", "V_HighScoreSaver"],
         "defaultWidth": 250,
         "sortable": True,
@@ -690,6 +740,7 @@ g_tableColumnSpecs = [
         "dbColumnNames": ["Games.V_IncludedDocs"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.V_IncludedDocs AS [Games.V_IncludedDocs]",
+        "dbSelectPlaceholder": "NULL AS [Games.V_IncludedDocs]",
         "dbIdentifiers": ["Games.V_IncludedDocs", "V_IncludedDocs"],
         "defaultWidth": 250,
         "sortable": True,
@@ -704,6 +755,7 @@ g_tableColumnSpecs = [
         "dbColumnNames": ["Games.V_TitleScreen"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.V_TitleScreen AS [Games.V_TitleScreen]",
+        "dbSelectPlaceholder": "NULL AS [Games.V_TitleScreen]",
         "dbIdentifiers": ["Games.V_TitleScreen", "V_TitleScreen"],
         "defaultWidth": 250,
         "sortable": True,
@@ -720,6 +772,7 @@ g_tableColumnSpecs = [
         "dbColumnNames": ["Games.LA_Id", "Languages.Language"],
         "dbTableNames": ["Languages"],
         "dbSelect": "Languages.Language AS [Languages.Language]",
+        "dbSelectPlaceholder": "NULL AS [Languages.Language]",
         "dbIdentifiers": ["Languages.Language", "Language"],
         "defaultWidth": 150,
         "sortable": True,
@@ -734,6 +787,7 @@ g_tableColumnSpecs = [
         "dbColumnNames": ["Games.V_PalNTSC"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.V_PalNTSC AS [Games.V_PalNTSC]",
+        "dbSelectPlaceholder": "NULL AS [Games.V_PalNTSC]",
         "dbIdentifiers": ["Games.V_PalNTSC", "V_PalNTSC"],
         "type": "enum",
         "enumMap": {
@@ -758,6 +812,7 @@ g_tableColumnSpecs = [
         "dbColumnNames": ["Games.CloneOf"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.CloneOf AS [Games.CloneOf]",
+        "dbSelectPlaceholder": "NULL AS [Games.CloneOf]",
         "dbIdentifiers": ["Games.CloneOf", "CloneOf"],
         "type": "gameId",
         "defaultWidth": 100,
@@ -773,6 +828,7 @@ g_tableColumnSpecs = [
         "dbColumnNames": ["Games.Prequel"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.Prequel AS [Games.Prequel]",
+        "dbSelectPlaceholder": "NULL AS [Games.Prequel]",
         "dbIdentifiers": ["Games.Prequel", "Prequel"],
         "type": "gameId",
         "defaultWidth": 100,
@@ -789,6 +845,7 @@ g_tableColumnSpecs = [
         "dbColumnNames": ["Games.Sequel"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.Sequel AS [Games.Sequel]",
+        "dbSelectPlaceholder": "NULL AS [Games.Sequel]",
         "dbIdentifiers": ["Games.Sequel", "Sequel"],
         "type": "gameId",
         "defaultWidth": 100,
@@ -805,6 +862,7 @@ g_tableColumnSpecs = [
         "dbColumnNames": ["Games.Related"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.Related AS [Games.Related]",
+        "dbSelectPlaceholder": "NULL AS [Games.Related]",
         "dbIdentifiers": ["Games.Related", "Related"],
         "type": "gameId",
         "defaultWidth": 100,
@@ -823,6 +881,7 @@ g_tableColumnSpecs = [
         "dbColumnNames": ["Games.CR_Id", "Crackers.Cracker"],
         "dbTableNames": ["Crackers"],
         "dbSelect": "Crackers.Cracker AS [Crackers.Cracker]",
+        "dbSelectPlaceholder": "NULL AS [Crackers.Cracker]",
         "dbIdentifiers": ["Crackers.Cracker", "Cracker"],
         "defaultWidth": 150,
         "sortable": True,
@@ -838,6 +897,7 @@ g_tableColumnSpecs = [
         "dbColumnNames": ["Games.LI_Id", "Licenses.License"],
         "dbTableNames": ["Licenses"],
         "dbSelect": "Licenses.License AS [Licenses.License]",
+        "dbSelectPlaceholder": "NULL AS [Licenses.License]",
         "dbIdentifiers": ["Licenses.License", "License"],
         "defaultWidth": 150,
         "sortable": True,
@@ -852,6 +912,7 @@ g_tableColumnSpecs = [
         "dbColumnNames": ["Games.RA_Id", "Rarities.Rarity"],
         "dbTableNames": ["Rarities"],
         "dbSelect": "Rarities.Rarity AS [Rarities.Rarity]",
+        "dbSelectPlaceholder": "NULL AS [Rarities.Rarity]",
         "dbIdentifiers": ["Rarities.Rarity", "Rarity"],
         "defaultWidth": 150,
         "sortable": True,
@@ -867,6 +928,7 @@ g_tableColumnSpecs = [
         "dbColumnNames": ["Difficulty.Difficulty"],
         "dbTableNames": ["Difficulty"],
         "dbSelect": "Difficulty.Difficulty AS [Difficulty.Difficulty]",
+        "dbSelectPlaceholder": "NULL AS [Difficulty.Difficulty]",
         "dbIdentifiers": ["Difficulty.Difficulty", "Difficulty"],
         "defaultWidth": 250,
         "sortable": True,
@@ -882,6 +944,7 @@ g_tableColumnSpecs = [
         "dbColumnNames": ["Games.Classic"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.Classic AS [Games.Classic]",
+        "dbSelectPlaceholder": "NULL AS [Games.Classic]",
         "dbIdentifiers": ["Games.Classic", "Classic"],
         "defaultWidth": 250,
         "sortable": True,
@@ -898,6 +961,7 @@ g_tableColumnSpecs = [
         "dbColumnNames": ["Games.Version"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.Version AS [Games.Version]",
+        "dbSelectPlaceholder": "NULL AS [Games.Version]",
         "dbIdentifiers": ["Games.Version", "Version"],
         "defaultWidth": 250,
         "sortable": True,
@@ -912,6 +976,7 @@ g_tableColumnSpecs = [
         "dbColumnNames": ["Games.V_Length"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.V_Length AS [Games.V_Length]",
+        "dbSelectPlaceholder": "NULL AS [Games.V_Length]",
         "dbIdentifiers": ["Games.V_Length", "V_Length"],
         "defaultWidth": 250,
         "sortable": True,
@@ -927,6 +992,7 @@ g_tableColumnSpecs = [
         "dbColumnNames": ["Games.V_LengthType"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.V_LengthType AS [Games.V_LengthType]",
+        "dbSelectPlaceholder": "NULL AS [Games.V_LengthType]",
         "dbIdentifiers": ["Games.V_LengthType", "V_LengthType"],
         "defaultWidth": 250,
         "sortable": True,
@@ -941,6 +1007,7 @@ g_tableColumnSpecs = [
         "dbColumnNames": ["Games.V_TrueDriveEmu"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.V_TrueDriveEmu AS [Games.V_TrueDriveEmu]",
+        "dbSelectPlaceholder": "NULL AS [Games.V_TrueDriveEmu]",
         "dbIdentifiers": ["Games.V_TrueDriveEmu", "V_TrueDriveEmu"],
         "defaultWidth": 250,
         "sortable": True,
@@ -955,6 +1022,7 @@ g_tableColumnSpecs = [
         "dbColumnNames": ["Games.WebLink_Name"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.WebLink_Name AS [Games.WebLink_Name]",
+        "dbSelectPlaceholder": "NULL AS [Games.WebLink_Name]",
         "dbIdentifiers": ["Games.WebLink_Name", "WebLink_Name"],
         "defaultWidth": 250,
         "sortable": True,
@@ -969,6 +1037,7 @@ g_tableColumnSpecs = [
         "dbColumnNames": ["Games.WebLink_URL"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.WebLink_URL AS [Games.WebLink_URL]",
+        "dbSelectPlaceholder": "NULL AS [Games.WebLink_URL]",
         "dbIdentifiers": ["Games.WebLink_URL", "WebLink_URL"],
         "defaultWidth": 250,
         "sortable": True,
@@ -983,6 +1052,7 @@ g_tableColumnSpecs = [
         "dbColumnNames": ["Games.V_WebLink_Name"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.V_WebLink_Name AS [Games.V_WebLink_Name]",
+        "dbSelectPlaceholder": "NULL AS [Games.V_WebLink_Name]",
         "dbIdentifiers": ["Games.V_WebLink_Name", "V_WebLink_Name"],
         "defaultWidth": 250,
         "sortable": True,
@@ -997,6 +1067,7 @@ g_tableColumnSpecs = [
         "dbColumnNames": ["Games.V_WebLink_URL"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.V_WebLink_URL AS [Games.V_WebLink_URL]",
+        "dbSelectPlaceholder": "NULL AS [Games.V_WebLink_URL]",
         "dbIdentifiers": ["Games.V_WebLink_URL", "V_WebLink_URL"],
         "defaultWidth": 250,
         "sortable": True,
@@ -1011,6 +1082,7 @@ g_tableColumnSpecs = [
         "dbColumnNames": ["Games.V_Playable"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.V_Playable AS [Games.V_Playable]",
+        "dbSelectPlaceholder": "NULL AS [Games.V_Playable]",
         "dbIdentifiers": ["Games.V_Playable", "V_Playable"],
         "defaultWidth": 250,
         "sortable": True,
@@ -1025,6 +1097,7 @@ g_tableColumnSpecs = [
         "dbColumnNames": ["Games.V_Original"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.V_Original AS [Games.V_Original]",
+        "dbSelectPlaceholder": "NULL AS [Games.V_Original]",
         "dbIdentifiers": ["Games.V_Original", "V_Original"],
         "defaultWidth": 250,
         "sortable": True,
@@ -1041,6 +1114,7 @@ g_tableColumnSpecs = [
         "dbColumnNames": ["Games.Comment"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.Comment AS [Games.Comment]",
+        "dbSelectPlaceholder": "NULL AS [Games.Comment]",
         "dbIdentifiers": ["Games.Comment", "Comment"],
         "defaultWidth": 250,
         "sortable": True,
@@ -1055,6 +1129,7 @@ g_tableColumnSpecs = [
         "dbColumnNames": ["Games.V_Comment"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.V_Comment AS [Games.V_Comment]",
+        "dbSelectPlaceholder": "NULL AS [Games.V_Comment]",
         "dbIdentifiers": ["Games.V_Comment", "V_Comment"],
         "defaultWidth": 250,
         "sortable": True,
@@ -1069,6 +1144,7 @@ g_tableColumnSpecs = [
         "dbColumnNames": ["Games.MemoText"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.MemoText AS [Games.MemoText]",
+        "dbSelectPlaceholder": "NULL AS [Games.MemoText]",
         "dbIdentifiers": ["Games.MemoText", "MemoText"],
         "defaultWidth": 250,
         "sortable": True,
@@ -1086,6 +1162,7 @@ g_tableColumnSpecs = [
         "dbColumnNames": ["Games.GA_Id"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.GA_Id AS [Games.GA_Id]",
+        "dbSelectPlaceholder": "NULL AS [Games.GA_Id]",
         "dbIdentifiers": ["Games.GA_Id", "GA_Id"],
         "defaultWidth": 50,
         "sortable": False,
@@ -1101,6 +1178,7 @@ g_tableColumnSpecs = [
         "dbColumnNames": ["Games.Gemus"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.Gemus AS [Games.Gemus]",
+        "dbSelectPlaceholder": "NULL AS [Games.Gemus]",
         "dbIdentifiers": ["Games.Gemus", "Gemus"],
         "defaultWidth": 200,
         "sortable": True,
@@ -1117,6 +1195,7 @@ g_tableColumnSpecs = [
         "dbColumnNames": ["Games.Filename"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.Filename AS [Games.Filename]",
+        "dbSelectPlaceholder": "NULL AS [Games.Filename]",
         "dbIdentifiers": ["Games.Filename", "Filename"],
         "defaultWidth": 250,
         "sortable": True,
@@ -1132,6 +1211,7 @@ g_tableColumnSpecs = [
         "dbColumnNames": ["Games.FileToRun"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.FileToRun AS [Games.FileToRun]",
+        "dbSelectPlaceholder": "NULL AS [Games.FileToRun]",
         "dbIdentifiers": ["Games.FileToRun", "FileToRun"],
         "defaultWidth": 250,
         "sortable": True,
@@ -1147,6 +1227,7 @@ g_tableColumnSpecs = [
         "dbColumnNames": ["Games.FileToRun"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.FileToRun AS [Games.FileToRun]",
+        "dbSelectPlaceholder": "NULL AS [Games.FileToRun]",
         "dbIdentifiers": ["Games.FileToRun", "FileToRun"],
         "defaultWidth": 250,
         "sortable": True,
@@ -1162,6 +1243,7 @@ g_tableColumnSpecs = [
         "dbColumnNames": ["Games.FilenameIndex"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.FilenameIndex AS [Games.FilenameIndex]",
+        "dbSelectPlaceholder": "NULL AS [Games.FilenameIndex]",
         "dbIdentifiers": ["Games.FilenameIndex", "FilenameIndex"],
         "defaultWidth": 250,
         "sortable": True,
@@ -1177,6 +1259,7 @@ g_tableColumnSpecs = [
         "dbColumnNames": ["Games.ScrnshotFilename"],
         "dbTableNames": ["Games"],
         "dbSelect": "Games.ScrnshotFilename AS [Games.ScrnshotFilename]",
+        "dbSelectPlaceholder": "NULL AS [Games.ScrnshotFilename]",
         "dbIdentifiers": ["Games.ScrnshotFilename", "ScrnshotFilename"],
         "defaultWidth": 250,
         "sortable": True,
@@ -1235,34 +1318,6 @@ def tableColumnSpec_getByDbIdentifier(i_identifier):
                     return tableColumnSpec
     return None
 
-def columnIdentifiersToTableNamesAndSelectTerms(i_columnIdentifiers):
-    """
-    Given some column identifiers,
-    get the database table names and select terms needed to get the columns being referenced in it.
-
-    Params:
-     i_columnIdentifiers:
-      (list of str)
-
-    Returns:
-     (tuple)
-     Tuple has elements:
-      0:
-       (set)
-       Table names
-      1:
-       (set)
-       SQL SELECT terms
-    """
-    dbTableNames = set()
-    dbSelectTerms = set()
-    for columnIdentifier in i_columnIdentifiers:
-        tableColumnSpec = tableColumnSpec_getByDbIdentifier(columnIdentifier)
-        for dbTableName in tableColumnSpec["dbTableNames"]:
-            dbTableNames.add(dbTableName)
-        dbSelectTerms.add(tableColumnSpec["dbSelect"])
-    return dbTableNames, dbSelectTerms
-
 # + }}}
 
 # + Currently visible table columns {{{
@@ -1311,7 +1366,7 @@ def tableColumn_add(i_id, i_width=None, i_beforeColumnId=None):
     Returns:
      Either (TableColumn)
      or (None)
-      The given i_id does not correspond to a usable table column spec (it may not exist in the current Gamebase database).
+      The given i_id does not correspond to a table column spec.
     """
     tableColumnSpec = tableColumnSpec_getById(i_id)
     if tableColumnSpec == None:

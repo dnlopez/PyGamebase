@@ -495,26 +495,34 @@ class GameTableView(QTableView):
             "Games"
         ]
 
+        #
+        schemaName = "md"
+
         # Determine what extra fields to select
         neededTableNames = set()
         neededSelectTerms = set()
 
         #  For all visible table columns,
-        #  collect tables that need to be joined to and the SELECT expression
+        #  collect FROM and SELECT terms
         for tableColumn in columns.tableColumn_getBySlice():
             tableColumnSpec = columns.tableColumnSpec_getById(tableColumn["id"])
-            if "dbTableNames" in tableColumnSpec:
-                for dbTableName in tableColumnSpec["dbTableNames"]:
-                    neededTableNames.add(dbTableName)
-            if "dbSelect" in tableColumnSpec:
-                neededSelectTerms.add(tableColumnSpec["dbSelect"])
+            newNeededTableNames, newNeededSelectTerms = db.tableColumnSpecToTableNamesAndSelectTerms(tableColumnSpec, schemaName)
+            neededTableNames |= newNeededTableNames
+            neededSelectTerms |= newNeededSelectTerms
 
         #  If needed, parse WHERE expression for column names and add those too
         if i_whereExpressionMightUseNonVisibleColumns:
-            columnIdentifiers = sql.sqlWhereExpressionToColumnIdentifiers(i_whereExpression)
-            parsedNeededTableNames, parsedNeededSelects = columns.columnIdentifiersToTableNamesAndSelectTerms(columnIdentifiers)
-            neededTableNames = neededTableNames.union(parsedNeededTableNames)
-            neededSelectTerms = neededSelectTerms.union(parsedNeededSelects)
+            #columnIdentifiers = sql.sqlWhereExpressionToColumnIdentifiers(i_whereExpression)
+            #for columnIdentifier in columnIdentifiers:
+            #    tableColumnSpec = columns.tableColumnSpec_getByDbIdentifier(columnIdentifier)
+            #    newNeededTableNames, newNeededSelectTerms = db.tableColumnSpecToTableNamesAndSelectTerms(tableColumnSpec, schemaName)
+            #    neededTableNames |= newNeededTableNames
+            #    neededSelectTerms |= newNeededSelectTerms
+            normalizedWhereExpression, newNeededTableNames, newNeededSelectTerms = sql.normalizeSqlWhereExpressionToTableNamesAndSelectTerms(i_whereExpression, schemaName)
+            if normalizedWhereExpression != None:
+                i_whereExpression = normalizedWhereExpression
+                neededTableNames |= newNeededTableNames
+                neededSelectTerms |= newNeededSelectTerms
 
         # Add the extra fromTerms
         tableConnections = copy.deepcopy(db.connectionsFromGamesTable)
@@ -543,7 +551,7 @@ class GameTableView(QTableView):
             orderByTerms = []
             for columnId, direction in i_sortOperations:
                 tableColumnSpec = columns.tableColumnSpec_getById(columnId)
-                term = tableColumnSpec["dbIdentifiers"][0]
+                term = '"' + tableColumnSpec["dbIdentifiers"][0] + '"'
                 if direction == -1:
                     term += " DESC"
                 orderByTerms.append(term)
