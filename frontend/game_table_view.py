@@ -491,7 +491,7 @@ class GameTableView(QTableView):
 
         #
         sqlText = db.getGameList_getSql(tableColumnSpecIds, i_whereExpression, i_sortOperations, i_whereExpressionMightUseNonVisibleColumns)
-        print(sqlText)
+        #print(sqlText)
 
         # Execute
         try:
@@ -505,13 +505,21 @@ class GameTableView(QTableView):
 
         self.doneQuery.emit(len(self.dbRows))
 
-    def selectedGameId(self):
+    def selectedGameSchemaNameAndId(self):
         """
         Returns:
-         (int)
+         (tuple)
+         Tuple has elements:
+          0:
+           (str)
+           Schema name
+          1:
+           (int)
+           Game ID
         """
         selectedIndex = self.selectionModel().currentIndex()
-        return self.dbRows[selectedIndex.row()][self.dbColumnNames.index("Games.GA_Id")]
+        dbRow = self.dbRows[selectedIndex.row()]
+        return (dbRow[self.dbColumnNames.index("SchemaName")], dbRow[self.dbColumnNames.index("Games.GA_Id")])
 
     def refilter(self, i_sqlWhereExpression, i_sortOperations):
         """
@@ -528,9 +536,9 @@ class GameTableView(QTableView):
         # Remember what game is currently selected and where on the screen the row is
         selectedIndex = self.selectionModel().currentIndex()
         if selectedIndex.row() < 0 or selectedIndex.row() >= len(self.dbRows):
-            selectedGameId = None
+            selectedGameSchemaNameAndId = None
         else:
-            selectedGameId = self.selectedGameId()
+            selectedGameSchemaNameAndId = self.selectedGameSchemaNameAndId()
             selectedRowTopY = self.rowViewportPosition(selectedIndex.row())
 
         # Query database
@@ -564,11 +572,13 @@ class GameTableView(QTableView):
         # If a game was previously selected,
         # search for new row number of that game
         # and if found, scroll to put that game in the same screen position it previously was
-        if selectedGameId != None:
+        if selectedGameSchemaNameAndId != None:
+            # [TODO use findGameWithSchemaNameAndId() ?...]
+            schemaNameColumnNo = self.dbColumnNames.index("SchemaName")
             idColumnNo = self.dbColumnNames.index("Games.GA_Id")
             newDbRowNo = None
             for dbRowNo, dbRow in enumerate(self.dbRows):
-                if dbRow[idColumnNo] == selectedGameId:
+                if dbRow[schemaNameColumnNo] == selectedGameSchemaNameAndId[0] and dbRow[idColumnNo] == selectedGameSchemaNameAndId[1]:
                     newDbRowNo = dbRowNo
                     break
 
@@ -635,7 +645,7 @@ class GameTableView(QTableView):
             gameRecord = db.getGameRecord(self.dbRows[rowNo]["SchemaName"], gameId)
             gameRecord = db.DbRecordDict(gameRecord)
 
-            adapterId = gameRecord["schemaName"]
+            adapterId = gamebase.schemaAdapterIds[gameRecord["SchemaName"]]
             try:
                 gamebase.adapters[adapterId]["module"].runGame(gameRecord["Games.Filename"], gameRecord["Games.FileToRun"], gameRecord)
             except Exception as e:
@@ -652,7 +662,7 @@ class GameTableView(QTableView):
             gameRecord = db.getGameRecord(self.dbRows[rowNo]["SchemaName"], gameId)
             gameRecord = db.DbRecordDict(gameRecord)
 
-            adapterId = gameRecord["schemaName"]
+            adapterId = gamebase.schemaAdapterIds[gameRecord["SchemaName"]]
             try:
                 gamebase.adapters[adapterId]["module"].runMusic(gameRecord["Games.SidFilename"], gameRecord)
             except Exception as e:
@@ -693,26 +703,42 @@ class GameTableView(QTableView):
             if "type" in tableColumnSpec and tableColumnSpec["type"] == "gameId":
                 # Get the target game ID
                 rowNo = i_modelIndex.row()
+                schemaName = self.dbRows[rowNo][self.dbColumnNames.index("SchemaName")]
                 gameId = self.dbRows[rowNo][self.dbColumnNames.index(tableColumnSpec["dbIdentifiers"][0])]
                 if gameId != 0:
-                    self.selectGameWithId(gameId)
+                    self.selectGameWithSchemaNameAndId(schemaName, gameId)
 
-    def findGameWithId(self, i_id):
+    def findGameWithSchemaNameAndId(self, i_schemaName, i_id):
+        """
+        Params:
+         i_schemaName:
+          (str)
+         i_id:
+          (int)
+        """
+        schemaNameColumnNo = self.dbColumnNames.index("SchemaName")
         idColumnNo = self.dbColumnNames.index("Games.GA_Id")
         for rowNo, row in enumerate(self.dbRows):
-            if row[idColumnNo] == i_id:
+            if row[schemaNameColumnNo] == i_schemaName and row[idColumnNo] == i_id:
                 return rowNo
         return None
 
     requestClearFilter = Signal()
 
-    def selectGameWithId(self, i_gameId):
+    def selectGameWithSchemaNameAndId(self, i_schemaName, i_gameId):
+        """
+        Params:
+         i_schemaName:
+          (str)
+         i_id:
+          (int)
+        """
         # Look for row in table,
         # and if not found then clear filter and look again
-        rowNo = self.findGameWithId(i_gameId)
+        rowNo = self.findGameWithSchemaNameAndId(i_schemaName, i_gameId)
         if rowNo == None:
             self.requestClearFilter.emit()
-            rowNo = self.findGameWithId(i_gameId)
+            rowNo = self.findGameWithSchemaNameAndId(i_schemaName, i_gameId)
 
         # If found, select it
         if rowNo != None:

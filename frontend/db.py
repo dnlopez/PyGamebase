@@ -209,51 +209,51 @@ def getJoinTermsToTable(i_tableName, io_tableConnections):
 connectionsFromGamesTable = {
     "Years": {
         "dependencies": [],
-        "fromTerm": "LEFT JOIN Years ON Games.YE_Id = Years.YE_Id"
+        "fromTerm": "LEFT JOIN <schema name>.Years ON Games.YE_Id = Years.YE_Id"
     },
     "Genres": {
         "dependencies": [],
-        "fromTerm": "LEFT JOIN Genres ON Games.GE_Id = Genres.GE_Id"
+        "fromTerm": "LEFT JOIN <schema name>.Genres ON Games.GE_Id = Genres.GE_Id"
     },
     "PGenres": {
         "dependencies": ["Genres"],
-        "fromTerm": "LEFT JOIN PGenres ON Genres.PG_Id = PGenres.PG_Id"
+        "fromTerm": "LEFT JOIN <schema name>.PGenres ON Genres.PG_Id = PGenres.PG_Id"
     },
     "Publishers": {
         "dependencies": [],
-        "fromTerm": "LEFT JOIN Publishers ON Games.PU_Id = Publishers.PU_Id"
+        "fromTerm": "LEFT JOIN <schema name>.Publishers ON Games.PU_Id = Publishers.PU_Id"
     },
     "Developers": {
         "dependencies": [],
-        "fromTerm": "LEFT JOIN Developers ON Games.DE_Id = Developers.DE_Id"
+        "fromTerm": "LEFT JOIN <schema name>.Developers ON Games.DE_Id = Developers.DE_Id"
     },
     "Programmers": {
         "dependencies": [],
-        "fromTerm": "LEFT JOIN Programmers ON Games.PR_Id = Programmers.PR_Id"
+        "fromTerm": "LEFT JOIN <schema name>.Programmers ON Games.PR_Id = Programmers.PR_Id"
     },
     "Languages": {
         "dependencies": [],
-        "fromTerm": "LEFT JOIN Languages ON Games.LA_Id = Languages.LA_Id"
+        "fromTerm": "LEFT JOIN <schema name>.Languages ON Games.LA_Id = Languages.LA_Id"
     },
     "Crackers": {
         "dependencies": [],
-        "fromTerm": "LEFT JOIN Crackers ON Games.CR_Id = Crackers.CR_Id"
+        "fromTerm": "LEFT JOIN <schema name>.Crackers ON Games.CR_Id = Crackers.CR_Id"
     },
     "Artists": {
         "dependencies": [],
-        "fromTerm": "LEFT JOIN Artists ON Games.AR_Id = Artists.AR_Id"
+        "fromTerm": "LEFT JOIN <schema name>.Artists ON Games.AR_Id = Artists.AR_Id"
     },
     "Licenses": {
         "dependencies": [],
-        "fromTerm": "LEFT JOIN Licenses ON Games.LI_Id = Licenses.LI_Id"
+        "fromTerm": "LEFT JOIN <schema name>.Licenses ON Games.LI_Id = Licenses.LI_Id"
     },
     "Rarities": {
         "dependencies": [],
-        "fromTerm": "LEFT JOIN Rarities ON Games.RA_Id = Rarities.RA_Id"
+        "fromTerm": "LEFT JOIN <schema name>.Rarities ON Games.RA_Id = Rarities.RA_Id"
     },
     "Musicians": {
         "dependencies": [],
-        "fromTerm": "LEFT JOIN Musicians ON Games.MU_Id = Musicians.MU_Id"
+        "fromTerm": "LEFT JOIN <schema name>.Musicians ON Games.MU_Id = Musicians.MU_Id"
     },
 }
 
@@ -291,7 +291,7 @@ def getGameList_getSql(i_tableColumnSpecIds, i_whereExpression, i_sortOperations
         ]
 
         fromTerms = [
-            "Games"
+            schemaName + ".Games"
         ]
 
         # Determine what extra fields to select
@@ -326,7 +326,7 @@ def getGameList_getSql(i_tableColumnSpecIds, i_whereExpression, i_sortOperations
         # Add the extra fromTerms
         tableConnections = copy.deepcopy(connectionsFromGamesTable)
         for neededTableName in neededTableNames:
-            fromTerms += getJoinTermsToTable(neededTableName, tableConnections)
+            fromTerms += [fromTerm.replace("<schema name>", schemaName)  for fromTerm in getJoinTermsToTable(neededTableName, tableConnections)]
 
         # Add the extra selectTerms
         for neededSelectTerm in neededSelectTerms:
@@ -338,12 +338,15 @@ def getGameList_getSql(i_tableColumnSpecIds, i_whereExpression, i_sortOperations
         # SELECT and FROM
         sqlTexts.append("SELECT " + ", ".join(selectTerms) + "\nFROM " + " ".join(fromTerms))
 
-    sqlText = sqlTexts[0]
+    #print(sqlTexts)
 
     # WHERE
     i_whereExpression = i_whereExpression.strip()
     if i_whereExpression != "":
-        sqlText += "\nWHERE " + i_whereExpression
+        sqlTexts = [sqlText + "\nWHERE " + i_whereExpression  for sqlText in sqlTexts]
+        #sqlText += "\nWHERE " + i_whereExpression
+
+    sqlText = "\nUNION ALL\n".join(sqlTexts)
 
     # ORDER BY
     if len(i_sortOperations) > 0:
@@ -389,7 +392,7 @@ def getGameRecord(i_schemaName, i_gameId, i_includeRelatedGameNames=False):
 
     # From Games table, select all fields
     fromTerms = [
-        "Games"
+        i_schemaName + ".Games"
     ]
 
     selectTerms = [
@@ -406,16 +409,16 @@ def getGameRecord(i_schemaName, i_gameId, i_includeRelatedGameNames=False):
     if i_includeRelatedGameNames:
         gamesColumnNames = [row["name"]  for row in dbInfo["schema"]["Games"]]
         if "CloneOf" in gamesColumnNames:
-            fromTerms.append("LEFT JOIN Games AS CloneOf_Games ON Games.CloneOf = CloneOf_Games.GA_Id")
+            fromTerms.append("LEFT JOIN " + i_schemaName + ".Games AS CloneOf_Games ON Games.CloneOf = CloneOf_Games.GA_Id")
             selectTerms.append("CloneOf_Games.Name AS [Games.CloneOf_Name]")
         if "Prequel" in gamesColumnNames:
-            fromTerms.append("LEFT JOIN Games AS Prequel_Games ON Games.Prequel = Prequel_Games.GA_Id")
+            fromTerms.append("LEFT JOIN " + i_schemaName + ".Games AS Prequel_Games ON Games.Prequel = Prequel_Games.GA_Id")
             selectTerms.append("Prequel_Games.Name AS [Games.Prequel_Name]")
         if "Sequel" in gamesColumnNames:
-            fromTerms.append("LEFT JOIN Games AS Sequel_Games ON Games.Sequel = Sequel_Games.GA_Id")
+            fromTerms.append("LEFT JOIN " + i_schemaName + ".Games AS Sequel_Games ON Games.Sequel = Sequel_Games.GA_Id")
             selectTerms.append("Sequel_Games.Name AS [Games.Sequel_Name]")
         if "Related" in gamesColumnNames:
-            fromTerms.append("LEFT JOIN Games AS Related_Games ON Games.Related = Related_Games.GA_Id")
+            fromTerms.append("LEFT JOIN " + i_schemaName + ".Games AS Related_Games ON Games.Related = Related_Games.GA_Id")
             selectTerms.append("Related_Games.Name AS [Games.Related_Name]")
 
     # For all other tables connected to Games
@@ -424,7 +427,7 @@ def getGameRecord(i_schemaName, i_gameId, i_includeRelatedGameNames=False):
     tableNames = [tableName  for tableName in tableConnections.keys()  if tableName in dbInfo["schema"].keys()]
     for tableName in tableNames:
         # Join to it
-        fromTerms += getJoinTermsToTable(tableName, tableConnections)
+        fromTerms += [fromTerm.replace("<schema name>", i_schemaName)  for fromTerm in getJoinTermsToTable(tableName, tableConnections)]
         # Select all fields from it
         if fullyQualifiedFieldNames:
             for field in dbInfo["schema"][tableName]:
@@ -461,7 +464,7 @@ def getExtrasRecords(i_schemaName, i_gameId):
      (dict)
     """
     # Build SQL string
-    sql = "SELECT '" + i_schemaName + "' AS \"SchemaName\", * FROM Extras"
+    sql = "SELECT '" + i_schemaName + "' AS \"SchemaName\", * FROM " + i_schemaName + ".Extras"
     sql += "\nWHERE GA_Id = " + str(i_gameId)
     sql += "\nORDER BY DisplayOrder"
 

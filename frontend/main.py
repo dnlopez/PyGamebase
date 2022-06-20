@@ -173,6 +173,8 @@ def forgetAdapter(i_adapterId):
     gamebase.forgetAdapter(i_adapterId)
 
 mainAdapterId = openAdapter(param_gamebaseAdapterFilePath)
+#mainAdapterId2 = openAdapter("/home/daniel/docs/code/python/gamebase/frontend/adapters/c64.py")
+#mainAdapterId3 = openAdapter("/home/daniel/docs/code/python/gamebase/frontend/adapters/vic20.py")
 
 # Load frontend configuration settings
 settings.loadPreferences()
@@ -314,8 +316,9 @@ def f12Shortcut_onActivated():
         # Open, populate and focus the detail pane
         detailPane_show()
 
-        if tableView.selectedGameId() != detail_pane.detailPane_currentGameId:
-            detailPane.populate(mainAdapterId, self.selectedGameId())
+        selectedGameSchemaNameAndId = tableView.selectedGameSchemaNameAndId()
+        if selectedGameSchemaNameAndId != detail_pane.detailPane_currentGameSchemaNameAndId:
+            detailPane.populateSG(selectedGameSchemaNameAndId[0], selectedGameSchemaNameAndId[1])
 
         detailPane.setFocus(Qt.OtherFocusReason)
     # Else if detail pane is open,
@@ -597,7 +600,7 @@ class TableColumnsMenu(qt_extras.StayOpenMenu):
         columnFilterBar.repositionTabOrder()
 
         # Remember currently selected game ID and column number
-        selectedGameId = tableView.selectedGameId()
+        selectedGameSchemaNameAndId = tableView.selectedGameSchemaNameAndId()
         selectedColumnNo = tableView.selectionModel().currentIndex().column()
 
         # Requery DB in case filter criteria have changed
@@ -607,7 +610,7 @@ class TableColumnsMenu(qt_extras.StayOpenMenu):
         tableView.resizeAllColumns([column["width"]  for column in columns.tableColumn_getBySlice()])
 
         # Reselect same game and column in table, if it's still there
-        rowNo = tableView.findGameWithId(selectedGameId)
+        rowNo = tableView.findGameWithSchemaNameAndId(selectedGameSchemaNameAndId[0], selectedGameSchemaNameAndId[1])
         if rowNo != None:
             tableView.selectionModel().setCurrentIndex(tableView.selectionModel().model().index(rowNo, selectedColumnNo), QItemSelectionModel.ClearAndSelect)
 
@@ -865,9 +868,9 @@ def tableView_onSelectionHasChanged():
     # If detail pane is open,
     # repopulate it from the new row
     if detailPane_height() > 0:
-        selectedIndex = tableView.selectionModel().currentIndex()
-        if tableView.selectedGameId() != detail_pane.detailPane_currentGameId:
-            detailPane.populate(mainAdapterId, tableView.selectedGameId())
+        selectedGameSchemaNameAndId = tableView.selectedGameSchemaNameAndId()
+        if selectedGameSchemaNameAndId != detail_pane.detailPane_currentGameSchemaNameAndId:
+            detailPane.populateSG(selectedGameSchemaNameAndId[0], selectedGameSchemaNameAndId[1])
 tableView.selectionHasChanged.connect(tableView_onSelectionHasChanged)
 
 def tableView_onRequestDetailPane(i_withKeyboardAction, i_modelIndex):
@@ -875,9 +878,10 @@ def tableView_onRequestDetailPane(i_withKeyboardAction, i_modelIndex):
     detailPane_show()
     if splitter.orientation() == Qt.Vertical:
         tableView.scrollTo(i_modelIndex, QAbstractItemView.PositionAtTop)
+    gameSchemaName = tableView.dbRows[i_modelIndex.row()][tableView.dbColumnNames.index("SchemaName")]
     gameId = tableView.dbRows[i_modelIndex.row()][tableView.dbColumnNames.index("Games.GA_Id")]
-    if gameId != detail_pane.detailPane_currentGameId:
-        detailPane.populate(mainAdapterId, gameId)
+    if (gameSchemaName, gameId) != detail_pane.detailPane_currentGameSchemaNameAndId:
+        detailPane.populateSG(gameSchemaName, gameId)
     if i_withKeyboardAction and detailPaneWasAlreadyVisible:
         detailPane.setFocus(Qt.OtherFocusReason)
 tableView.requestDetailPane.connect(tableView_onRequestDetailPane)
@@ -933,8 +937,8 @@ def detailPane_onLinkHovered(i_url):
         label_statusbar.setText(i_url)
 detailPane.linkHovered.connect(detailPane_onLinkHovered)
 
-def detailPane_onRequestGameNavigation(i_gameId):
-    tableView.selectGameWithId(i_gameId)
+def detailPane_onRequestGameNavigation(i_schemaName, i_gameId):
+    tableView.selectGameWithSchemaNameAndId(i_schemaName, i_gameId)
 detailPane.requestGameNavigation.connect(detailPane_onRequestGameNavigation)
 
 # + + Layout {{{
@@ -955,7 +959,8 @@ def detailPaneItems_onChange():
     # If detail pane is open,
     # repopulate it
     if detailPane_height() > 0:
-        detailPane.populate(mainAdapterId, detail_pane.detailPane_currentGameId)
+        if detail_pane.detailPane_currentGameSchemaNameAndId != None:
+            detailPane.populateSG(detail_pane.detailPane_currentGameSchemaNameAndId[0], detail_pane.detailPane_currentGameSchemaNameAndId[1])
 
 # + + }}}
 

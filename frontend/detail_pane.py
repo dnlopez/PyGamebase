@@ -19,7 +19,7 @@ import frontend_utils
 import settings
 
 
-detailPane_currentGameId = None
+detailPane_currentGameSchemaNameAndId = None
 
 if "detailPaneItems" not in settings.viewSettings:
     settings.viewSettings["detailPaneItems"] = [
@@ -145,15 +145,17 @@ class DetailPane(QWidget):
     #   The URL of the link hovered over
     #   "": A URL has been unhovered
 
-    requestGameNavigation = Signal(int)
+    requestGameNavigation = Signal(str, int)
     # Emitted when
     #  User clicks in the detail view on a link to another game
     #
     # Params:
+    #  i_schemaName:
+    #   (str)
     #  i_gameId:
     #   (int)
 
-    def populate(self, i_adapterId, i_gameId):
+    def populateAG(self, i_adapterId, i_gameId):
         """
         Params:
          i_adapterId:
@@ -162,12 +164,33 @@ class DetailPane(QWidget):
           (int)
         """
         schemaName = gamebase.adapters[i_adapterId]["schemaName"]
-        gameRow = db.getGameRecord(schemaName, i_gameId, True)
-        extrasRows = db.getExtrasRecords(schemaName, str(gameRow["Games.GA_Id"]))
+        self.populateSAG(schemaName, i_adapterId, i_gameId)
+
+    def populateSG(self, i_schemaName, i_gameId):
+        """
+        Params:
+         i_schemaName:
+          (str)
+         i_gameId:
+          (int)
+        """
+        adapterId = gamebase.schemaAdapterIds[i_schemaName]
+        self.populateSAG(i_schemaName, adapterId, i_gameId)
+
+    def populateSAG(self, i_schemaName, i_adapterId, i_gameId):
+        """
+        Params:
+         i_adapterId:
+          (str)
+         i_gameId:
+          (int)
+        """
+        gameRow = db.getGameRecord(i_schemaName, i_gameId, True)
+        extrasRows = db.getExtrasRecords(i_schemaName, str(gameRow["Games.GA_Id"]))
 
         #
-        global detailPane_currentGameId
-        detailPane_currentGameId = gameRow["Games.GA_Id"]
+        global detailPane_currentGameSchemaNameAndId
+        detailPane_currentGameSchemaNameAndId = (gameRow["SchemaName"], gameRow["Games.GA_Id"])
 
         # Save name for the titlebar of the view source window
         self.gameName = gameRow["Games.Name"]
@@ -263,25 +286,25 @@ class DetailPane(QWidget):
                     if "Games.CloneOf_Name" in gameRow and gameRow["Games.CloneOf_Name"] != None:
                         html += '    <p style="white-space: pre-wrap;">'
                         html += 'Clone of: '
-                        html += '<a href="game:///' + str(gameRow["Games.CloneOf"]) + '">' + gameRow["Games.CloneOf_Name"] + '</a>'
+                        html += '<a href="game:///' + i_schemaName + '/' + str(gameRow["Games.CloneOf"]) + '">' + gameRow["Games.CloneOf_Name"] + '</a>'
                         html += '</p>\n'
 
                     if "Games.Prequel_Name" in gameRow and gameRow["Games.Prequel_Name"] != None:
                         html += '    <p style="white-space: pre-wrap;">'
                         html += 'Prequel: '
-                        html += '<a href="game:///' + str(gameRow["Games.Prequel"]) + '">' + gameRow["Games.Prequel_Name"] + '</a>'
+                        html += '<a href="game:///' + i_schemaName + '/' + str(gameRow["Games.Prequel"]) + '">' + gameRow["Games.Prequel_Name"] + '</a>'
                         html += '</p>\n'
 
                     if "Games.Sequel_Name" in gameRow and gameRow["Games.Sequel_Name"] != None:
                         html += '    <p style="white-space: pre-wrap;">'
                         html += 'Sequel: '
-                        html += '<a href="game:///' + str(gameRow["Games.Sequel"]) + '">' + gameRow["Games.Sequel_Name"] + '</a>'
+                        html += '<a href="game:///' + i_schemaName + '/' + str(gameRow["Games.Sequel"]) + '">' + gameRow["Games.Sequel_Name"] + '</a>'
                         html += '</p>\n'
 
                     if "Games.Related_Name" in gameRow and gameRow["Games.Related_Name"] != None:
                         html += '    <p style="white-space: pre-wrap;">'
                         html += 'Related: '
-                        html += '<a href="game:///' + str(gameRow["Games.Related"]) + '">' + gameRow["Games.Related_Name"] + '</a>'
+                        html += '<a href="game:///' + i_schemaName + '/' + str(gameRow["Games.Related"]) + '">' + gameRow["Games.Related_Name"] + '</a>'
                         html += '</p>\n'
 
                     html += '  </div>'
@@ -454,9 +477,11 @@ class DetailPane(QWidget):
                     # select it in the table view
                     elif url.startswith("game:///"):
                         gameId = url[8:]
+                        schemaName, gameId = gameId.split("/", 1)
+                        schemaName = urllib.parse.unquote(schemaName)
                         gameId = urllib.parse.unquote(gameId)
                         gameId = int(gameId)
-                        self.parent().parent().requestGameNavigation.emit(gameId)
+                        self.parent().parent().requestGameNavigation.emit(schemaName, gameId)
 
                     # Else if it's a normal link,
                     # open it with the default browser
