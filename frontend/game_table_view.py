@@ -518,11 +518,14 @@ class GameTableView(QTableView):
             #    newNeededTableNames, newNeededSelectTerms = db.tableColumnSpecToTableNamesAndSelectTerms(tableColumnSpec, schemaName)
             #    neededTableNames |= newNeededTableNames
             #    neededSelectTerms |= newNeededSelectTerms
-            normalizedWhereExpression, newNeededTableNames, newNeededSelectTerms = sql.normalizeSqlWhereExpressionToTableNamesAndSelectTerms(i_whereExpression, schemaName)
-            if normalizedWhereExpression != None:
-                i_whereExpression = normalizedWhereExpression
-                neededTableNames |= newNeededTableNames
-                neededSelectTerms |= newNeededSelectTerms
+            try:
+                normalizedWhereExpression, newNeededTableNames, newNeededSelectTerms = sql.normalizeSqlWhereExpressionToTableNamesAndSelectTerms(i_whereExpression, schemaName)
+                if normalizedWhereExpression != None:
+                    i_whereExpression = normalizedWhereExpression
+                    neededTableNames |= newNeededTableNames
+                    neededSelectTerms |= newNeededSelectTerms
+            except sql.SqlParseError as e:
+                raise
 
         # Add the extra fromTerms
         tableConnections = copy.deepcopy(db.connectionsFromGamesTable)
@@ -602,6 +605,16 @@ class GameTableView(QTableView):
         sqlValid = True
         try:
             self.queryDb(i_sqlWhereExpression, i_sortOperations)
+        except sql.SqlParseError as e:
+            sqlValid = False
+
+            import traceback
+            print(traceback.format_exc())
+
+            messageBox = qt_extras.ResizableMessageBox(QApplication.style().standardIcon(QStyle.SP_MessageBoxCritical), "Error")
+            messageBox.setText("<big><b>In SQL WHERE expression:</b></big><pre>" + "\n".join(e.args) + "</pre>")
+            messageBox.resizeToContent()
+            messageBox.exec()
         except sqlite3.OperationalError as e:
             sqlValid = False
 

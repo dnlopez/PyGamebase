@@ -14,6 +14,9 @@ import pprint
 #whereExpr = r"(a OR b) AND c AND d"
 #whereExpr = r"(Years.Year BETWEEN 1983 AND 1985)"
 
+class SqlParseError(RuntimeError):
+    pass
+
 # + Tokenize {{{
 
 def tokenizeWhereExpr(i_text):
@@ -23,38 +26,43 @@ def tokenizeWhereExpr(i_text):
       (str)
 
     Returns:
-     (list)
-     Each element is:
-      (tuple)
-      Tuple has elements:
-       0:
-        (str)
-        Type of token
-        One of
-         "integer"
-         "float"
-         "keyword"
-         "operator"
-         "identifier"
-         "."
-         "("
-         ")"
-         "string"
-       1:
-        (str)
-        The characters of the token.
-       2:
-        (int)
-        The start position of the token in i_text.
-       3:
-        (int)
-        The (non-inclusive) end position of the token in i_text.
+     Either (list)
+      Each element is:
+       (tuple)
+       Tuple has elements:
+        0:
+         (str)
+         Type of token
+         One of
+          "integer"
+          "float"
+          "keyword"
+          "operator"
+          "identifier"
+          "."
+          "("
+          ")"
+          "string"
+        1:
+         (str)
+         The characters of the token.
+        2:
+         (int)
+         The start position of the token in i_text.
+        3:
+         (int)
+         The (non-inclusive) end position of the token in i_text.
+     or raise exception
+      (SqlParseError)
+      args[0]:
+       (str)
+       Description of error.
     """
     i_text += " "
 
     tokens = []
     textPos = 0
-    while textPos < len(i_text):
+    while textPos < len(i_text) - 1:
         match = re.match(r"\s+", i_text[textPos:])
         if match:
             textPos += match.end(0)
@@ -123,12 +131,12 @@ def tokenizeWhereExpr(i_text):
 
         if i_text[textPos] == "'":
             endPos = textPos + 1
-            while endPos < len(i_text):
+            while endPos < len(i_text) - 1:
                 # If found a quote
                 if i_text[endPos] == "'":
                     # If there's another one after it,
                     # it's a escaped quote so skip them both
-                    if endPos + 1 < len(i_text) and i_text[endPos + 1] == "'":
+                    if endPos + 1 < len(i_text) - 1 and i_text[endPos + 1] == "'":
                         endPos += 2
                     # Else if there isn't another one after it,
                     # it's a closing quote
@@ -137,13 +145,13 @@ def tokenizeWhereExpr(i_text):
                 else:
                     endPos += 1
             if i_text[endPos] != "'":
-                return "Couldn't find end of string at pos: " + str(endPos)
+                raise SqlParseError("Syntax error at position " + str(endPos) + ": couldn't find end of string")
             endPos += 1
             tokens.append(("string", i_text[textPos:endPos], textPos, endPos))
             textPos = endPos
             continue
 
-        return "Unrecognized token at pos: " + str(textPos)
+        raise SqlParseError("Unrecognized token at pos: " + str(textPos))
 
     return tokens
 
@@ -267,8 +275,9 @@ def parseExpression(i_tokens):
     Returns:
      Either (AstNode)
       Root node of syntax tree
-     or raise RuntimeError
-      with value:
+     or raise exception
+      (SqlParseError)
+      args[0]:
        (str)
        Description of error.
     """
@@ -314,23 +323,26 @@ def parseValue(i_tokens):
     Returns:
      Either (AstNode)
       Root node of syntax tree
-     or raise RuntimeError
-      with value:
+     or raise exception
+      (SqlParseError)
+      args[0]:
        (str)
        Description of error.
     """
+    if len(i_tokens) == 0:
+        raise SqlParseError("Syntax error: unexpected end of input")
     token = i_tokens.pop(0)
     if token[0] == "operator":
-        raise RuntimeError("unexpected operator")
+        raise SqlParseError("Syntax error at position " + str(token[2]) + ": unexpected operator")
     elif token[0] == ")":
-        raise RuntimeError("unexpected close parenthesis")
+        raise SqlParseError("Syntax error at position " + str(token[2]) + ": unexpected close parenthesis")
     elif token[0] == "(":
         # Parse subexpression
         subParse = parseExpression(i_tokens)
         # Validate presence of closing parenthesis
         # and skip over it
         if not (len(i_tokens) > 0 and i_tokens[0][0] == ")"):
-            raise RuntimeError("unclosed parenthesis")
+            raise SqlParseError("Syntax error at position " + str(token[2]) + ": unclosed parenthesis")
         i_tokens.pop(0)
         return subParse
     elif token[0] == "integer":
@@ -557,9 +569,6 @@ def sqlWhereExpressionToColumnFilters(i_whereExpression, i_skipFailures=False):
     initializeOperatorTable()
     parsed = parseExpression(tokenized)
     #print(parsed)
-    if parsed == None:
-        label_statusbar.setText("Failed to parse")
-        return None
     parsed = flattenOperator(parsed, "AND")
     parsed = flattenOperator(parsed, "OR")
 
@@ -595,7 +604,6 @@ def sqlWhereExpressionToColumnFilters(i_whereExpression, i_skipFailures=False):
                 if i_skipFailures:
                     continue
                 else:
-                    label_statusbar.setText("Failed to interpret column")  # TODO
                     return None
 
             # If the column name actually corresponds to a database field
@@ -662,9 +670,6 @@ def sqlWhereExpressionToColumnIdentifiers(i_whereExpression):
     initializeOperatorTable()
     parsed = parseExpression(tokenized)
     #print(parsed)
-    if parsed == None:
-        label_statusbar.setText("Failed to parse")
-        return None
 
     # Collect and return column identifiers
     def collectColumnIdentifiers(i_node):
@@ -697,21 +702,26 @@ def normalizeSqlWhereExpressionToTableNamesAndSelectTerms(i_whereExpression, i_s
       (str)
 
     Returns:
-     (tuple)
-     Tuple has elements:
-      Either
-       0:
-        (str)
-        Normalized SQL WHERE expression
-       1:
-        (set)
-        Table names
-       2:
-        (set)
-        SQL SELECT terms
-      or
-       (None, None, None)
-       i_whereExpression was empty, [...]
+     Either (tuple)
+      Tuple has elements:
+       Either
+        0:
+         (str)
+         Normalized SQL WHERE expression
+        1:
+         (set)
+         Table names
+        2:
+         (set)
+         SQL SELECT terms
+       or
+        (None, None, None)
+        i_whereExpression was empty, [...]
+     or raise exception
+      (SqlParseError)
+      args[0]:
+       (str)
+       Description of error.
     """
     # Tokenize and parse WHERE expression
     tokenized = tokenizeWhereExpr(i_whereExpression)
@@ -719,10 +729,6 @@ def normalizeSqlWhereExpressionToTableNamesAndSelectTerms(i_whereExpression, i_s
         return None, None, None
     initializeOperatorTable()
     parsed = parseExpression(tokenized)
-    #print(parsed)
-    if parsed == None:
-        label_statusbar.setText("Failed to parse")
-        return None, None, None
 
     # Collect and return column identifiers
     def normalizeIdentifiersAndCollectTableNamesAndSelectTerms(i_schemaName, io_node):

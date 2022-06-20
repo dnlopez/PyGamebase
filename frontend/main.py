@@ -321,6 +321,7 @@ def filterFormat_perColumn():
     oredRows = sql.sqlWhereExpressionToColumnFilters(whereExpression)
     if oredRows == None:
         columnFilterBar.resetFilterRowCount(1)
+        #label_statusbar.setText("Failed to interpret column")
     else:
         columnFilterBar.setFilterValues(oredRows)
 
