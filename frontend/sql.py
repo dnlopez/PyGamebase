@@ -248,10 +248,12 @@ def parseExpression(i_tokens):
       (list)
 
     Returns:
-     Either (dict)
+     Either (AstNode)
       Root node of syntax tree
-     or (str)
-      Description of error.
+     or raise RuntimeError
+      with value:
+       (str)
+       Description of error.
     """
     lhs = parseValue(i_tokens)
     return parseOperations(lhs, i_tokens, 0)
@@ -287,6 +289,19 @@ def unquoteIdentifier(i_str):
     return i_str[1:-1]
 
 def parseValue(i_tokens):
+    """
+    Params:
+     i_tokens:
+      (list)
+
+    Returns:
+     Either (AstNode)
+      Root node of syntax tree
+     or raise RuntimeError
+      with value:
+       (str)
+       Description of error.
+    """
     token = i_tokens.pop(0)
     if token[0] == "operator":
         raise RuntimeError("unexpected operator")
@@ -298,7 +313,7 @@ def parseValue(i_tokens):
         # Validate presence of closing parenthesis
         # and skip over it
         if not (len(i_tokens) > 0 and i_tokens[0][0] == ")"):
-            return "unclosed parenthesis"
+            raise RuntimeError("unclosed parenthesis")
         i_tokens.pop(0)
         return subParse
     elif token[0] == "integer":
