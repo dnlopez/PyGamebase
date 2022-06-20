@@ -52,8 +52,7 @@ def tokenizeWhereExpr(i_text):
         3:
          (int)
          The (non-inclusive) end position of the token in i_text.
-     or raise exception
-      (SqlParseError)
+     or raise exception (SqlParseError)
       args[0]:
        (str)
        Description of error.
@@ -275,8 +274,7 @@ def parseExpression(i_tokens):
     Returns:
      Either (AstNode)
       Root node of syntax tree
-     or raise exception
-      (SqlParseError)
+     or raise exception (SqlParseError)
       args[0]:
        (str)
        Description of error.
@@ -323,8 +321,7 @@ def parseValue(i_tokens):
     Returns:
      Either (AstNode)
       Root node of syntax tree
-     or raise exception
-      (SqlParseError)
+     or raise exception (SqlParseError)
       args[0]:
        (str)
        Description of error.
@@ -717,8 +714,7 @@ def normalizeSqlWhereExpressionToTableNamesAndSelectTerms(i_whereExpression, i_s
        or
         (None, None, None)
         i_whereExpression was empty, [...]
-     or raise exception
-      (SqlParseError)
+     or raise exception (SqlParseError)
       args[0]:
        (str)
        Description of error.

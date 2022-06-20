@@ -107,10 +107,72 @@ if param_gamebaseAdapterFilePath == None:
 # + }}}
 
 
-# Import specified adapter module
-import gamebase
-gamebase.importAdapter(param_gamebaseAdapterFilePath)
+g_nextSchemaNo = 1
 
+import gamebase
+def openAdapter(i_adapterFilePath):
+    """
+    Params:
+     i_adapterFilePath:
+      (str)
+
+    Returns:
+     Either (str)
+      Unique ID string for loaded adapter.
+     or (None)
+      Adapter (or database) failed to open.
+    """
+    # Import specified adapter module
+    adapterId = gamebase.importAdapter(i_adapterFilePath)
+
+    # Ensure there's a database file path
+    if not hasattr(gamebase.adapters[adapterId]["module"], "config_databaseFilePath"):
+        messageBox = qt_extras.ResizableMessageBox(QApplication.style().standardIcon(QStyle.SP_MessageBoxCritical), "Error")
+        messageBox.setText("<big><b>Missing adapter setting:</b></big><pre>config_databaseFilePath</pre>")
+        messageBox.resizeToContent()
+        messageBox.exec()
+
+        gamebase.forgetAdapter(adapterId)
+        return None
+        #sys.exit(1)
+
+    # Generate new schema name
+    global g_nextSchemaNo
+    schemaName = "db" + str(g_nextSchemaNo)
+    g_nextSchemaNo += 1
+    gamebase.setAdapterSchemaName(adapterId, schemaName)
+    #gamebase.adapters[adapterId]["schemaName"] = schemaName
+
+    # Open the database
+    try:
+        db.openDb(schemaName, gamebase.normalizeDirPathFromAdapter(gamebase.adapters[adapterId]["module"].config_databaseFilePath))
+    except Exception as e:
+        import traceback
+        print(traceback.format_exc())
+        messageBox = qt_extras.ResizableMessageBox(QApplication.style().standardIcon(QStyle.SP_MessageBoxCritical), "Error")
+        messageBox.setText("<big><b>When opening database file:</b></big><p>\nWith path:<br>\n<br>\n" + gamebase.adapters[adapterId]["module"].config_databaseFilePath + "<p>\nAn error occurred:<pre>" + "<br>\n".join(traceback.format_exception_only(e.__class__, e)) + "</pre>")
+        messageBox.resizeToContent()
+        messageBox.exec()
+
+        gamebase.forgetAdapter(adapterId)
+        return None
+        sys.exit(1)
+
+    return adapterId
+
+def forgetAdapter(i_adapterId):
+    """
+    Params:
+     i_adapterId:
+      (str)
+    """
+    # Close the database
+    db.closeDb(gamebase.adapters[i_adapterId]["schemaName"])
+
+    # Forget the adapter
+    gamebase.forgetAdapter(i_adapterId)
+
+mainAdapterId = openAdapter(param_gamebaseAdapterFilePath)
 
 # Load frontend configuration settings
 settings.loadPreferences()
@@ -215,8 +277,8 @@ mainWindow = main_window.MainWindow(application)
 mainWindow.resize(800, 600)
 mainWindow.move(QApplication.desktop().rect().center() - mainWindow.rect().center())
 mainWindow.move(QApplication.desktop().rect().center() - mainWindow.rect().center())
-if hasattr(gamebase.adapter, "config_title"):
-    mainWindow.setWindowTitle(gamebase.adapter.config_title + " - PyGamebase")
+if hasattr(gamebase.adapters[mainAdapterId]["module"], "config_title"):
+    mainWindow.setWindowTitle(gamebase.adapters[mainAdapterId]["module"].config_title + " - PyGamebase")
 else:
     mainWindow.setWindowTitle(param_gamebaseAdapterFilePath + " - PyGamebase")
 
@@ -253,7 +315,7 @@ def f12Shortcut_onActivated():
         detailPane_show()
 
         if tableView.selectedGameId() != detail_pane.detailPane_currentGameId:
-            detailPane.populate(self.selectedGameId())
+            detailPane.populate(mainAdapterId, self.selectedGameId())
 
         detailPane.setFocus(Qt.OtherFocusReason)
     # Else if detail pane is open,
@@ -280,7 +342,7 @@ menuBar = QMenuBar()
 mainWindow.layout.addWidget(menuBar)
 
 def menu_file_openDatabaseInExternalProgram_onTriggered(i_checked):
-    frontend_utils.openInDefaultApplication([gamebase.adapter.config_databaseFilePath])
+    frontend_utils.openInDefaultApplication([gamebase.adapters[mainAdapterId]["module"].config_databaseFilePath])
 
 menu = QMenu(mainWindow)
 #menu.addAction("File")
@@ -805,7 +867,7 @@ def tableView_onSelectionHasChanged():
     if detailPane_height() > 0:
         selectedIndex = tableView.selectionModel().currentIndex()
         if tableView.selectedGameId() != detail_pane.detailPane_currentGameId:
-            detailPane.populate(tableView.selectedGameId())
+            detailPane.populate(mainAdapterId, tableView.selectedGameId())
 tableView.selectionHasChanged.connect(tableView_onSelectionHasChanged)
 
 def tableView_onRequestDetailPane(i_withKeyboardAction, i_modelIndex):
@@ -815,7 +877,7 @@ def tableView_onRequestDetailPane(i_withKeyboardAction, i_modelIndex):
         tableView.scrollTo(i_modelIndex, QAbstractItemView.PositionAtTop)
     gameId = tableView.dbRows[i_modelIndex.row()][tableView.dbColumnNames.index("Games.GA_Id")]
     if gameId != detail_pane.detailPane_currentGameId:
-        detailPane.populate(gameId)
+        detailPane.populate(mainAdapterId, gameId)
     if i_withKeyboardAction and detailPaneWasAlreadyVisible:
         detailPane.setFocus(Qt.OtherFocusReason)
 tableView.requestDetailPane.connect(tableView_onRequestDetailPane)
@@ -893,7 +955,7 @@ def detailPaneItems_onChange():
     # If detail pane is open,
     # repopulate it
     if detailPane_height() > 0:
-        detailPane.populate(detail_pane.detailPane_currentGameId)
+        detailPane.populate(mainAdapterId, detail_pane.detailPane_currentGameId)
 
 # + + }}}
 
@@ -948,25 +1010,6 @@ detailPane_hide()
 
 #
 mainWindow.show()
-
-#
-if not hasattr(gamebase.adapter, "config_databaseFilePath"):
-    messageBox = qt_extras.ResizableMessageBox(QApplication.style().standardIcon(QStyle.SP_MessageBoxCritical), "Error")
-    messageBox.setText("<big><b>Missing adapter setting:</b></big><pre>config_databaseFilePath</pre>")
-    messageBox.resizeToContent()
-    messageBox.exec()
-    sys.exit(1)
-
-try:
-    db.openDb("md", gamebase.normalizeDirPathFromAdapter(gamebase.adapter.config_databaseFilePath))
-except Exception as e:
-    import traceback
-    print(traceback.format_exc())
-    messageBox = qt_extras.ResizableMessageBox(QApplication.style().standardIcon(QStyle.SP_MessageBoxCritical), "Error")
-    messageBox.setText("<big><b>When opening database file:</b></big><p>\nWith path:<br>\n<br>\n" + gamebase.adapter.config_databaseFilePath + "<p>\nAn error occurred:<pre>" + "<br>\n".join(traceback.format_exception_only(e.__class__, e)) + "</pre>")
-    messageBox.resizeToContent()
-    messageBox.exec()
-    sys.exit(1)
 
 #
 viewMenu_tableColumnsMenu.populateMenu()

@@ -486,84 +486,16 @@ class GameTableView(QTableView):
          i_whereExpressionMightUseNonVisibleColumns:
           (bool)
         """
-        # Start with fields that are always selected
-        selectTerms = [
-            "Games.GA_Id AS [Games.GA_Id]"
-        ]
-
-        fromTerms = [
-            "Games"
-        ]
+        # Get IDs of visible table columns
+        tableColumnSpecIds = [column["id"]  for column in columns.tableColumn_getBySlice()]
 
         #
-        schemaName = "md"
-
-        # Determine what extra fields to select
-        neededTableNames = set()
-        neededSelectTerms = set()
-
-        #  For all visible table columns,
-        #  collect FROM and SELECT terms
-        for tableColumn in columns.tableColumn_getBySlice():
-            tableColumnSpec = columns.tableColumnSpec_getById(tableColumn["id"])
-            newNeededTableNames, newNeededSelectTerms = db.tableColumnSpecToTableNamesAndSelectTerms(tableColumnSpec, schemaName)
-            neededTableNames |= newNeededTableNames
-            neededSelectTerms |= newNeededSelectTerms
-
-        #  If needed, parse WHERE expression for column names and add those too
-        if i_whereExpressionMightUseNonVisibleColumns:
-            #columnIdentifiers = sql.sqlWhereExpressionToColumnIdentifiers(i_whereExpression)
-            #for columnIdentifier in columnIdentifiers:
-            #    tableColumnSpec = columns.tableColumnSpec_getByDbIdentifier(columnIdentifier)
-            #    newNeededTableNames, newNeededSelectTerms = db.tableColumnSpecToTableNamesAndSelectTerms(tableColumnSpec, schemaName)
-            #    neededTableNames |= newNeededTableNames
-            #    neededSelectTerms |= newNeededSelectTerms
-            try:
-                normalizedWhereExpression, newNeededTableNames, newNeededSelectTerms = sql.normalizeSqlWhereExpressionToTableNamesAndSelectTerms(i_whereExpression, schemaName)
-                if normalizedWhereExpression != None:
-                    i_whereExpression = normalizedWhereExpression
-                    neededTableNames |= newNeededTableNames
-                    neededSelectTerms |= newNeededSelectTerms
-            except sql.SqlParseError as e:
-                raise
-
-        # Add the extra fromTerms
-        tableConnections = copy.deepcopy(db.connectionsFromGamesTable)
-        for neededTableName in neededTableNames:
-            fromTerms += db.getJoinTermsToTable(neededTableName, tableConnections)
-
-        # Add the extra selectTerms
-        for neededSelectTerm in neededSelectTerms:
-            if neededSelectTerm == "Games.GA_Id" or neededSelectTerm == "GA_Id":  # TODO use a set for this too
-                continue
-            selectTerms.append(neededSelectTerm)
-
-        # SELECT
-        sqlText = "SELECT " + ", ".join(selectTerms)
-        sqlText += "\nFROM " + " ".join(fromTerms)
-
-        # WHERE
-        i_whereExpression = i_whereExpression.strip()
-        if i_whereExpression != "":
-            sqlText += "\nWHERE " + i_whereExpression
-
-        # ORDER BY
-        if len(i_sortOperations) > 0:
-            sqlText += "\nORDER BY "
-
-            orderByTerms = []
-            for columnId, direction in i_sortOperations:
-                tableColumnSpec = columns.tableColumnSpec_getById(columnId)
-                term = '"' + tableColumnSpec["dbIdentifiers"][0] + '"'
-                if direction == -1:
-                    term += " DESC"
-                orderByTerms.append(term)
-            sqlText += ", ".join(orderByTerms)
+        sqlText = db.getGameList_getSql(tableColumnSpecIds, i_whereExpression, i_sortOperations, i_whereExpressionMightUseNonVisibleColumns)
+        print(sqlText)
 
         # Execute
-        #print(sqlText)
         try:
-            cursor = db.getGameList(sqlText)
+            cursor = db.getGameList_executeSql(sqlText)
         except sqlite3.OperationalError as e:
             # TODO if i_whereExpressionMightUseNonVisibleColumns and error was 'no such column', maybe retry with SELECT * and all tables (see getGameRecord())
             raise
@@ -700,11 +632,12 @@ class GameTableView(QTableView):
         elif columnId == "play":
             rowNo = i_modelIndex.row()
             gameId = self.dbRows[rowNo][self.dbColumnNames.index("Games.GA_Id")]
-            gameRecord = db.getGameRecord(gameId)
+            gameRecord = db.getGameRecord(self.dbRows[rowNo]["SchemaName"], gameId)
             gameRecord = db.DbRecordDict(gameRecord)
 
+            adapterId = gameRecord["schemaName"]
             try:
-                gamebase.adapter.runGame(gameRecord["Games.Filename"], gameRecord["Games.FileToRun"], gameRecord)
+                gamebase.adapters[adapterId]["module"].runGame(gameRecord["Games.Filename"], gameRecord["Games.FileToRun"], gameRecord)
             except Exception as e:
                 import traceback
                 print(traceback.format_exc())
@@ -716,11 +649,12 @@ class GameTableView(QTableView):
         elif columnId == "music":
             rowNo = i_modelIndex.row()
             gameId = self.dbRows[rowNo][self.dbColumnNames.index("Games.GA_Id")]
-            gameRecord = db.getGameRecord(gameId)
+            gameRecord = db.getGameRecord(self.dbRows[rowNo]["SchemaName"], gameId)
             gameRecord = db.DbRecordDict(gameRecord)
 
+            adapterId = gameRecord["schemaName"]
             try:
-                gamebase.adapter.runMusic(gameRecord["Games.SidFilename"], gameRecord)
+                gamebase.adapters[adapterId]["module"].runMusic(gameRecord["Games.SidFilename"], gameRecord)
             except Exception as e:
                 import traceback
                 print(traceback.format_exc())

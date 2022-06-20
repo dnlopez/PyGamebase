@@ -9,6 +9,7 @@ import re
 # This program
 import qt_extras
 import columns
+import sql
 
 
 def sqliteRowToDict(i_row):
@@ -69,51 +70,55 @@ def openDb(i_schemaName, i_dbFilePath):
     # Attach database
     cursor = g_db.execute("ATTACH DATABASE '" + i_dbFilePath.replace("'", "''") + "' AS " + i_schemaName)
 
-    # Get names of tables
-    cursor = g_db.execute("SELECT name FROM " + i_schemaName + ".sqlite_master WHERE type = 'table'")
-    rows = cursor.fetchall()
-    dbTableNames = [row[0]  for row in rows]
+    try:
+        # Get names of tables
+        cursor = g_db.execute("SELECT name FROM " + i_schemaName + ".sqlite_master WHERE type = 'table'")
+        rows = cursor.fetchall()
+        dbTableNames = [row[0]  for row in rows]
 
-    # Get info about tables
-    dbInfo["schema"] = {}
-    g_db.row_factory = sqlite3.Row
-    for tableName in ["Games", "Years", "Genres", "PGenres", "Publishers", "Developers", "Programmers", "Languages", "Crackers", "Artists", "Licenses", "Rarities", "Musicians"]:
-        if tableName in dbTableNames:
-            cursor = g_db.execute("PRAGMA " + i_schemaName + ".table_info(" + tableName + ")")
-            rows = cursor.fetchall()
-            rows = [sqliteRowToDict(row)  for row in rows]
-            dbInfo["schema"][tableName] = rows
+        # Get info about tables
+        dbInfo["schema"] = {}
+        g_db.row_factory = sqlite3.Row
+        for tableName in ["Games", "Years", "Genres", "PGenres", "Publishers", "Developers", "Programmers", "Languages", "Crackers", "Artists", "Licenses", "Rarities", "Musicians"]:
+            if tableName in dbTableNames:
+                cursor = g_db.execute("PRAGMA " + i_schemaName + ".table_info(" + tableName + ")")
+                rows = cursor.fetchall()
+                rows = [sqliteRowToDict(row)  for row in rows]
+                dbInfo["schema"][tableName] = rows
 
-    # Note which table column specs can be realized from this database
-    fulfillableColumnIds = set()
-    def validateTableColumnSpec(i_dbSchema, i_dbTableNames, i_tableColumnSpec):
-        rv = True
-        if "dbTableNames" in i_tableColumnSpec:
-            for dbTableName in i_tableColumnSpec["dbTableNames"]:
-                if not (dbTableName in i_dbTableNames):
-                    rv = False
-        if "dbColumnNames" in i_tableColumnSpec:
-            for dbColumnName in i_tableColumnSpec["dbColumnNames"]:
-                tableName, columnName = dbColumnName.split(".")
-                if not (tableName in i_dbSchema.keys()):
-                    rv = False
-                else:
-                    columnNames = [row["name"]  for row in i_dbSchema[tableName]]
-                    if not (columnName in columnNames):
+        # Note which table column specs can be realized from this database
+        fulfillableColumnIds = set()
+        def validateTableColumnSpec(i_dbSchema, i_dbTableNames, i_tableColumnSpec):
+            rv = True
+            if "dbTableNames" in i_tableColumnSpec:
+                for dbTableName in i_tableColumnSpec["dbTableNames"]:
+                    if not (dbTableName in i_dbTableNames):
                         rv = False
-        if rv == False:
-            print("Missing column: " + i_tableColumnSpec["id"])
-        return rv
-    for tableColumnSpec in columns.g_tableColumnSpecs:
-        if validateTableColumnSpec(dbInfo["schema"], dbTableNames, tableColumnSpec):
-            fulfillableColumnIds.add(tableColumnSpec["id"])
-    dbInfo["fulfillableColumnIds"] = fulfillableColumnIds
+            if "dbColumnNames" in i_tableColumnSpec:
+                for dbColumnName in i_tableColumnSpec["dbColumnNames"]:
+                    tableName, columnName = dbColumnName.split(".")
+                    if not (tableName in i_dbSchema.keys()):
+                        rv = False
+                    else:
+                        columnNames = [row["name"]  for row in i_dbSchema[tableName]]
+                        if not (columnName in columnNames):
+                            rv = False
+            if rv == False:
+                print("Missing column: " + i_tableColumnSpec["id"])
+            return rv
+        for tableColumnSpec in columns.g_tableColumnSpecs:
+            if validateTableColumnSpec(dbInfo["schema"], dbTableNames, tableColumnSpec):
+                fulfillableColumnIds.add(tableColumnSpec["id"])
+        dbInfo["fulfillableColumnIds"] = fulfillableColumnIds
 
-    ## Only use the columns that the database actually has
-    #columns.filterColumnsByDb(dbTableNames, dbInfo["schema"])
+        ## Only use the columns that the database actually has
+        #columns.filterColumnsByDb(dbTableNames, dbInfo["schema"])
 
-    #
-    g_openDatabases[i_schemaName] = dbInfo
+        #
+        g_openDatabases[i_schemaName] = dbInfo
+
+    except:
+        g_db.execute("DETACH DATABASE " + i_schemaName)
 
 def closeDb(i_schemaName):
     """
@@ -256,7 +261,107 @@ connectionsFromGamesTable = {
 
 # + Run queries {{{
 
-def getGameList(i_sqlText):
+def getGameList_getSql(i_tableColumnSpecIds, i_whereExpression, i_sortOperations, i_whereExpressionMightUseNonVisibleColumns=True):
+    """
+    Params:
+     i_tableColumnSpecIds:
+      (list of str)
+     i_whereExpression:
+      (str)
+     i_sortOperations:
+      (list)
+      See ColumnNameBar.sort_operations
+     i_whereExpressionMightUseNonVisibleColumns:
+      (bool)
+
+    Returns:
+     Either (str)
+     or raise exception (SqlParseError)
+      args[0]:
+       (str)
+       Description of error.
+    """
+    sqlTexts = []
+
+    for schemaName in list(g_openDatabases.keys()):
+        # Start with fields that are always selected
+        selectTerms = [
+            "'" + schemaName + "' AS \"SchemaName\"",
+            "Games.GA_Id AS [Games.GA_Id]"
+        ]
+
+        fromTerms = [
+            "Games"
+        ]
+
+        # Determine what extra fields to select
+        neededTableNames = set()
+        neededSelectTerms = set()
+
+        #  For all visible table columns,
+        #  collect FROM and SELECT terms
+        for tableColumnSpecId in i_tableColumnSpecIds:
+            tableColumnSpec = columns.tableColumnSpec_getById(tableColumnSpecId)
+            newNeededTableNames, newNeededSelectTerms = tableColumnSpecToTableNamesAndSelectTerms(tableColumnSpec, schemaName)
+            neededTableNames |= newNeededTableNames
+            neededSelectTerms |= newNeededSelectTerms
+
+        #  If needed, parse WHERE expression for column names and add those too
+        if i_whereExpressionMightUseNonVisibleColumns:
+            #columnIdentifiers = sql.sqlWhereExpressionToColumnIdentifiers(i_whereExpression)
+            #for columnIdentifier in columnIdentifiers:
+            #    tableColumnSpec = columns.tableColumnSpec_getByDbIdentifier(columnIdentifier)
+            #    newNeededTableNames, newNeededSelectTerms = tableColumnSpecToTableNamesAndSelectTerms(tableColumnSpec, schemaName)
+            #    neededTableNames |= newNeededTableNames
+            #    neededSelectTerms |= newNeededSelectTerms
+            try:
+                normalizedWhereExpression, newNeededTableNames, newNeededSelectTerms = sql.normalizeSqlWhereExpressionToTableNamesAndSelectTerms(i_whereExpression, schemaName)
+                if normalizedWhereExpression != None:
+                    i_whereExpression = normalizedWhereExpression
+                    neededTableNames |= newNeededTableNames
+                    neededSelectTerms |= newNeededSelectTerms
+            except sql.SqlParseError as e:
+                raise
+
+        # Add the extra fromTerms
+        tableConnections = copy.deepcopy(connectionsFromGamesTable)
+        for neededTableName in neededTableNames:
+            fromTerms += getJoinTermsToTable(neededTableName, tableConnections)
+
+        # Add the extra selectTerms
+        for neededSelectTerm in neededSelectTerms:
+            if neededSelectTerm == "Games.GA_Id" or neededSelectTerm == "GA_Id":  # TODO use a set for this too
+                continue
+            selectTerms.append(neededSelectTerm)
+
+        #
+        # SELECT and FROM
+        sqlTexts.append("SELECT " + ", ".join(selectTerms) + "\nFROM " + " ".join(fromTerms))
+
+    sqlText = sqlTexts[0]
+
+    # WHERE
+    i_whereExpression = i_whereExpression.strip()
+    if i_whereExpression != "":
+        sqlText += "\nWHERE " + i_whereExpression
+
+    # ORDER BY
+    if len(i_sortOperations) > 0:
+        sqlText += "\nORDER BY "
+
+        orderByTerms = []
+        for columnId, direction in i_sortOperations:
+            tableColumnSpec = columns.tableColumnSpec_getById(columnId)
+            term = '"' + tableColumnSpec["dbIdentifiers"][0] + '"'
+            if direction == -1:
+                term += " DESC"
+            orderByTerms.append(term)
+        sqlText += ", ".join(orderByTerms)
+
+    #
+    return sqlText
+
+def getGameList_executeSql(i_sqlText):
     """
     Params:
      i_sqlText:
@@ -267,9 +372,11 @@ def getGameList(i_sqlText):
     """
     return g_db.execute(i_sqlText)
 
-def getGameRecord(i_gameId, i_includeRelatedGameNames=False):
+def getGameRecord(i_schemaName, i_gameId, i_includeRelatedGameNames=False):
     """
     Params:
+     i_schemaName:
+      (str)
      i_gameId:
       (int)
      i_includeRelatedGameNames:
@@ -286,6 +393,7 @@ def getGameRecord(i_gameId, i_includeRelatedGameNames=False):
     ]
 
     selectTerms = [
+        "'" + i_schemaName + "' AS \"SchemaName\""
     ]
     fullyQualifiedFieldNames = True
     if fullyQualifiedFieldNames:
@@ -334,15 +442,26 @@ def getGameRecord(i_gameId, i_includeRelatedGameNames=False):
 
     # Execute
     g_db.row_factory = sqlite3.Row
+    #print(sql)
     cursor = g_db.execute(sql)
 
     row = cursor.fetchone()
     row = sqliteRowToDict(row)
     return row
 
-def getExtrasRecords(i_gameId):
+def getExtrasRecords(i_schemaName, i_gameId):
+    """
+    Params:
+     i_schemaName:
+      (str)
+     i_gameId:
+      (int)
+
+    Returns:
+     (dict)
+    """
     # Build SQL string
-    sql = "SELECT * FROM Extras"
+    sql = "SELECT '" + i_schemaName + "' AS \"SchemaName\", * FROM Extras"
     sql += "\nWHERE GA_Id = " + str(i_gameId)
     sql += "\nORDER BY DisplayOrder"
 

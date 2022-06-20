@@ -3,22 +3,79 @@
 import sys
 import os.path
 
+# + Load {{{
 
-adapter = None
+adapters = {}
+# (dict)
+# Dict has arbitrary key-value properties:
+#  Keys:
+#   (str)
+#   Unique ID string for loaded adapter.
+#   (Currently happens to be the adapter module's absolute file path.)
+#  Values:
+#   (dict)
+#   Dict has specific key-value properties:
+#    module:
+#     (module)
+#     Imported adapter module
+#    schemaName:
+#     Either not yet set
+#     or (str)
+
+schemaAdapterIds = {}
+# (dict)
+# Shortcut reverse lookup table from schema name to adapter ID
+
 def importAdapter(i_adapterFilePath):
     """
     Params:
      i_adapterFilePath:
       (str)
+
+    Returns:
+     (str)
+     Unique ID string for loaded adapter.
     """
     # Add adapter's directory to sys.path
     i_adapterFilePath = os.path.abspath(i_adapterFilePath)
     sys.path.append(os.path.dirname(i_adapterFilePath))
     # Import the module
     import importlib
-    global adapter
-    adapter = importlib.import_module(os.path.splitext(os.path.basename(i_adapterFilePath))[0])
+    adapterModule = importlib.import_module(os.path.splitext(os.path.basename(i_adapterFilePath))[0])
+    adapters[i_adapterFilePath] = {
+        "module": adapterModule
+    }
 
+    return i_adapterFilePath
+
+def setAdapterSchemaName(i_adapterId, i_schemaName):
+    """
+    Params:
+     i_adapterId:
+      (str)
+     i_schemaName:
+      (str)
+    """
+    adapters[i_adapterId]["schemaName"] = i_schemaName
+    schemaAdapterIds[i_schemaName] = i_adapterId
+
+def forgetAdapter(i_adapterId):
+    """
+    Params:
+     i_adapterId:
+      (str)
+    """
+    # If we got as far as setting it there,
+    # delete schema name from reverse lookup table
+    if "schemaName" in adapters[i_adapterId]:
+        schemaName = adapters[i_adapterId]
+        if schemaName in schemaAdapterIds:
+            del(schemaAdapterIds[schemaName])
+
+    # Delete main adapter entry
+    del(adapters[i_adapterId])
+
+# + }}}
 
 # + Screenshot/photo file/URL resolving {{{
 
@@ -42,9 +99,11 @@ def normalizeDirPathFromAdapter(i_dirPath):
     return i_dirPath
 
 # [was getScreenshotAbsolutePath()]
-def screenshotPath_relativeToAbsolute(i_relativePath):
+def screenshotPath_relativeToAbsolute(i_adapterId, i_relativePath):
     """
     Params:
+     i_adapterId:
+      (str)
      i_relativePath:
       (str)
 
@@ -52,13 +111,15 @@ def screenshotPath_relativeToAbsolute(i_relativePath):
      Either (str)
      or (None)
     """
-    if not hasattr(adapter, "config_screenshotsBaseDirPath"):
+    if not hasattr(adapters[i_adapterId]["module"], "config_screenshotsBaseDirPath"):
         return None
-    return normalizeDirPathFromAdapter(adapter.config_screenshotsBaseDirPath) + "/" + i_relativePath
+    return normalizeDirPathFromAdapter(adapters[i_adapterId]["module"].config_screenshotsBaseDirPath) + "/" + i_relativePath
 
-def photoPath_relativeToAbsolute(i_relativePath):
+def photoPath_relativeToAbsolute(i_adapterId, i_relativePath):
     """
     Params:
+     i_adapterId:
+      (str)
      i_relativePath:
       (str)
 
@@ -66,14 +127,16 @@ def photoPath_relativeToAbsolute(i_relativePath):
      Either (str)
      or (None)
     """
-    if not hasattr(adapter, "config_photosBaseDirPath"):
+    if not hasattr(adapters[i_adapterId]["module"], "config_photosBaseDirPath"):
         return None
-    return normalizeDirPathFromAdapter(adapter.config_photosBaseDirPath) + "/" + i_relativePath
+    return normalizeDirPathFromAdapter(adapters[i_adapterId]["module"].config_photosBaseDirPath) + "/" + i_relativePath
 
 # [was getScreenshotUrl()]
-def screenshotPath_relativeToUrl(i_relativePath):
+def screenshotPath_relativeToUrl(i_adapterId, i_relativePath):
     """
     Params:
+     i_adapterId:
+      (str)
      i_relativePath:
       (str)
 
@@ -83,10 +146,10 @@ def screenshotPath_relativeToUrl(i_relativePath):
     """
     i_relativePath = i_relativePath.replace(" ", "%20")
     i_relativePath = i_relativePath.replace("#", "%23")
-    screenshotAbsolutePath = screenshotPath_relativeToAbsolute(i_relativePath)
+    screenshotAbsolutePath = screenshotPath_relativeToAbsolute(i_adapterId, i_relativePath)
     if screenshotAbsolutePath == None:
         return None
-    return "file://" + screenshotPath_relativeToAbsolute(i_relativePath)
+    return "file://" + screenshotPath_relativeToAbsolute(i_adapterId, i_relativePath)
 
 # + }}}
 
@@ -137,6 +200,9 @@ def dbRow_supplementaryScreenshotRelativePaths(i_row, i_simulateCount=None):
      (list of str)
      Paths of images, relative to the 'Screenshots' folder.
     """
+    schemaName = i_row["SchemaName"]
+    adapterId = schemaAdapterIds[schemaName]
+
     # If there's not already a cached value,
     # compute and cache it now
     if True:#!i_row.supplementaryScreenshotPaths:
@@ -152,7 +218,7 @@ def dbRow_supplementaryScreenshotRelativePaths(i_row, i_simulateCount=None):
                 screenshotNo = 1
                 while True:
                     screenshotRelativePath = screenshotStem + "_" + str(screenshotNo) + imageExtension
-                    screenshotAbsolutePath = screenshotPath_relativeToAbsolute(screenshotRelativePath)
+                    screenshotAbsolutePath = screenshotPath_relativeToAbsolute(adapterId, screenshotRelativePath)
                     if screenshotAbsolutePath == None or not os.path.exists(screenshotAbsolutePath):
                         break
 
@@ -185,8 +251,12 @@ def dbRow_allScreenshotRelativePaths(i_row):
      Paths of images, relative to the 'Screenshots' folder.
     """
     rv = []
-    rv.append(dbRow_firstScreenshotRelativePath(i_row))
-    rv.extend(dbRow_supplementaryScreenshotRelativePaths(i_row))
+
+    firstScreenshotRelativePath = dbRow_firstScreenshotRelativePath(i_row)
+    if firstScreenshotRelativePath != None:
+        rv.append(firstScreenshotRelativePath)
+        rv.extend(dbRow_supplementaryScreenshotRelativePaths(i_row))
+
     return rv
 
 def dbRow_screenshotCount(i_row):
@@ -245,7 +315,9 @@ def dbRow_nthScreenshotFullPath(i_row, i_picNo):
     """
     path = dbRow_nthScreenshotRelativePath(i_row, i_picNo)
     if path != None:
-        path = screenshotPath_relativeToAbsolute(path)
+        schemaName = i_row["SchemaName"]
+        adapterId = schemaAdapterIds[schemaName]
+        path = screenshotPath_relativeToAbsolute(adapterId, path)
     return path
 
 
@@ -306,7 +378,9 @@ def dbRow_nthRandomScreenshotFullPath(i_row, i_picNo):
     """
     path = dbRow_nthRandomScreenshotRelativePath(i_row, i_picNo)
     if path != None:
-        path = screenshotPath_relativeToAbsolute(path)
+        schemaName = i_row["SchemaName"]
+        adapterId = schemaAdapterIds[schemaName]
+        path = screenshotPath_relativeToAbsolute(adapterId, path)
     return path
 
 # + + }}}
@@ -358,7 +432,9 @@ def dbRow_photoFullPath(i_row):
     """
     path = dbRow_photoRelativePath(i_row)
     if path != None:
-        path = photoPath_relativeToAbsolute(path)
+        schemaName = i_row["SchemaName"]
+        adapterId = schemaAdapterIds[schemaName]
+        path = photoPath_relativeToAbsolute(adapterId, path)
     return path
 
 # + + }}}
