@@ -5,6 +5,7 @@ import sqlite3
 import copy
 import os.path
 import re
+import collections
 
 # This program
 import qt_extras
@@ -183,26 +184,26 @@ def tableColumnSpecToTableNamesAndSelectTerms(i_tableColumnSpec, i_schemaName):
      (tuple)
      Tuple has elements:
       0:
-       (set)
+       (list)
        Table names
       1:
-       (set)
+       (list)
        SQL SELECT terms
     """
-    dbTableNames = set()
-    dbSelectTerms = set()
+    dbTableNames = collections.OrderedDict()
+    dbSelectTerms = collections.OrderedDict()
 
     if i_tableColumnSpec["id"] in g_openDatabases[i_schemaName]["fulfillableColumnIds"]:
         if "dbTableNames" in i_tableColumnSpec:
             for dbTableName in i_tableColumnSpec["dbTableNames"]:
-                dbTableNames.add(dbTableName)
+                dbTableNames[dbTableName] = True
         if "dbSelect" in i_tableColumnSpec:
-            dbSelectTerms.add(i_tableColumnSpec["dbSelect"])
+            dbSelectTerms[i_tableColumnSpec["dbSelect"]] = True
     else:
         if "dbSelectPlaceholder" in i_tableColumnSpec:
-            dbSelectTerms.add(i_tableColumnSpec["dbSelectPlaceholder"])
+            dbSelectTerms[i_tableColumnSpec["dbSelectPlaceholder"]] = True
 
-    return (dbTableNames, dbSelectTerms)
+    return list(dbTableNames.keys()), list(dbSelectTerms.keys())
 
 
 # + Gamebase-specified schema {{{
@@ -322,6 +323,8 @@ def getGameList_getSql(i_tableColumnSpecIds, i_whereExpression, i_sortOperations
     sqlTexts = []
 
     for schemaName in list(g_openDatabases.keys()):
+        #print(schemaName)
+
         # Start with fields that are always selected
         selectTerms = [
             "'" + schemaName + "' AS \"SchemaName\"",
@@ -333,16 +336,18 @@ def getGameList_getSql(i_tableColumnSpecIds, i_whereExpression, i_sortOperations
         ]
 
         # Determine what extra fields to select
-        neededTableNames = set()
-        neededSelectTerms = set()
+        neededTableNames = collections.OrderedDict()
+        neededSelectTerms = collections.OrderedDict()
 
         #  For all visible table columns,
         #  collect FROM and SELECT terms
         for tableColumnSpecId in i_tableColumnSpecIds:
             tableColumnSpec = columns.tableColumnSpec_getById(tableColumnSpecId)
             newNeededTableNames, newNeededSelectTerms = tableColumnSpecToTableNamesAndSelectTerms(tableColumnSpec, schemaName)
-            neededTableNames |= newNeededTableNames
-            neededSelectTerms |= newNeededSelectTerms
+            for newNeededTableName in newNeededTableNames:
+                neededTableNames[newNeededTableName] = True
+            for newNeededSelectTerm in newNeededSelectTerms:
+                neededSelectTerms[newNeededSelectTerm] = True
 
         #  If needed, parse WHERE expression for column names and add those too
         if i_whereExpressionMightUseNonVisibleColumns:
@@ -356,10 +361,16 @@ def getGameList_getSql(i_tableColumnSpecIds, i_whereExpression, i_sortOperations
                 normalizedWhereExpression, newNeededTableNames, newNeededSelectTerms = sql.normalizeSqlWhereExpressionToTableNamesAndSelectTerms(i_whereExpression, schemaName)
                 if normalizedWhereExpression != None:
                     i_whereExpression = normalizedWhereExpression
-                    neededTableNames |= newNeededTableNames
-                    neededSelectTerms |= newNeededSelectTerms
+                    for newNeededTableName in newNeededTableNames:
+                        neededTableNames[newNeededTableName] = True
+                    for newNeededSelectTerm in newNeededSelectTerms:
+                        neededSelectTerms[newNeededSelectTerm] = True
             except sql.SqlParseError as e:
                 raise
+
+        # Get terms as lists instead of OrderedDict
+        neededTableNames = list(neededTableNames.keys())
+        neededSelectTerms = list(neededSelectTerms.keys())
 
         # Add the extra fromTerms
         tableConnections = copy.deepcopy(connectionsFromGamesTable)
@@ -368,13 +379,15 @@ def getGameList_getSql(i_tableColumnSpecIds, i_whereExpression, i_sortOperations
 
         # Add the extra selectTerms
         for neededSelectTerm in neededSelectTerms:
-            if neededSelectTerm == "Games.GA_Id" or neededSelectTerm == "GA_Id":  # TODO use a set for this too
+            if neededSelectTerm == "Games.GA_Id" or neededSelectTerm == "GA_Id":
                 continue
             selectTerms.append(neededSelectTerm)
 
         #
         # SELECT and FROM
         sqlTexts.append("SELECT " + ", ".join(selectTerms) + "\nFROM " + " ".join(fromTerms))
+
+        #print(" " + "SELECT " + ", ".join(selectTerms) + "\nFROM " + " ".join(fromTerms))
 
     #for sqlText in sqlTexts:
     #    print(sqlText)

@@ -4,6 +4,7 @@
 # Python std
 import re
 import copy
+import collections
 import pprint
 
 
@@ -706,10 +707,10 @@ def normalizeSqlWhereExpressionToTableNamesAndSelectTerms(i_whereExpression, i_s
          (str)
          Normalized SQL WHERE expression
         1:
-         (set)
+         (list)
          Table names
         2:
-         (set)
+         (list)
          SQL SELECT terms
        or
         (None, None, None)
@@ -740,22 +741,24 @@ def normalizeSqlWhereExpressionToTableNamesAndSelectTerms(i_whereExpression, i_s
           (tuple)
           Tuple has elements:
            0:
-            (set)
+            (list)
             Table names
            1:
-            (set)
+            (list)
             SQL SELECT terms
          io_node:
           Identifier names may be modified
         """
-        neededTableNames = set()
-        neededSelectTerms = set()
+        neededTableNames = collections.OrderedDict()
+        neededSelectTerms = collections.OrderedDict()
 
         if isinstance(io_node, OperatorNode):
             for operand in io_node.operands:
                 newNeededTableNames, newNeededSelectTerms = normalizeIdentifiersAndCollectTableNamesAndSelectTerms(i_schemaName, operand)
-                neededTableNames |= newNeededTableNames
-                neededSelectTerms |= newNeededSelectTerms
+                for newNeededTableName in newNeededTableNames:
+                    neededTableNames[newNeededTableName] = True
+                for newNeededSelectTerm in newNeededSelectTerms:
+                    neededSelectTerms[newNeededSelectTerm] = True
         else: # isinstance(child, ValueNode):
             if io_node.type == "identifier":
                 # If recognize the column,
@@ -766,10 +769,12 @@ def normalizeSqlWhereExpressionToTableNamesAndSelectTerms(i_whereExpression, i_s
                     io_node.value = '"' + tableColumnSpec["dbIdentifiers"][0] + '"'
                     # Collect needed FROM and SELECT terms
                     newNeededTableNames, newNeededSelectTerms = db.tableColumnSpecToTableNamesAndSelectTerms(tableColumnSpec, i_schemaName)
-                    neededTableNames |= newNeededTableNames
-                    neededSelectTerms |= newNeededSelectTerms
+                    for newNeededTableName in newNeededTableNames:
+                        neededTableNames[newNeededTableName] = True
+                    for newNeededSelectTerm in newNeededSelectTerms:
+                        neededSelectTerms[newNeededSelectTerm] = True
 
-        return neededTableNames, neededSelectTerms
+        return list(neededTableNames.keys()), list(neededSelectTerms.keys())
 
     neededTableNames, neededSelectTerms = normalizeIdentifiersAndCollectTableNamesAndSelectTerms(i_schemaName, parsed)
     return (parsed.toSqlString(), neededTableNames, neededSelectTerms)
