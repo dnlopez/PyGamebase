@@ -107,8 +107,6 @@ if param_gamebaseAdapterFilePath == None:
 # + }}}
 
 
-g_nextSchemaNo = 1
-
 import gamebase
 def openAdapter(i_adapterFilePath):
     """
@@ -137,11 +135,8 @@ def openAdapter(i_adapterFilePath):
         #sys.exit(1)
 
     # Generate new schema name
-    global g_nextSchemaNo
-    schemaName = "db" + str(g_nextSchemaNo)
-    g_nextSchemaNo += 1
+    schemaName = db.sanitizeSchemaName(adapterId)
     gamebase.setAdapterSchemaName(adapterId, schemaName)
-    #gamebase.adapters[adapterId]["schemaName"] = schemaName
 
     # Open the database
     try:

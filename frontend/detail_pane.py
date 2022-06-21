@@ -209,7 +209,7 @@ class DetailPane(QWidget):
                 for relativePath in allScreenshotRelativePaths:
                     screenshotUrl = gamebase.screenshotPath_relativeToUrl(i_adapterId, relativePath)
                     if screenshotUrl != None:
-                        html += '    <a href="screenshot:///' + relativePath + '"><img src="' + screenshotUrl + '"></a>\n'
+                        html += '    <a href="screenshot:///' + i_schemaName + '/' + relativePath + '"><img src="' + screenshotUrl + '"></a>\n'
 
                 html += '  </div>'
                 html += '\n\n'
@@ -224,7 +224,7 @@ class DetailPane(QWidget):
                         if columns.tableColumn_getById("pic[" + str(screenshotNo) + "]") == None:
                             screenshotUrl = gamebase.screenshotPath_relativeToUrl(i_adapterId, relativePath)
                             if screenshotUrl != None:
-                                html += '    <a href="screenshot:///' + relativePath + '"><img src="' + screenshotUrl + '"></a>\n'
+                                html += '    <a href="screenshot:///' + i_schemaName + '/' + relativePath + '"><img src="' + screenshotUrl + '"></a>\n'
                 else:
                     relativePathsInTable = set()
 
@@ -245,7 +245,7 @@ class DetailPane(QWidget):
                         if relativePath not in relativePathsInTable:
                             screenshotUrl = gamebase.screenshotPath_relativeToUrl(i_adapterId, relativePath)
                             if screenshotUrl != None:
-                                html += '    <a href="screenshot:///' + relativePath + '"><img src="' + screenshotUrl + '"></a>\n'
+                                html += '    <a href="screenshot:///' + i_schemaName + '/' + relativePath + '"><img src="' + screenshotUrl + '"></a>\n'
 
                 html += '  </div>'
                 html += '\n\n'
@@ -389,7 +389,7 @@ class DetailPane(QWidget):
                         html += '<a'
                         path = nonImageRow["Path"]
                         if path != None:
-                            html += ' href="extra:///' + path + '"'
+                            html += ' href="extra:///' + i_schemaName + '/' + path + '"'
                         html += '>'
                         html += nonImageRow["Name"]
                         html += '</a>\n'
@@ -418,7 +418,7 @@ class DetailPane(QWidget):
 
                         html += "    "
 
-                        html += '<a href="extra:///' + imageRow["Path"] + '" style="display: inline-block; text-align: center;">'
+                        html += '<a href="extra:///' + i_schemaName + '/' + imageRow["Path"] + '" style="display: inline-block; text-align: center;">'
                         if hasattr(gamebase.adapters[i_adapterId]["module"], "config_extrasBaseDirPath"):
                             html += '<img src="file://' + gamebase.normalizeDirPathFromAdapter(gamebase.adapters[i_adapterId]["module"].config_extrasBaseDirPath) + "/" + imageRow["Path"] + '" style="height: 300px;">'
                         #html += '<img src="https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_92x30dp.png" style="height: 300px;">'
@@ -450,7 +450,9 @@ class DetailPane(QWidget):
                     # pass it to the adapter file's runExtra()
                     url = i_qUrl.toString()
                     if url.startswith("extra:///"):
-                        extraPath = url[9:]
+                        path = url[9:]
+                        schemaName, extraPath = path.split("/", 1)
+                        schemaName = urllib.parse.unquote(schemaName)
                         extraPath = urllib.parse.unquote(extraPath)
                         extraInfo = [row  for row in self.extrasRows  if row["Path"] == extraPath][0]
                         gameInfo = self.gameRow
@@ -469,15 +471,17 @@ class DetailPane(QWidget):
                     # Else if it's a link to a screenshot,
                     # open it with the default application
                     elif url.startswith("screenshot:///"):
-                        screenshotPath = url[14:]
+                        path = url[14:]
+                        schemaName, screenshotPath = path.split("/", 1)
+                        schemaName = urllib.parse.unquote(schemaName)
                         screenshotPath = urllib.parse.unquote(screenshotPath)
                         frontend_utils.openInDefaultApplication(gamebase.screenshotPath_relativeToAbsolute(i_adapterId, screenshotPath))
 
                     # If it's a link to a game,
                     # select it in the table view
                     elif url.startswith("game:///"):
-                        gameId = url[8:]
-                        schemaName, gameId = gameId.split("/", 1)
+                        path = url[8:]
+                        schemaName, gameId = path.split("/", 1)
                         schemaName = urllib.parse.unquote(schemaName)
                         gameId = urllib.parse.unquote(gameId)
                         gameId = int(gameId)

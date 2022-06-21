@@ -52,6 +52,44 @@ g_openDatabases = {}
 #    schema:
 #     (dict)
 
+def sanitizeSchemaName(i_name):
+    """
+    Params:
+     i_name:
+      (str)
+
+    Returns:
+     (str)
+    """
+    sanitized = ""
+
+    # Normalize slashes
+    i_name = i_name.replace("\\", "/")
+
+    # Take stem name
+    i_name = os.path.splitext(os.path.basename(i_name))[0]
+
+    # Replace awkward characters with underscores
+    for char in i_name:
+        if not ((char.upper() >= "A" and char.upper() <= "Z") or (char >= "0" and char <= "9") or char == "_"):
+            char = "_"
+        sanitized += char
+
+    # If it starts with a numeric digit,
+    # prepend an underscore
+    if sanitized[0] >= "0" and sanitized[0] <= "9":
+        sanitized = "_" + sanitized
+
+    # If not unique,
+    # append numeric suffix
+    rv = sanitized
+    nextNo = 2
+    while rv in g_openDatabases.keys():
+        rv = sanitized + "_" + str(nextNo)
+
+    #
+    return rv
+
 def openDb(i_schemaName, i_dbFilePath):
     """
     Params:
@@ -103,8 +141,8 @@ def openDb(i_schemaName, i_dbFilePath):
                         columnNames = [row["name"]  for row in i_dbSchema[tableName]]
                         if not (columnName in columnNames):
                             rv = False
-            if rv == False:
-                print("Missing column: " + i_tableColumnSpec["id"])
+            #if rv == False:
+            #    print("Missing column: " + i_tableColumnSpec["id"])
             return rv
         for tableColumnSpec in columns.g_tableColumnSpecs:
             if validateTableColumnSpec(dbInfo["schema"], dbTableNames, tableColumnSpec):
@@ -338,7 +376,8 @@ def getGameList_getSql(i_tableColumnSpecIds, i_whereExpression, i_sortOperations
         # SELECT and FROM
         sqlTexts.append("SELECT " + ", ".join(selectTerms) + "\nFROM " + " ".join(fromTerms))
 
-    #print(sqlTexts)
+    #for sqlText in sqlTexts:
+    #    print(sqlText)
 
     # WHERE
     i_whereExpression = i_whereExpression.strip()
