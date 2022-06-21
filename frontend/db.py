@@ -440,7 +440,7 @@ def getGameRecord(i_schemaName, i_gameId, i_includeRelatedGameNames=False):
     Returns:
      (dict)
     """
-    dbInfo = g_openDatabases[list(g_openDatabases.keys())[0]]
+    dbInfo = g_openDatabases[i_schemaName]
 
     # From Games table, select all fields
     fromTerms = [
