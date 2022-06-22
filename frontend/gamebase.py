@@ -2,6 +2,7 @@
 # Python std
 import sys
 import os.path
+import importlib
 
 # + Load {{{
 
@@ -37,14 +38,24 @@ def importAdapter(i_adapterFilePath):
      Unique ID string for loaded adapter.
     """
     # Add adapter's directory to sys.path
-    i_adapterFilePath = os.path.abspath(i_adapterFilePath)
+    i_adapterFilePath = os.path.realpath(i_adapterFilePath)
     sys.path.append(os.path.dirname(i_adapterFilePath))
+
+    # Find out if module was previously loaded
+    moduleWasPreviouslyLoaded = False
+    for module in sys.modules.values():
+        if hasattr(module, "__file__") and module.__file__ != None and os.path.abspath(module.__file__) == i_adapterFilePath:
+            moduleWasPreviouslyLoaded = True
+            break
+
     # Import the module
-    import importlib
+    # and if it had been previously loaded, call reload() to execute its code again
     adapterModule = importlib.import_module(os.path.splitext(os.path.basename(i_adapterFilePath))[0])
     adapters[i_adapterFilePath] = {
         "module": adapterModule
     }
+    if moduleWasPreviouslyLoaded:
+        importlib.reload(adapterModule)
 
     return i_adapterFilePath
 
@@ -58,6 +69,14 @@ def setAdapterSchemaName(i_adapterId, i_schemaName):
     """
     adapters[i_adapterId]["schemaName"] = i_schemaName
     schemaAdapterIds[i_schemaName] = i_adapterId
+
+def reloadAdapter(i_adapterId):
+    """
+    Params:
+     i_adapterId:
+      (str)
+    """
+    importlib.reload(adapters[i_adapterId]["module"])
 
 def forgetAdapter(i_adapterId):
     """

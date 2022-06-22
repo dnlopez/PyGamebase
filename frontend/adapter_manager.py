@@ -182,22 +182,34 @@ class AdapterManager(QWidget):
         self.layout.addWidget(self.visibleItemsLabel, 0, 0, 1, 1, Qt.AlignHCenter)
 
         self.adapterTableView = AdapterTableView()
-        self.layout.addWidget(self.adapterTableView, 1, 0, 2, 1)
+        self.layout.addWidget(self.adapterTableView, 1, 0, 1, 1)
+
+        self.buttonContainer = QWidget(self)
+        self.buttonLayout = QVBoxLayout(self.buttonContainer)
+        #self.buttonLayout.setSpacing(0)
+        self.buttonLayout.setContentsMargins(0, 0, 0, 0)
+        self.buttonContainer.setLayout(self.buttonLayout)
 
         self.addItemsButton = QPushButton("&Add...")
-        self.layout.addWidget(self.addItemsButton, 1, 1, 1, 1, Qt.AlignBottom)
+        self.buttonLayout.addWidget(self.addItemsButton)
         self.addItemsButton.clicked.connect(self.addItemsButton_onClicked)
 
+        self.reloadItemButton = QPushButton("R&eload")
+        self.buttonLayout.addWidget(self.reloadItemButton)
+        self.reloadItemButton.clicked.connect(self.reloadItemButton_onClicked)
+
         self.removeItemButton = QPushButton("&Remove")
-        self.layout.addWidget(self.removeItemButton, 2, 1, 1, 1, Qt.AlignTop)
+        self.buttonLayout.addWidget(self.removeItemButton)
         self.removeItemButton.clicked.connect(self.removeItemButton_onClicked)
+
+        self.layout.addWidget(self.buttonContainer, 1, 1, 1, 1, Qt.AlignTop)
 
         #self.dialogButtons = QDialogButtonBox(QDialogButtonBox.Cancel, self)
         #self.layout.addWidget(self.dialogButtons, 3, 0, 1, 2, Qt.AlignHCenter)
         #self.dialogButtons.accepted.connect(self.dialogButtons_onAccept)
 
         self.closeButton = QPushButton("&Close")
-        self.layout.addWidget(self.closeButton, 3, 0, 1, 2, Qt.AlignHCenter)
+        self.layout.addWidget(self.closeButton, 2, 0, 1, 2, Qt.AlignHCenter)
         self.closeButton.clicked.connect(self.closeButton_onClicked)
 
         #self.layout.setColumnStretch(0, 2)
@@ -222,24 +234,20 @@ class AdapterManager(QWidget):
     #  An adapter is added or removed
 
     def addItemsButton_onClicked(self):
-        rowNo = self.adapterTableView.selectionModel().currentIndex().row()
         if selectAndOpenAdapter():
             self.adapterTableView.model().modelReset.emit()
             self.adaptersChanged.emit()
-        #unusedItems = sorted(list(g_detailPaneItemsAvailable - set(g_detailPaneItems)))
-        #if unusedRowNo >= 0 and unusedRowNo < len(unusedItems):
-        #    #insertAtRowNo = self.visibleItemsTableView.selectionModel().currentIndex().row()
-        #    insertAtRowNo = len(g_detailPaneItems)
-        #    self.useItem(unusedItems[unusedRowNo])
-        #
-        #    #
-        #    self.visibleItemsTableView.model().modelReset.emit()
-        #    self.adapterTableView.model().modelReset.emit()
-        #    self.change.emit()
+
+    def reloadItemButton_onClicked(self):
+        currentIndex = self.adapterTableView.selectionModel().currentIndex()
+        adapterId = self.adapterTableView.model().data(currentIndex, Qt.DisplayRole)
+
+        gamebase.reloadAdapter(adapterId)
 
     def removeItemButton_onClicked(self):
         currentIndex = self.adapterTableView.selectionModel().currentIndex()
         adapterId = self.adapterTableView.model().data(currentIndex, Qt.DisplayRole)
+
         forgetAdapter(adapterId)
 
         self.adapterTableView.model().modelReset.emit()
