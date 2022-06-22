@@ -27,11 +27,13 @@
 #    Fully-qualified (ie. "<table name>.<column name>") names of columns,
 #    that must all exist in the database, for the value of this column spec to be able to be assembled from it.
 #   dbSelect:
-#    (str)
-#    The term to add to the SELECT clause to assemble a value for this column spec,
-#    which will be used when the presence in the database of everything named by dbTableNames and dbColumnNames implies that this is possible.
-#    It should end with an "AS ..." alias for predictable referencing in filters and so on.
-#    For a simple, single database column select (as opposed to an expression) use "AS [<table name>.<column name>]".
+#    Either (str)
+#     The term to add to the SELECT clause to assemble a value for this column spec,
+#     which will be used when the presence in the database of everything named by dbTableNames and dbColumnNames implies that this is possible.
+#     It should end with an "AS ..." alias for predictable referencing in filters and so on.
+#     For a simple, single database column select (as opposed to an expression) use "AS [<table name>.<column name>]".
+#    or unspecified
+#     Don't add any terms to the SELECT clause for this column.
 #   dbSelectPlaceholder:
 #    (str)
 #    The term to add to the SELECT clause to assemble a fallback value for this column spec,
@@ -68,6 +70,21 @@
 #    As exported from a GameBase 64 MDB file. Not currently used by this program.
 
 g_tableColumnSpecs = [
+    {
+        "id": "schema",
+        "menuPath": ["Gamebase name"],
+        "headingName": "Gamebase name",
+        "dbColumnNames": [],
+        "dbTableNames": [],
+        #"dbSelect": "SchemaName",
+        #"dbSelectPlaceholder": "NULL AS [Games.PlayersSim]",
+        "dbIdentifiers": ["SchemaName"],
+        "defaultWidth": 80,
+        "sortable": True,
+        "filterable": True,
+        "textAlignment": "left",
+    },
+
     # Launch
     {
         "id": "detail",

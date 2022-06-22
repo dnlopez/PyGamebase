@@ -492,16 +492,21 @@ class GameTableView(QTableView):
         #
         sqlText = db.getGameList_getSql(tableColumnSpecIds, i_whereExpression, i_sortOperations, i_whereExpressionMightUseNonVisibleColumns)
         #print(sqlText)
+        # If no SQL to execute (because no databases are open)
+        if sqlText == "":
+            self.dbColumnNames = []
+            self.dbRows = []
+        # Else if we have some SQL
+        else:
+            # Execute
+            try:
+                cursor = db.getGameList_executeSql(sqlText)
+            except sqlite3.OperationalError as e:
+                # TODO if i_whereExpressionMightUseNonVisibleColumns and error was 'no such column', maybe retry with SELECT * and all tables (see getGameRecord())
+                raise
 
-        # Execute
-        try:
-            cursor = db.getGameList_executeSql(sqlText)
-        except sqlite3.OperationalError as e:
-            # TODO if i_whereExpressionMightUseNonVisibleColumns and error was 'no such column', maybe retry with SELECT * and all tables (see getGameRecord())
-            raise
-
-        self.dbColumnNames = [column[0]  for column in cursor.description]
-        self.dbRows = cursor.fetchall()
+            self.dbColumnNames = [column[0]  for column in cursor.description]
+            self.dbRows = cursor.fetchall()
 
         self.doneQuery.emit(len(self.dbRows))
 
@@ -568,6 +573,11 @@ class GameTableView(QTableView):
 
         # Update table widget data
         self.requery()
+
+        # If no Gamebases/databases loaded,
+        # stop here
+        if len(self.dbColumnNames) == 0:
+            return True
 
         # If a game was previously selected,
         # search for new row number of that game

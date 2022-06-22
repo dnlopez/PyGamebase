@@ -68,7 +68,7 @@ def forgetAdapter(i_adapterId):
     # If we got as far as setting it there,
     # delete schema name from reverse lookup table
     if "schemaName" in adapters[i_adapterId]:
-        schemaName = adapters[i_adapterId]
+        schemaName = adapters[i_adapterId]["schemaName"]
         if schemaName in schemaAdapterIds:
             del(schemaAdapterIds[schemaName])
 

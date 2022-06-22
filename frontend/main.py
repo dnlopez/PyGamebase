@@ -33,6 +33,8 @@ import column_filter_bar
 import column_name_bar
 import game_table_view
 import preferences_window
+import gamebase
+import adapter_manager
 
 
 # Create a Qt application
@@ -68,7 +70,7 @@ Options:
 ''')
 
 #
-param_gamebaseAdapterFilePath = None
+param_gamebaseAdapterFilePaths = []
 
 import sys
 argNo = 1
@@ -90,90 +92,21 @@ while argNo < len(filteredArgv):
 
     else:
         # Collect command-line arguments
-        if param_gamebaseAdapterFilePath == None:
-            param_gamebaseAdapterFilePath = arg
-        else:
-            print("ERROR: Too many arguments.")
-            print("(Run with --help to show command usage.)")
-            #sys.exit(-1)
-
-# If no adapter file was specified
-# then prompt with a file picker
-if param_gamebaseAdapterFilePath == None:
-    param_gamebaseAdapterFilePath, filter = QFileDialog.getOpenFileName(None, "Select Gamebase adapter file")
-    if param_gamebaseAdapterFilePath == "":
-        sys.exit(0)
+        param_gamebaseAdapterFilePaths.append(arg)
 
 # + }}}
 
 
-import gamebase
-def openAdapter(i_adapterFilePath):
-    """
-    Params:
-     i_adapterFilePath:
-      (str)
-
-    Returns:
-     Either (str)
-      Unique ID string for loaded adapter.
-     or (None)
-      Adapter (or database) failed to open.
-    """
-    # Import specified adapter module
-    adapterId = gamebase.importAdapter(i_adapterFilePath)
-
-    # Ensure there's a database file path
-    if not hasattr(gamebase.adapters[adapterId]["module"], "config_databaseFilePath"):
-        messageBox = qt_extras.ResizableMessageBox(QApplication.style().standardIcon(QStyle.SP_MessageBoxCritical), "Error")
-        messageBox.setText("<big><b>Missing adapter setting:</b></big><pre>config_databaseFilePath</pre>")
-        messageBox.resizeToContent()
-        messageBox.exec()
-
-        gamebase.forgetAdapter(adapterId)
-        return None
-        #sys.exit(1)
-
-    # Generate new schema name
-    schemaName = db.sanitizeSchemaName(adapterId)
-    gamebase.setAdapterSchemaName(adapterId, schemaName)
-
-    # Open the database
-    try:
-        db.openDb(schemaName, gamebase.normalizeDirPathFromAdapter(gamebase.adapters[adapterId]["module"].config_databaseFilePath))
-    except Exception as e:
-        import traceback
-        print(traceback.format_exc())
-        messageBox = qt_extras.ResizableMessageBox(QApplication.style().standardIcon(QStyle.SP_MessageBoxCritical), "Error")
-        messageBox.setText("<big><b>When opening database file:</b></big><p>\nWith path:<br>\n<br>\n" + gamebase.adapters[adapterId]["module"].config_databaseFilePath + "<p>\nAn error occurred:<pre>" + "<br>\n".join(traceback.format_exception_only(e.__class__, e)) + "</pre>")
-        messageBox.resizeToContent()
-        messageBox.exec()
-
-        gamebase.forgetAdapter(adapterId)
-        return None
-        sys.exit(1)
-
-    return adapterId
-
-def forgetAdapter(i_adapterId):
-    """
-    Params:
-     i_adapterId:
-      (str)
-    """
-    # Close the database
-    db.closeDb(gamebase.adapters[i_adapterId]["schemaName"])
-
-    # Forget the adapter
-    gamebase.forgetAdapter(i_adapterId)
-
-mainAdapterId = openAdapter(param_gamebaseAdapterFilePath)
-#mainAdapterId2 = openAdapter("/home/daniel/docs/code/python/gamebase/frontend/adapters/c64.py")
-#mainAdapterId3 = openAdapter("/home/daniel/docs/code/python/gamebase/frontend/adapters/vic20.py")
 
 # Load frontend configuration settings
 settings.loadPreferences()
 settings.loadViewSettings()
+
+# If application stylesheet wasn't already set (via command line)
+# and there's one specified in the preferences,
+# activate it
+if application.styleSheet() == "" and "applicationStylesheet" in settings.preferences and settings.preferences["applicationStylesheet"] != "":
+    application.setStyleSheet("file:///" + settings.preferences["applicationStylesheet"])
 
 
 # + Filter history {{{
@@ -274,10 +207,7 @@ mainWindow = main_window.MainWindow(application)
 mainWindow.resize(800, 600)
 mainWindow.move(QApplication.desktop().rect().center() - mainWindow.rect().center())
 mainWindow.move(QApplication.desktop().rect().center() - mainWindow.rect().center())
-if hasattr(gamebase.adapters[mainAdapterId]["module"], "config_title"):
-    mainWindow.setWindowTitle(gamebase.adapters[mainAdapterId]["module"].config_title + " - PyGamebase")
-else:
-    mainWindow.setWindowTitle(param_gamebaseAdapterFilePath + " - PyGamebase")
+mainWindow.setWindowTitle("PyGamebase")
 
 frontend.mainWindow = mainWindow
 
@@ -347,6 +277,42 @@ menu = QMenu(mainWindow)
 #menuBar.addMenu(menu)
 
 fileMenu = menuBar.addMenu("&File")
+
+action = fileMenu.addAction("&Open Gamebase...")
+action.setShortcut(QKeySequence("Ctrl+O"))
+def action_openGamebase_onTriggered():
+    if not adapter_manager.selectAndOpenAdapter():
+        return
+
+    #
+    updateTitleBar()
+
+    # Requery DB
+    refilterFromCurrentlyVisibleBar()
+    tableView.requery()
+action.triggered.connect(action_openGamebase_onTriggered)
+
+action = fileMenu.addAction("Manage &multiple Gamebases...")
+adapterManager = adapter_manager.AdapterManager()
+adapterManager.resize(600, 600)
+
+def adapterManager_onAdaptersChanged():
+    #
+    updateTitleBar()
+
+    # Requery DB
+    refilterFromCurrentlyVisibleBar()
+    tableView.requery()
+adapterManager.adaptersChanged.connect(adapterManager_onAdaptersChanged)
+
+def action_manageMultipleGamebases_onTriggered():
+    adapterManager.move(QApplication.desktop().rect().center() - adapterManager.rect().center())
+    adapterManager.show()
+    adapterManager.activateWindow()
+action.triggered.connect(action_manageMultipleGamebases_onTriggered)
+
+fileMenu.addSeparator()
+
 action = fileMenu.addAction("Open &database in external program")
 action.triggered.connect(menu_file_openDatabaseInExternalProgram_onTriggered)
 #fileMenu.addAction("New")
@@ -1054,8 +1020,30 @@ for initialColumn in settings.viewSettings["tableColumns"]:
 
 columnNameBar.initFromColumns()
 columnFilterBar.initFromColumns()
-refilterFromCurrentlyVisibleBar()
-tableView.requery()
+
+
+
+# Open adapters specified on command-line
+for gamebaseAdapterFilePath in param_gamebaseAdapterFilePaths:
+    adapter_manager.openAdapter(gamebaseAdapterFilePath)
+
+# Set title bar
+def updateTitleBar():
+    if len(gamebase.adapters) == 0:
+        mainWindow.setWindowTitle("PyGamebase")
+    elif len(gamebase.adapters) == 1:
+        adapterId = next(iter(gamebase.adapters.keys()))
+        if hasattr(gamebase.adapters[adapterId]["module"], "config_title"):
+            mainWindow.setWindowTitle(gamebase.adapters[adapterId]["module"].config_title + " - PyGamebase")
+        else:
+            mainWindow.setWindowTitle(adapterId + " - PyGamebase")
+    else:
+        mainWindow.setWindowTitle(str(len(gamebase.adapters)) + " gamebases - PyGamebase")
+updateTitleBar()
+
+#
+refilterFromCurrentlyVisibleBar()  # [still here else when opening without a gamebase, next line doesn't resize columns]
+#tableView.requery()
 tableView.resizeAllColumns([column["width"]  for column in columns.tableColumn_getBySlice()])
 
 if columns.tableColumn_getById("name") != None:
@@ -1122,16 +1110,10 @@ def menu_file_showSubprocessOutput_onTriggered(i_checked):
 
     subprocessOutput.show()
 
-action = fileMenu.addAction("Show subprocess &output")
+action = fileMenu.addAction("Show &subprocess output")
 action.triggered.connect(menu_file_showSubprocessOutput_onTriggered)
 
 # + }}}
-
-# If application stylesheet wasn't already set (via command line)
-# and there's one specified in the preferences,
-# activate it
-if application.styleSheet() == "" and "applicationStylesheet" in settings.preferences and settings.preferences["applicationStylesheet"] != "":
-    application.setStyleSheet("file:///" + settings.preferences["applicationStylesheet"])
 
 # Enter Qt application main loop
 exitCode = application.exec_()

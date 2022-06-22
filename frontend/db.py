@@ -315,11 +315,15 @@ def getGameList_getSql(i_tableColumnSpecIds, i_whereExpression, i_sortOperations
 
     Returns:
      Either (str)
+      "": There are no databases open.
      or raise exception (SqlParseError)
       args[0]:
        (str)
        Description of error.
     """
+    if len(g_openDatabases) == 0:
+        return ""
+
     sqlTexts = []
 
     for schemaName in list(g_openDatabases.keys()):
