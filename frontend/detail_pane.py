@@ -869,6 +869,10 @@ class DetailPaneItems(QWidget):
         self.layout.addWidget(self.moveVisibleItemDownButton, 4, 3, 1, 1, Qt.AlignLeft)
         self.moveVisibleItemDownButton.clicked.connect(self.moveVisibleItemDownButton_onClicked)
         
+        self.closeButton = QPushButton("&Close")
+        self.layout.addWidget(self.closeButton, 5, 0, 1, 4, Qt.AlignHCenter)
+        self.closeButton.clicked.connect(self.closeButton_onClicked)
+
         self.layout.setColumnStretch(0, 2)
         self.layout.setColumnStretch(1, 0)
         self.layout.setColumnStretch(2, 1)
@@ -878,6 +882,9 @@ class DetailPaneItems(QWidget):
         self.layout.setRowStretch(1, 1)
         self.layout.setRowStretch(2, 1)
         self.layout.setRowStretch(3, 0)
+
+    def closeButton_onClicked(self):
+        self.hide()
 
     def useItem(self, i_item):
         detailPaneItems_use(i_item, len(g_detailPaneItems))
