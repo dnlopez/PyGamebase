@@ -270,7 +270,8 @@ menuBar = QMenuBar()
 mainWindow.layout.addWidget(menuBar)
 
 def menu_file_openDatabaseInExternalProgram_onTriggered(i_checked):
-    frontend_utils.openInDefaultApplication([gamebase.adapters[mainAdapterId]["module"].config_databaseFilePath])
+    schemaName, gameId = tableView.selectedGameSchemaNameAndId()
+    frontend_utils.openInDefaultApplication([gamebase.adapters[gamebase.schemaAdapterIds[schemaName]]["module"].config_databaseFilePath])
 
 menu = QMenu(mainWindow)
 #menu.addAction("File")
