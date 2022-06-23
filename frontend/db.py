@@ -64,10 +64,8 @@ def sanitizeSchemaName(i_name):
     """
     sanitized = ""
 
-    # Normalize slashes
+    # Normalize slashes and take stem name
     i_name = i_name.replace("\\", "/")
-
-    # Take stem name
     i_name = os.path.splitext(os.path.basename(i_name))[0]
 
     # Replace awkward characters with underscores
