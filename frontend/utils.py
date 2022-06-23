@@ -223,13 +223,20 @@ def findFileSequence(i_baseDirPath, i_filePath):
 
 # + Zip files {{{
 
-def extractZip(i_zipFilePath, i_destDirPath):
+def extractZip(i_zipFilePath, i_destDirPath, i_membersToExtract=None):
     """
     Params:
      i_zipFilePath:
       (str)
+      Path of ZIP file.
      i_destDirPath:
       (str)
+      Folder to unzip to.
+     i_membersToExtract:
+      Either (list of str)
+       Specific zip members to extract
+      or (None)
+       Extract all zip members.
 
     Returns:
      (list of str)
@@ -243,10 +250,19 @@ def extractZip(i_zipFilePath, i_destDirPath):
     # [error here if file not found]
 
     # Extract to dest dir with overwriting allowed
-    archive.extractall(i_destDirPath)
+    archive.extractall(i_destDirPath, members=i_membersToExtract)
 
     # Get absolute paths of files (exclude directories)
-    filePaths = [path  for path in archive.namelist()  if not path.endswith("/")]
+    if i_membersToExtract == None:
+        filePaths = [path  for path in archive.namelist()  if not path.endswith("/")]
+    else:
+        filePaths = []
+        for path in archive.namelist():
+            if not path.endswith("/"):
+                for memberToExtract in i_membersToExtract:
+                    if path.startswith(memberToExtract):
+                        filePaths.append(path)
+                        break
 
     #
     return filePaths
