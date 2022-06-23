@@ -362,13 +362,12 @@ class DetailPane(QWidget):
                     html += '\n\n'
 
             elif item == "Non-image extras":
-                # Seperate extras which are and aren't images
-                imageRows = []
+                # Get only the extras which aren't images
                 nonImageRows = []
                 for extrasRow in extrasRows:
                     path = extrasRow["Path"]
                     if path != None and (path.lower().endswith(".jpg") or path.lower().endswith(".jpeg") or path.lower().endswith(".gif") or path.lower().endswith(".png")):
-                        imageRows.append(extrasRow)
+                        pass
                     else:
                         nonImageRows.append(extrasRow)
 
@@ -377,20 +376,19 @@ class DetailPane(QWidget):
                     html += '  <div id="nonImageExtras">\n'
 
                     for nonImageRowNo, nonImageRow in enumerate(nonImageRows):
-                        #var label = nonImageRow.Name + " (" + nonImageRow.Path + ")";
-                        #container.appendChild(document.createTextNode(label));
-
                         html += "    "
 
                         if nonImageRowNo > 0:
                             #container.appendChild(document.createTextNode(" | "));
                             html += '<span style="margin-left: 8px; margin-right: 8px; border-left: 1px dotted #666;"></span>'
 
-                        html += '<a'
-                        path = nonImageRow["Path"]
-                        if path != None:
-                            html += ' href="extra:///' + i_schemaName + '/' + path + '"'
-                        html += '>'
+                        url = "extra:///" + i_schemaName
+                        if nonImageRow["Path"] != None:
+                            url += ":" + nonImageRow["Path"]
+                            if nonImageRow["FileToRun"] != None:
+                                url += ":" + nonImageRow["FileToRun"]
+
+                        html += '<a href="' + url + '" style="display: inline-block; text-align: center;">'
                         html += nonImageRow["Name"]
                         html += '</a>\n'
 
@@ -398,31 +396,32 @@ class DetailPane(QWidget):
                     html += '\n\n'
 
             elif item == "Image extras":
-                # Seperate extras which are and aren't images
+                # Get only the extras which are images
                 imageRows = []
-                nonImageRows = []
                 for extrasRow in extrasRows:
                     path = extrasRow["Path"]
                     if path != None and (path.lower().endswith(".jpg") or path.lower().endswith(".jpeg") or path.lower().endswith(".gif") or path.lower().endswith(".png")):
                         imageRows.append(extrasRow)
-                    else:
-                        nonImageRows.append(extrasRow)
 
-                # For each image, insert an image
+                # For each image extra, insert an image
                 if len(imageRows) > 0:
                     html += '  <div id="imageExtras">\n'
 
                     for imageRowNo, imageRow in enumerate(imageRows):
-                        #print("imageRow: " + str(imageRow))
-                        #var cell = document.createElement("div");
-
                         html += "    "
 
-                        html += '<a href="extra:///' + i_schemaName + '/' + imageRow["Path"] + '" style="display: inline-block; text-align: center;">'
+                        url = "extra:///" + i_schemaName
+                        url += ":" + imageRow["Path"]
+                        if imageRow["FileToRun"] != None:
+                            url += ":" + imageRow["FileToRun"]
+
+                        html += '<a href="' + url + '" style="display: inline-block; text-align: center;">'
+
                         if hasattr(gamebase.adapters[i_adapterId]["module"], "config_extrasBaseDirPath"):
                             html += '<img src="file://' + gamebase.normalizeDirPathFromAdapter(gamebase.adapters[i_adapterId]["module"].config_extrasBaseDirPath) + "/" + imageRow["Path"] + '" style="height: 300px;">'
                         #html += '<img src="https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_92x30dp.png" style="height: 300px;">'
                         html += '<div>' + imageRow["Name"] + '</div>'
+
                         html += '</a>\n'
 
                         #cell.appendChild(link);
@@ -451,15 +450,22 @@ class DetailPane(QWidget):
                     url = i_qUrl.toString()
                     if url.startswith("extra:///"):
                         path = url[9:]
-                        schemaName, extraPath = path.split("/", 1)
+                        schemaName, extraPaths = path.split(":", 1)
                         schemaName = urllib.parse.unquote(schemaName)
+                        if extraPaths.find(":") == -1:
+                            extraPath = extraPaths
+                            fileToRun = None
+                        else:
+                            extraPath, fileToRun = extraPaths.split(":", 1)
                         extraPath = urllib.parse.unquote(extraPath)
+                        fileToRun = urllib.parse.unquote(fileToRun)
+
                         extraInfo = [row  for row in self.extrasRows  if row["Path"] == extraPath][0]
                         gameInfo = self.gameRow
                         gameInfo = db.DbRecordDict(gameInfo)
 
                         try:
-                            gamebase.adapters[i_adapterId]["module"].runExtra(extraPath, extraInfo, gameInfo)
+                            gamebase.adapters[i_adapterId]["module"].runExtra(extraPath, fileToRun, extraInfo, gameInfo)
                         except Exception as e:
                             import traceback
                             print(traceback.format_exc())

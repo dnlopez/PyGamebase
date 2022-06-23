@@ -69,8 +69,8 @@ def runGame(i_gamePath, i_fileToRun = None, i_gameInfo = None):
     #
     runGameWithMame(utils.joinPaths(tempDirPath, gameFiles))
 
-def runExtra(i_extraPath, i_extraInfo, i_gameInfo):
-    #print('runExtra(' + pprint.pformat(i_extraPath) + ', ' + pprint.pformat(i_extraInfo) + ', ' + pprint.pformat(i_gameInfo) + ')')
+def runExtra(i_extraPath, i_fileToRun, i_extraInfo, i_gameInfo):
+    #print('runExtra(' + pprint.pformat(i_extraPath) + ', ' + pprint.pformat(i_fileToRun) + ', ' + pprint.pformat(i_extraInfo) + ', ' + pprint.pformat(i_gameInfo) + ')')
 
     # If file is a zip
     if utils.pathHasExtension(i_extraPath, ".ZIP"):
