@@ -27,6 +27,29 @@ schemaAdapterIds = {}
 # (dict)
 # Shortcut reverse lookup table from schema name to adapter ID
 
+def adapterFilePathToAdapterId(i_adapterFilePath):
+    """
+    Params:
+     i_adapterFilePath:
+      (str)
+
+    Returns:
+     (str)
+    """
+    # Normalize file path
+    return os.path.realpath(i_adapterFilePath)
+
+def adapterIsLoaded(i_adapterId):
+    """
+    Params:
+     i_adapterId:
+      (str)
+
+    Returns:
+     (bool)
+    """
+    return i_adapterId in adapters
+
 def importAdapter(i_adapterFilePath):
     """
     Params:
@@ -37,27 +60,32 @@ def importAdapter(i_adapterFilePath):
      (str)
      Unique ID string for loaded adapter.
     """
+    # Generate adapter ID
+    adapterId = adapterFilePathToAdapterId(i_adapterFilePath)
+
     # Add adapter's directory to sys.path
-    i_adapterFilePath = os.path.realpath(i_adapterFilePath)
-    sys.path.append(os.path.dirname(i_adapterFilePath))
+    # if it's not there already
+    adapterDirPath = os.path.dirname(adapterId)
+    if adapterDirPath not in sys.path:
+        sys.path.append(adapterDirPath)
 
     # Find out if module was previously loaded
     moduleWasPreviouslyLoaded = False
     for module in sys.modules.values():
-        if hasattr(module, "__file__") and module.__file__ != None and os.path.abspath(module.__file__) == i_adapterFilePath:
+        if hasattr(module, "__file__") and module.__file__ != None and os.path.abspath(module.__file__) == adapterId:
             moduleWasPreviouslyLoaded = True
             break
 
     # Import the module
     # and if it had been previously loaded, call reload() to execute its code again
-    adapterModule = importlib.import_module(os.path.splitext(os.path.basename(i_adapterFilePath))[0])
-    adapters[i_adapterFilePath] = {
+    adapterModule = importlib.import_module(os.path.splitext(os.path.basename(adapterId))[0])
+    adapters[adapterId] = {
         "module": adapterModule
     }
     if moduleWasPreviouslyLoaded:
         importlib.reload(adapterModule)
 
-    return i_adapterFilePath
+    return adapterId
 
 def setAdapterSchemaName(i_adapterId, i_schemaName):
     """

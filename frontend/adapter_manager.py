@@ -27,6 +27,13 @@ def openAdapter(i_adapterFilePath):
      or (None)
       Adapter (or database) failed to open.
     """
+    # If adapter is already loaded,
+    # just reload the module
+    adapterId = gamebase.adapterFilePathToAdapterId(i_adapterFilePath)
+    if gamebase.adapterIsLoaded(adapterId):
+        gamebase.reloadAdapter(adapterId)
+        return adapterId
+
     # Import specified adapter module
     adapterId = gamebase.importAdapter(i_adapterFilePath)
 
