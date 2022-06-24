@@ -341,9 +341,9 @@ class ColumnFilterBar(QWidget):
                             value = "'" + value + "'"
 
                         # Else if a comparison operator (=, <>, >, <, >=, <=)
-                        elif value.startswith("=") or value.startswith(">") or value.startswith("<"):
+                        elif value.startswith("=") or value.startswith(">") or value.startswith("<") or value.startswith("!="):
                             # Get operator and value
-                            if value.startswith(">=") or value.startswith("<=") or value.startswith("<>"):
+                            if value.startswith(">=") or value.startswith("<=") or value.startswith("<>") or value.startswith("!="):
                                 operator = value[:2]
                                 value = value[2:]
                             else:

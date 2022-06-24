@@ -14,6 +14,7 @@ import pprint
 #whereExpr = r"a AND b OR c AND d"
 #whereExpr = r"(a OR b) AND c AND d"
 #whereExpr = r"(Years.Year BETWEEN 1983 AND 1985)"
+#whereExpr = r"Games.Name!=a"
 
 class SqlParseError(RuntimeError):
     pass
@@ -99,7 +100,7 @@ def tokenizeWhereExpr(i_text):
             continue
 
         #match = re.match(r"(<=|>=|<|>|==|=|!=|<>|~)[^<>=!~]", i_text[textPos:])
-        match = re.match(r"(<=|>=|<|>|==|=|!=|<>|~)", i_text[textPos:])
+        match = re.match(r"(==|<=|>=|<>|!=|<|>|=|~)", i_text[textPos:])
         if match:
             tokens.append(("operator", match.group(1), textPos, textPos + match.end(1)))
             textPos += match.end(1)
