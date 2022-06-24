@@ -35,13 +35,23 @@ def openAdapter(i_adapterFilePath):
         return adapterId
 
     # Import specified adapter module
-    adapterId = gamebase.importAdapter(i_adapterFilePath)
+    try:
+        adapterId = gamebase.importAdapter(i_adapterFilePath)
+    except Exception as e:
+        import traceback
+        print(traceback.format_exc())
+        messageBox = qt_extras.ResizableMessageBox(QApplication.style().standardIcon(QStyle.SP_MessageBoxCritical), "Error")
+        messageBox.setText("<b>In adapter file:</b>\n<p><pre>" + i_adapterFilePath + "</pre>\n<p><b>While importing, an error occurred:</b>\n<p><pre>" + traceback.format_exc() + "</pre>\n")
+        messageBox.resizeToContent()
+        messageBox.exec()
+
+        return None
 
     # If there isn't a database file path,
     # show error message, undo adapter import and stop
     if not hasattr(gamebase.adapters[adapterId]["module"], "config_databaseFilePath"):
         messageBox = qt_extras.ResizableMessageBox(QApplication.style().standardIcon(QStyle.SP_MessageBoxCritical), "Error")
-        messageBox.setText("<big><b>Missing adapter setting:</b></big><pre>config_databaseFilePath</pre>")
+        messageBox.setText("<b>In adapter file:</b>\n<p><pre>" + i_adapterFilePath + "</pre>\n<p><b>A required setting is missing:</b>\n<p><pre>config_databaseFilePath</pre>\n<p><b>This file will not be loaded.</b>")
         messageBox.resizeToContent()
         messageBox.exec()
 
@@ -60,7 +70,7 @@ def openAdapter(i_adapterFilePath):
         import traceback
         print(traceback.format_exc())
         messageBox = qt_extras.ResizableMessageBox(QApplication.style().standardIcon(QStyle.SP_MessageBoxCritical), "Error")
-        messageBox.setText("<big><b>When opening database file:</b></big><p>\nWith path:<br>\n<br>\n" + gamebase.adapters[adapterId]["module"].config_databaseFilePath + "<p>\nAn error occurred:<pre>" + "<br>\n".join(traceback.format_exception_only(e.__class__, e)) + "</pre>")
+        messageBox.setText("<b>In adapter file:</b>\n<p><pre>" + i_adapterFilePath + "</pre>\n<p><b>When opening database file:</b>\n<p><pre>" + gamebase.adapters[adapterId]["module"].config_databaseFilePath + "</pre>\n<p><b>An error occurred:</b>\n<p><pre>" + "<br>\n".join(traceback.format_exception_only(e.__class__, e)) + "</pre>\n<p><b>This file will not be loaded.</b>")
         messageBox.resizeToContent()
         messageBox.exec()
 
