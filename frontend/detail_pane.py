@@ -54,6 +54,16 @@ g_detailPaneItemsAvailable = set([
 
 class DetailPane(QWidget):
 
+    requestGameSwitch = Signal(int)
+    # Emitted when
+    #  The detail pane wants to navigate to another game (the mouse was over the close button and the wheel was rolled)
+    #
+    # Params:
+    #  i_direction:
+    #   (int)
+    #   1: Go to the next game
+    #   -1: Go to the previous game
+
     def __init__(self):
         QWidget.__init__(self)
 
@@ -77,7 +87,15 @@ class DetailPane(QWidget):
         self.setAutoFillBackground(True)
         self.setPalette(pal)
 
-        self.margin = QPushButton("x")
+        class Margin(QPushButton):
+            def __init__(self, i_parent=None):
+                super().__init__("x", i_parent)
+            def wheelEvent(self, i_event):
+                if i_event.pixelDelta().y() > 0:
+                    self.parent().requestGameSwitch.emit(-1)
+                elif i_event.pixelDelta().y() < 0:
+                    self.parent().requestGameSwitch.emit(1)
+        self.margin = Margin(self)
         self.margin.clicked.connect(self.margin_onClicked)
         self.layout.addWidget(self.margin)
 
