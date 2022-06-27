@@ -210,6 +210,35 @@ class MyStyledItemDelegate(QStyledItemDelegate):
                 destRect = danrectToQrect(fitLetterboxed(qrectToDanrect(pixmap.rect()), qrectToDanrect(i_option.rect)))
                 i_painter.drawPixmap(destRect, pixmap)
 
+        #
+        elif column["id"] == "schema":
+            schemaName = self.parent().dbRows[i_index.row()]["SchemaName"]
+
+            #i_option.rect.setTop(i_option.rect.top() + 16)
+
+            # If the adapter specifies a system image,
+            # draw it
+            adapterId = gamebase.schemaAdapterIds[schemaName]
+            gamebaseImageFilePath = gamebase.gamebaseImageFilePath(adapterId)
+            if gamebaseImageFilePath != None:
+                pixmap = QPixmap(gamebaseImageFilePath)
+                destRect = danrectToQrect(fitLetterboxed(qrectToDanrect(pixmap.rect()), qrectToDanrect(i_option.rect.adjusted(8, 8, -8, -8))))
+                i_painter.drawPixmap(destRect, pixmap)
+            # Else draw some text
+            else:
+                # If the adapter specifies a title, use that,
+                # else use the symbolic schema name
+                if hasattr(gamebase.adapters[adapterId]["module"], "config_title"):
+                    text = gamebase.adapters[adapterId]["module"].config_title
+                else:
+                    text = schemaName
+
+                # Draw it rotated 90 degrees and centred in cell
+                i_painter.translate(i_option.rect.x(), i_option.rect.y() + i_option.rect.height())
+                i_painter.rotate(-90)
+                i_painter.drawText(QRect(0, 0, i_option.rect.height(), i_option.rect.width()), Qt.AlignVCenter|Qt.AlignHCenter|Qt.TextWordWrap, text)
+                i_painter.resetTransform()
+
         # Musician photo
         elif column["id"] == "musician_photo":
             photoFullPath = gamebase.dbRow_photoFullPath(self.parent().dbRows[i_index.row()])

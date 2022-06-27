@@ -84,7 +84,7 @@ This program works with Gamebase databases in SQLite format. Since Gamebase data
 
 <h3>The Gamebase adapter file</h3>
 
-<p>A Gamebase adapter file is a Python module that connects the frontend up to a particular Gamebase database and its associated media files. The frontend requires such a file to function.
+<p>A Gamebase adapter file is a Python module that connects the frontend up to a particular Gamebase database and its associated media files. The frontend will appear empty without one.
 
 <p>For a description of what the frontend expects to find in this module, helper facilities that are available for use in such modules and other details, see <a href="gamebase_adapter_files.html">Gamebase adapter files</a>.
 
@@ -94,8 +94,9 @@ This program works with Gamebase databases in SQLite format. Since Gamebase data
 
 <div class="code_block">python3 main.py</div>
 
-<p>You can append the path of your adapter file to open it riight up, else you will be prompted with a file selector.
+<p>You can append the path of your adapter file to open it immediately, or multiple adapter files to view their games mixed together.
 
+<p>After startup, use the menu items "File -> Open Gamebase..." or "File -> Manage multiple Gamebases..." to open and close Gamebases by their adapter files.
 
 <h2>The game table</h2>
 

@@ -124,6 +124,22 @@ def forgetAdapter(i_adapterId):
 
 # + }}}
 
+
+def gamebaseImageFilePath(i_adapterId):
+    """
+    Params:
+     i_adapterId:
+      (str)
+
+    Returns:
+     Either (str)
+     or (None)
+    """
+    if not hasattr(adapters[i_adapterId]["module"], "config_gamebaseImageFilePath"):
+        return None
+    return adapters[i_adapterId]["module"].config_gamebaseImageFilePath
+
+
 # + Screenshot/photo file/URL resolving {{{
 
 def normalizeDirPathFromAdapter(i_dirPath):

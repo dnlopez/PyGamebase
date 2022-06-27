@@ -73,7 +73,7 @@ g_tableColumnSpecs = [
     {
         "id": "schema",
         "menuPath": ["Gamebase name"],
-        "headingName": "Gamebase name",
+        "headingName": "GB",
         "dbColumnNames": [],
         "dbTableNames": [],
         #"dbSelect": "SchemaName",
