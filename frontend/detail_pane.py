@@ -3,6 +3,17 @@
 import os.path
 import urllib.parse
 import math
+import base64
+import io
+import tempfile
+import zipfile
+
+# Pillow
+try:
+    import PIL.Image
+    g_havePil = True
+except ImportError:
+    g_havePil = False
 
 # Qt
 from PySide2.QtCore import *
@@ -219,6 +230,32 @@ class DetailPane(QWidget):
         if "detailPaneStylesheet" in settings.preferences and settings.preferences["detailPaneStylesheet"] != "":
             html += '  <link rel="stylesheet" type="text/css" href="file://' + (settings.preferences["detailPaneStylesheet"]).replace("\\", "/") + '">\n'
 
+        def extraIsAnImage(i_extrasRow):
+            """
+            Params:
+             i_extrasRow:
+              (dict)
+
+            Returns:
+             (bool)
+            """
+            # If "Path" is an image,
+            # return True
+            path = i_extrasRow["Path"]
+            if path != None:
+                if path.lower().endswith(".jpg") or path.lower().endswith(".jpeg") or path.lower().endswith(".gif") or path.lower().endswith(".png"):
+                    return True
+                # Else if "Path" is a zip, we can support images inside it
+                elif path.lower().endswith(".zip"):
+                    # If "FileToRun" is an image,
+                    # return True
+                    fileToRun = i_extrasRow["FileToRun"]
+                    if fileToRun != None:
+                        if fileToRun.lower().endswith(".jpg") or fileToRun.lower().endswith(".jpeg") or fileToRun.lower().endswith(".gif") or fileToRun.lower().endswith(".png"):
+                            return True
+            #
+            return False
+
         for item in g_detailPaneItems:
             if item == "Screenshots (all)":
                 html += '  <div id="screenshots">\n'
@@ -381,13 +418,7 @@ class DetailPane(QWidget):
 
             elif item == "Non-image extras":
                 # Get only the extras which aren't images
-                nonImageRows = []
-                for extrasRow in extrasRows:
-                    path = extrasRow["Path"]
-                    if path != None and (path.lower().endswith(".jpg") or path.lower().endswith(".jpeg") or path.lower().endswith(".gif") or path.lower().endswith(".png")):
-                        pass
-                    else:
-                        nonImageRows.append(extrasRow)
+                nonImageRows = [extrasRow  for extrasRow in extrasRows  if not extraIsAnImage(extrasRow)]
 
                 # For each non-image, insert a link
                 if len(nonImageRows) > 0:
@@ -415,11 +446,7 @@ class DetailPane(QWidget):
 
             elif item == "Image extras":
                 # Get only the extras which are images
-                imageRows = []
-                for extrasRow in extrasRows:
-                    path = extrasRow["Path"]
-                    if path != None and (path.lower().endswith(".jpg") or path.lower().endswith(".jpeg") or path.lower().endswith(".gif") or path.lower().endswith(".png")):
-                        imageRows.append(extrasRow)
+                imageRows = [extrasRow  for extrasRow in extrasRows  if extraIsAnImage(extrasRow)]
 
                 # For each image extra, insert an image
                 if len(imageRows) > 0:
@@ -436,7 +463,41 @@ class DetailPane(QWidget):
                         html += '<a href="' + url + '" style="display: inline-block; text-align: center;">'
 
                         if hasattr(gamebase.adapters[i_adapterId]["module"], "config_extrasBaseDirPath"):
-                            html += '<img src="file://' + gamebase.normalizeDirPathFromAdapter(gamebase.adapters[i_adapterId]["module"].config_extrasBaseDirPath) + "/" + imageRow["Path"] + '" style="height: 300px;">'
+                            if imageRow["Path"].lower().endswith(".zip"):
+                                zipFilePath = gamebase.normalizeDirPathFromAdapter(gamebase.adapters[i_adapterId]["module"].config_extrasBaseDirPath) + os.sep + imageRow["Path"]
+                                memberPath = imageRow["FileToRun"]
+                                if g_havePil:
+                                    # Load the file from the zip into memory
+                                    imageBytes = gamebase.getZipMemberBytes(zipFilePath, memberPath)
+
+                                    # Parse image,
+                                    # convert colours to RGB
+                                    # and save as JPEG, to make it smaller and mostly come within QtWebEngine/Chromium data URI size limits
+                                    image = PIL.Image.open(io.BytesIO(imageBytes))
+                                    #image = image.resize((image.width // 8, image.height // 8))
+                                    if image.mode != "RGB":
+                                        image = image.convert("RGB")
+                                    imageBytesIo = io.BytesIO()
+                                    image.save(imageBytesIo, format="JPEG")
+                                    imageBytes = imageBytesIo.getvalue()
+
+                                    # Convert to data URI
+                                    encoded = base64.b64encode(imageBytes)
+                                    imgSrc = "data:image/jpeg;base64," + str(encoded.decode())
+                                else:
+                                    # (Re-)create temporary directory
+                                    # and extract image file to it
+                                    tempDirPath = tempfile.gettempdir() + "/gamebase/images/" + os.path.basename(zipFilePath) + "/"
+                                    frontend_utils.createTree(tempDirPath)
+                                    zipFile = zipfile.ZipFile(zipFilePath)
+                                    zipFile.extract(memberPath, tempDirPath)
+
+                                    #
+                                    imgSrc = tempDirPath + os.sep + memberPath
+                            else:
+                                imgSrc = 'file://' + gamebase.normalizeDirPathFromAdapter(gamebase.adapters[i_adapterId]["module"].config_extrasBaseDirPath) + "/" + imageRow["Path"]
+
+                            html += '<img src="' + imgSrc + '" style="height: 300px;">'
                         #html += '<img src="https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_92x30dp.png" style="height: 300px;">'
                         html += '<div>' + imageRow["Name"] + '</div>'
 
@@ -449,6 +510,8 @@ class DetailPane(QWidget):
 
 
         #print(html)
+        #with open("/tmp/detail_pane.html", "w") as f:
+        #    f.write(html)
 
         #self.webEngineView.setHtml(html, QUrl("file:///"))
         # Load HTML into a QWebEnginePage with a handler for link clicks

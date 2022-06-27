@@ -487,3 +487,32 @@ def dbRow_photoFullPath(i_row):
 # + + }}}
 
 # + }}}
+
+# + Zip file cache {{{
+
+import zipfile
+g_zipFiles = {}
+
+def getZipMemberBytes(i_zipFilePath, i_memberPath):
+    """
+    Params:
+     i_zipFilePath:
+      (str)
+     i_memberPath:
+      (str)
+
+    Returns:
+     (bytes)
+    """
+    # If zip file isn't already open,
+    # open it
+    global g_zipFiles
+    if i_zipFilePath not in g_zipFiles:
+        g_zipFiles[i_zipFilePath] = zipfile.ZipFile(i_zipFilePath, "r")
+
+    #
+    zipFile = g_zipFiles[i_zipFilePath]
+
+    return zipFile.read(i_memberPath)
+
+# + }}}

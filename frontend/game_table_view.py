@@ -3,6 +3,9 @@ import sqlite3
 import functools
 import copy
 import random
+import os
+import zipfile
+import tempfile
 
 # Qt
 from PySide2.QtCore import *
@@ -15,7 +18,7 @@ import qt_extras
 import columns
 import db
 import frontend_utils
-import utils
+#import utils
 import sql
 import gamebase
 import settings
@@ -185,7 +188,15 @@ class MyStyledItemDelegate(QStyledItemDelegate):
 
             screenshotFullPath = gamebase.dbRow_nthScreenshotFullPath(self.parent().dbRows[i_index.row()], picNo)
             if screenshotFullPath != None:
-                pixmap = QPixmap(screenshotFullPath)
+                zipExtensionPos = screenshotFullPath.lower().find(".zip/")
+                if zipExtensionPos == -1:
+                    pixmap = QPixmap(screenshotFullPath)
+                else:
+                    zipFilePath = screenshotFullPath[:zipExtensionPos + 4]
+                    memberPath = screenshotFullPath[zipExtensionPos + 5:]
+
+                    pixmap = QPixmap()
+                    pixmap.loadFromData(gamebase.getZipMemberBytes(zipFilePath, memberPath))
                 destRect = danrectToQrect(fitLetterboxed(qrectToDanrect(pixmap.rect()), qrectToDanrect(i_option.rect)))
                 i_painter.drawPixmap(destRect, pixmap)
 
@@ -690,7 +701,22 @@ class GameTableView(QTableView):
             rowNo = i_modelIndex.row()
             screenshotFullPath = gamebase.dbRow_nthScreenshotFullPath(self.dbRows[rowNo], picNo)
             if screenshotFullPath != None:
-                frontend_utils.openInDefaultApplication(screenshotFullPath)
+                zipExtensionPos = screenshotFullPath.lower().find(".zip/")
+                if zipExtensionPos == -1:
+                    frontend_utils.openInDefaultApplication(screenshotFullPath)
+                else:
+                    zipFilePath = screenshotFullPath[:zipExtensionPos + 4]
+                    memberPath = screenshotFullPath[zipExtensionPos + 5:]
+
+                    # (Re-)create temporary directory
+                    # and extract image file to it
+                    tempDirPath = tempfile.gettempdir() + "/gamebase/images"
+                    frontend_utils.createTree(tempDirPath)
+                    zipFile = zipfile.ZipFile(zipFilePath)
+                    zipFile.extract(memberPath, tempDirPath)
+
+                    #
+                    frontend_utils.openInDefaultApplication(tempDirPath + os.sep + memberPath)
 
         # Random screenshot
         elif columnId.startswith("random_pic[") and columnId.endswith("]"):

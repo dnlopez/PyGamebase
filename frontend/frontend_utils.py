@@ -1,6 +1,7 @@
 
 # Python std
 import sys
+import os
 
 
 def openInDefaultApplication(i_filePaths):
@@ -43,3 +44,18 @@ def openInDefaultApplication(i_filePaths):
     popen = subprocess.Popen(executableAndArgs,
                              shell=True,
                              stdout=sys.stdout.fileno(), stderr=sys.stderr.fileno())
+
+def createTree(i_pathOnDiskOfLeafDir):
+    """
+    Params:
+     i_pathOnDiskOfLeafDir:
+      (str)
+    """
+    # Allow either forward or back-slashes
+    i_pathOnDiskOfLeafDir = i_pathOnDiskOfLeafDir.replace("/", os.sep)
+
+    partialPath = ""
+    for part in i_pathOnDiskOfLeafDir.split(os.sep):
+        partialPath += part + os.sep
+        if not os.path.isdir(partialPath):
+            os.mkdir(partialPath)
