@@ -530,17 +530,21 @@ class DetailPane(QWidget):
                     # pass it to the adapter file's runExtra()
                     url = i_qUrl.toString()
                     if url.startswith("extra:///"):
+                        # Strip protocol scheme
                         path = url[9:]
+                        # Get and unquote schema name, and rest expected to be extra paths
                         schemaName, extraPaths = path.split(":", 1)
                         schemaName = urllib.parse.unquote(schemaName)
+                        # Get and unquote single extra path, or file to run also
                         if extraPaths.find(":") == -1:
                             extraPath = extraPaths
+                            extraPath = urllib.parse.unquote(extraPath)
                             fileToRun = None
                         else:
                             extraPath, fileToRun = extraPaths.split(":", 1)
-                        extraPath = urllib.parse.unquote(extraPath)
-                        fileToRun = urllib.parse.unquote(fileToRun)
-
+                            extraPath = urllib.parse.unquote(extraPath)
+                            fileToRun = urllib.parse.unquote(fileToRun)
+                        #
                         extraInfo = [row  for row in self.extrasRows  if row["Path"] == extraPath][0]
                         gameInfo = self.gameRow
                         gameInfo = db.DbRecordDict(gameInfo)
@@ -558,18 +562,24 @@ class DetailPane(QWidget):
                     # Else if it's a link to a screenshot,
                     # open it with the default application
                     elif url.startswith("screenshot:///"):
+                        # Strip protocol scheme
                         path = url[14:]
+                        # Get and unquote schema name, and rest expected to be screenshot path
                         schemaName, screenshotPath = path.split("/", 1)
                         schemaName = urllib.parse.unquote(schemaName)
+                        #
                         screenshotPath = urllib.parse.unquote(screenshotPath)
                         frontend_utils.openInDefaultApplication(gamebase.screenshotPath_relativeToAbsolute(i_adapterId, screenshotPath))
 
                     # If it's a link to a game,
                     # select it in the table view
                     elif url.startswith("game:///"):
+                        # Strip protocol scheme
                         path = url[8:]
+                        # Get and unquote schema name, and rest expected to be game ID
                         schemaName, gameId = path.split("/", 1)
                         schemaName = urllib.parse.unquote(schemaName)
+                        #
                         gameId = urllib.parse.unquote(gameId)
                         gameId = int(gameId)
                         self.parent().parent().requestGameNavigation.emit(schemaName, gameId)
