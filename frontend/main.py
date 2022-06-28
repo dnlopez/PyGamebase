@@ -211,6 +211,16 @@ mainWindow.setWindowTitle("PyGamebase")
 
 frontend.mainWindow = mainWindow
 
+def mainWindow_onUrlsDropped(i_urls):
+    atLeastOneSuccess = False
+    for url in i_urls:
+        if url.isLocalFile():
+            if adapter_manager.openAdapter(url.toLocalFile()) != None:
+                atLeastOneSuccess = True
+    if atLeastOneSuccess:
+        adapterManager_onAdaptersChanged()
+mainWindow.urlsDropped.connect(mainWindow_onUrlsDropped)
+
 #mainWindow.setStyleSheet("* {background-color: white; }")
 
 # Application-wide keyboard shortcuts

@@ -29,3 +29,27 @@ class MainWindow(QWidget):
         self.layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(self.layout)
 
+        self.initDropFiles()
+
+    # + Drop files {{{
+
+    urlsDropped = Signal(list)
+    # Emitted when
+    #  Some URLs (files) are dropped on the window
+    #
+    # Params:
+    #  i_urls:
+    #   (list of QUrl)
+
+    def initDropFiles(self):
+        self.setAcceptDrops(True)
+
+    def dragEnterEvent(self, i_event):  # override from QWidget
+        i_event.acceptProposedAction()
+
+    def dropEvent(self, i_event):  # override from QWidget
+        mimeData = i_event.mimeData()
+        if mimeData.hasUrls():
+            self.urlsDropped.emit(mimeData.urls())
+
+    # + }}}
