@@ -141,7 +141,7 @@ def openDb(i_schemaName, i_dbFilePath):
                         if not (columnName in columnNames):
                             rv = False
             #if rv == False:
-            #    print("Missing column: " + i_tableColumnSpec["id"])
+            #    print("Schema: "  + i_schemaName + ", missing column: " + i_tableColumnSpec["id"])
             return rv
         for tableColumnSpec in columns.g_tableColumnSpecs:
             if validateTableColumnSpec(dbInfo["schema"], dbTableNames, tableColumnSpec):
