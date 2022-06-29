@@ -249,7 +249,7 @@ class DetailPane(QWidget):
                 elif path.lower().endswith(".zip"):
                     # If "FileToRun" is an image,
                     # return True
-                    fileToRun = i_extrasRow["FileToRun"]
+                    fileToRun = i_extrasRow.get("FileToRun", None)
                     if fileToRun != None:
                         if fileToRun.lower().endswith(".jpg") or fileToRun.lower().endswith(".jpeg") or fileToRun.lower().endswith(".gif") or fileToRun.lower().endswith(".png"):
                             return True
@@ -434,7 +434,7 @@ class DetailPane(QWidget):
                         url = "extra:///" + i_schemaName
                         if nonImageRow["Path"] != None:
                             url += ":" + nonImageRow["Path"]
-                            if nonImageRow["FileToRun"] != None:
+                            if nonImageRow.get("FileToRun", None) != None:
                                 url += ":" + nonImageRow["FileToRun"]
 
                         html += '<a href="' + url + '" style="display: inline-block; text-align: center;">'
@@ -457,7 +457,7 @@ class DetailPane(QWidget):
 
                         url = "extra:///" + i_schemaName
                         url += ":" + imageRow["Path"]
-                        if imageRow["FileToRun"] != None:
+                        if imageRow.get("FileToRun", None) != None:
                             url += ":" + imageRow["FileToRun"]
 
                         html += '<a href="' + url + '" style="display: inline-block; text-align: center;">'
