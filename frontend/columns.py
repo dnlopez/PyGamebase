@@ -1314,7 +1314,7 @@ def tableColumnSpec_getById(i_id):
         return None
     return columns[0]
 
-def tableColumnSpec_getByDbIdentifier(i_identifier):
+def tableColumnSpec_getByDbIdentifier(i_identifier, i_caseInsensitive=False):
     """
     Params:
      i_identifier:
@@ -1323,6 +1323,8 @@ def tableColumnSpec_getByDbIdentifier(i_identifier):
       eg.
        "Name"
        "Games.Name"
+     i_caseInsensitive:
+      (bool)
 
     Returns:
      Either (TableColumnSpec)
@@ -1331,7 +1333,7 @@ def tableColumnSpec_getByDbIdentifier(i_identifier):
     for tableColumnSpec in g_tableColumnSpecs:
         if "dbIdentifiers" in tableColumnSpec:
             for dbIdentifier in tableColumnSpec["dbIdentifiers"]:
-                if dbIdentifier == i_identifier:
+                if dbIdentifier == i_identifier or (i_caseInsensitive and dbIdentifier.upper() == i_identifier.upper()):
                     return tableColumnSpec
     return None
 

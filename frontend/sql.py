@@ -606,7 +606,7 @@ def sqlWhereExpressionToColumnFilters(i_whereExpression, i_skipFailures=False):
                     return None
 
             # If the column name actually corresponds to a database field
-            tableColumnSpec = columns.tableColumnSpec_getByDbIdentifier(columnName)
+            tableColumnSpec = columns.tableColumnSpec_getByDbIdentifier(columnName, True)
             if tableColumnSpec != None:
                 widgetText = None
                 strValue = str(value)
@@ -764,7 +764,7 @@ def normalizeSqlWhereExpressionToTableNamesAndSelectTerms(i_whereExpression, i_s
             if io_node.type == "identifier":
                 # If recognize the column,
                 # normalize the identifier, modifying the node
-                tableColumnSpec = columns.tableColumnSpec_getByDbIdentifier(io_node.value)
+                tableColumnSpec = columns.tableColumnSpec_getByDbIdentifier(io_node.value, True)
                 if tableColumnSpec != None:
                     # Normalize identifier name in the parsed SQL
                     io_node.value = '"' + tableColumnSpec["dbIdentifiers"][0] + '"'
