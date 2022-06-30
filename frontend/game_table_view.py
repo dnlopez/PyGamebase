@@ -590,16 +590,16 @@ class GameTableView(QTableView):
         sqlValid = True
         try:
             self.queryDb(i_sqlWhereExpression, i_sortOperations)
-        except sql.SqlParseError as e:
-            sqlValid = False
-
-            import traceback
-            print(traceback.format_exc())
-
-            messageBox = qt_extras.ResizableMessageBox(QApplication.style().standardIcon(QStyle.SP_MessageBoxCritical), "Error")
-            messageBox.setText("<big><b>In SQL WHERE expression:</b></big><pre>" + "\n".join(e.args) + "</pre>")
-            messageBox.resizeToContent()
-            messageBox.exec()
+        #except sql.SqlParseError as e:
+        #    sqlValid = False
+        #
+        #    import traceback
+        #    print(traceback.format_exc())
+        #
+        #    messageBox = qt_extras.ResizableMessageBox(QApplication.style().standardIcon(QStyle.SP_MessageBoxCritical), "Error")
+        #    messageBox.setText("<big><b>In SQL WHERE expression:</b></big><pre>" + "\n".join(e.args) + "</pre>")
+        #    messageBox.resizeToContent()
+        #    messageBox.exec()
         except sqlite3.OperationalError as e:
             sqlValid = False
 
