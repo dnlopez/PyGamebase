@@ -1238,22 +1238,6 @@ g_tableColumnSpecs = [
         "mdbComment": "File to Run within Filename if Filename is an archive containing more than one compatible emulator file"
     },
     {
-        "id": "file_to_run2",
-        "menuPath": ["Internal", "Filenames", "File to run"],
-        "headingName": "File to run",
-        "dbColumnNames": ["Games.FileToRun"],
-        "dbTableNames": ["Games"],
-        "dbSelect": "Games.FileToRun AS [Games.FileToRun]",
-        "dbSelectPlaceholder": "NULL AS [Games.FileToRun]",
-        "dbIdentifiers": ["Games.FileToRun", "FileToRun"],
-        "defaultWidth": 250,
-        "sortable": True,
-        "filterable": True,
-        "textAlignment": "left",
-        "mdbType": "Memo/Hyperlink (255)",
-        "mdbComment": "File to Run within Filename if Filename is an archive containing more than one compatible emulator file"
-    },
-    {
         "id": "filename_index",
         "menuPath": ["Internal", "Filenames", "Filename index"],
         "headingName": "Filename index",
