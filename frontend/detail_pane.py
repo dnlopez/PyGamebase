@@ -214,6 +214,13 @@ class DetailPane(QWidget):
          i_gameId:
           (int)
         """
+        self.webEngineView.setPage(None)
+        if hasattr(self, "webEnginePage"):
+            self.webEnginePage.setParent(None)
+            #self.webEnginePage.deleteLater()
+            #del(self.webEnginePage)
+            self.webEnginePage = None
+
         gameRow = db.getGameRecord(i_schemaName, i_gameId, True)
         extrasRows = db.getExtrasRecords(i_schemaName, str(gameRow["Games.GA_Id"]))
 
@@ -582,7 +589,17 @@ class DetailPane(QWidget):
                         #
                         gameId = urllib.parse.unquote(gameId)
                         gameId = int(gameId)
-                        self.parent().parent().requestGameNavigation.emit(schemaName, gameId)
+
+                        # Emit requestGameNavigation signal,
+                        # but do so only when program is idle, by using a one-shot timer,
+                        # else if a listener responds to the signal by repopulating the detail pane,
+                        # there is a seg fault
+                        self.gameNavigationSelectTimer = QTimer()
+                        self.gameNavigationSelectTimer.setInterval(0)
+                        self.gameNavigationSelectTimer.setSingleShot(True)
+                        self.gameNavigationSelectTimer.timeout.connect(lambda: self.parent().parent().requestGameNavigation.emit(schemaName, gameId))
+                        self.gameNavigationSelectTimer.start()
+                        #self.parent().parent().requestGameNavigation.emit(schemaName, gameId)
 
                     # Else if it's a normal link,
                     # open it with the default browser
@@ -594,18 +611,18 @@ class DetailPane(QWidget):
 
                 else:
                     return True
-        webEnginePage = WebEnginePage(gameRow, extrasRows, self.webEngineView)
-        webEnginePage.setHtml(html, QUrl("file:///"))
+        self.webEnginePage = WebEnginePage(gameRow, extrasRows, self.webEngineView)
+        self.webEnginePage.setHtml(html, QUrl("file:///"))
         # Let background of application show through to stop white flash on page loads
-        webEnginePage.setBackgroundColor(Qt.transparent)
+        self.webEnginePage.setBackgroundColor(Qt.transparent)
 
         def webEnginePage_onLinkHovered(i_url):
             self.linkHovered.emit(i_url)
-        webEnginePage.linkHovered.connect(webEnginePage_onLinkHovered)
+        self.webEnginePage.linkHovered.connect(webEnginePage_onLinkHovered)
 
         # Load web engine page into the web engine view
-        #webEnginePage.setView(self.webEngineView)
-        self.webEngineView.setPage(webEnginePage)
+        #self.webEnginePage.setView(self.webEngineView)
+        self.webEngineView.setPage(self.webEnginePage)
 
     def setFocus(self, i_focusReason):
         self.webEngineView.setFocus(i_focusReason)
