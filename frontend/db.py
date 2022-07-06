@@ -410,6 +410,7 @@ def getGameList_getSql(i_tableColumnSpecIds, i_whereExpression, i_sortOperations
         for columnId, direction in i_sortOperations:
             tableColumnSpec = columns.tableColumnSpec_getById(columnId)
             term = '"' + tableColumnSpec["dbIdentifiers"][0] + '"'
+            term += " COLLATE NOCASE"
             if direction == -1:
                 term += " DESC"
             orderByTerms.append(term)
