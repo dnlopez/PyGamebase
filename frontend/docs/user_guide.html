@@ -98,6 +98,11 @@ This program works with Gamebase databases in SQLite format. Since Gamebase data
 
 <p>After startup, use the menu items "File -> Open Gamebase..." or "File -> Manage multiple Gamebases..." to open and close Gamebases by their adapter files.
 
+<h3>Efficiency of opening multiple Gamebases</h3>
+
+<p>While there is no hard limit to the number of Gamebases you can open at once except for the capacity of your computer's RAM, you may experience better performance while within your SQLite installation's '<a href="https://www.sqlite.org/limits.html#max_attached">SQLITE_MAX_ATTACHED</a>' per-connection database limit. (The default number is 10, but if you are able to recompile SQLite it may be increased to 125).
+
+
 <h2>The game table</h2>
 
 <h3>Filtering</h3>

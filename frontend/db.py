@@ -26,32 +26,87 @@ def sqliteRowToDict(i_row):
     """
     return { keyName: i_row[keyName]  for keyName in i_row.keys() }
 
-# Open a temporary database
-g_db = sqlite3.connect("")
-# (sqlite3.Connection)
-
-# Add REGEXP function
-def functionRegex(i_pattern, i_value):
-    #print("functionRegex(" + i_value + ", " + i_pattern + ")")
+def sqliteRegexFunction(i_pattern, i_value):
+    #print("sqliteRegexFunction(" + i_value + ", " + i_pattern + ")")
     #c_pattern = re.compile(r"\b" + i_pattern.lower() + r"\b")
     compiledPattern = re.compile(i_pattern)
     return compiledPattern.search(str(i_value)) is not None
-g_db.create_function("REGEXP", 2, functionRegex)
 
-g_openDatabases = {}
-# (dict)
-# Dictionary has:
-#  Keys:
-#   (str)
-#   Schema name
-#   ie. the alias specified in the ATTACH command
-#  Values:
-#   (dict)
-#   Dictionary has specific key-value properties:
-#    dbFilePath:
-#     (str)
-#    schema:
-#     (dict)
+g_containerDbs = []
+# (list of ContainerDb)
+
+# Type: ContainerDb
+#  (dict)
+#  Dictionary has specific key-value properties:
+#   connection:
+#    (sqlite3.Connection)
+#    Connection to a temporary database, to which actually used databases are attached
+#   maxAttachedDatabases:
+#    (int)
+#   attachedDatabases:
+#    (dict)
+#    Dictionary has:
+#     Keys:
+#      (str)
+#      Schema name
+#      ie. the alias specified in the ATTACH command
+#     Values:
+#      (AttachedDbInfo)
+
+# Type: AttachedDbInfo
+#  (dict)
+#  Dictionary has specific key-value properties:
+#   dbFilePath:
+#    (str)
+#   schema:
+#    (dict)
+#   fulfillableColumnIds:
+#    (set of str)
+
+def openContainerDb():
+    """
+    Returns:
+     (ContainerDb)
+    """
+    # Open a new temporary database to contain some attached databases
+    # and append it to the g_containerDbs list
+    global g_containerDbs
+    g_containerDbs.append({
+        "connection": sqlite3.connect(""),
+        "attachedDatabases": {}
+    })
+    # Add REGEXP function
+    g_containerDbs[-1]["connection"].create_function("REGEXP", 2, sqliteRegexFunction)
+
+    # Lookup maximum possible number of attached databases
+    compileOptions = [record[0]  for record in g_containerDbs[-1]["connection"].execute("PRAGMA compile_options").fetchall()]
+    for compileOption in compileOptions:
+        if compileOption.startswith("MAX_ATTACHED="):
+            g_containerDbs[-1]["maxAttachedDatabases"] = int(compileOption.split("=")[1])
+    #g_containerDbs[-1]["maxAttachedDatabases"] = 2  # for testing
+
+    #
+    return g_containerDbs[-1]
+
+def getNonFullContainerDb():
+    """
+    Returns:
+     (ContainerDb)
+    """
+    # If no container DBs are open,
+    # open one and return it
+    if len(g_containerDbs) == 0:
+        return openContainerDb()
+
+    # Iterate existing container DBs and if find one with space for another attachment,
+    # return it
+    for containerDb in g_containerDbs:
+        if len(containerDb["attachedDatabases"]) < containerDb["maxAttachedDatabases"]:
+            return containerDb
+
+    # Else if no free space in existing container DBs,
+    # open another one and return it
+    return openContainerDb()
 
 def sanitizeSchemaName(i_name):
     """
@@ -81,9 +136,12 @@ def sanitizeSchemaName(i_name):
 
     # If not unique,
     # append numeric suffix
+    existingSchemaNames = []
+    for containerDb in g_containerDbs:
+        existingSchemaNames.extend(list(containerDb["attachedDatabases"].keys()))
     rv = sanitized
     nextNo = 2
-    while rv in g_openDatabases.keys():
+    while rv in existingSchemaNames:
         rv = sanitized + "_" + str(nextNo)
 
     #
@@ -91,6 +149,8 @@ def sanitizeSchemaName(i_name):
 
 def openDb(i_schemaName, i_dbFilePath):
     """
+    Attach a new database.
+
     Params:
      i_schemaName:
       (str)
@@ -104,21 +164,22 @@ def openDb(i_schemaName, i_dbFilePath):
         "dbFilePath": i_dbFilePath
     }
 
-    # Attach database
-    cursor = g_db.execute("ATTACH DATABASE '" + i_dbFilePath.replace("'", "''") + "' AS " + i_schemaName)
+    # Get a non-full container database and attach new database to it
+    containerDb = getNonFullContainerDb()
+    cursor = containerDb["connection"].execute("ATTACH DATABASE '" + i_dbFilePath.replace("'", "''") + "' AS " + i_schemaName)
 
     try:
         # Get names of tables
-        cursor = g_db.execute("SELECT name FROM " + i_schemaName + ".sqlite_master WHERE type = 'table'")
+        cursor = containerDb["connection"].execute("SELECT name FROM " + i_schemaName + ".sqlite_master WHERE type = 'table'")
         rows = cursor.fetchall()
         dbTableNames = [row[0]  for row in rows]
 
         # Get info about tables
         dbInfo["schema"] = {}
-        g_db.row_factory = sqlite3.Row
+        containerDb["connection"].row_factory = sqlite3.Row
         for tableName in ["Games", "Years", "Genres", "PGenres", "Publishers", "Developers", "Programmers", "Languages", "Crackers", "Artists", "Licenses", "Rarities", "Musicians"]:
             if tableName in dbTableNames:
-                cursor = g_db.execute("PRAGMA " + i_schemaName + ".table_info(" + tableName + ")")
+                cursor = containerDb["connection"].execute("PRAGMA " + i_schemaName + ".table_info(" + tableName + ")")
                 rows = cursor.fetchall()
                 rows = [sqliteRowToDict(row)  for row in rows]
                 dbInfo["schema"][tableName] = rows
@@ -152,10 +213,17 @@ def openDb(i_schemaName, i_dbFilePath):
         #columns.filterColumnsByDb(dbTableNames, dbInfo["schema"])
 
         #
-        g_openDatabases[i_schemaName] = dbInfo
+        containerDb["attachedDatabases"][i_schemaName] = dbInfo
 
     except:
-        g_db.execute("DETACH DATABASE " + i_schemaName)
+        containerDb["connection"].execute("DETACH DATABASE " + i_schemaName)
+
+    ##
+    #print("DBs:")
+    #for containerDbNo, containerDb in enumerate(g_containerDbs):
+    #    print(" " + str(containerDbNo))
+    #    for schemaName in containerDb["attachedDatabases"].keys():
+    #        print("  " + schemaName)
 
 def closeDb(i_schemaName):
     """
@@ -163,9 +231,42 @@ def closeDb(i_schemaName):
      i_schemaName:
       (str)
     """
-    cursor = g_db.execute("DETACH DATABASE " + i_schemaName)
-    del(g_openDatabases[i_schemaName])
+    for containerDb in g_containerDbs:
+        if i_schemaName in containerDb["attachedDatabases"]:
+            cursor = containerDb["connection"].execute("DETACH DATABASE " + i_schemaName)
+            del(containerDb["attachedDatabases"][i_schemaName])
+            break
 
+def getContainerDbForSchemaName(i_schemaName):
+    """
+    Params:
+     i_schemaName:
+      (str)
+
+    Returns:
+     Either (ContainerDb)
+     or (None)
+    """
+    for containerDb in g_containerDbs:
+        if i_schemaName in containerDb["attachedDatabases"]:
+            return containerDb
+    return None
+
+def getDbInfoForSchemaName(i_schemaName):
+    """
+    Params:
+     i_schemaName:
+      (str)
+
+    Returns:
+     Either (DbInfo)
+     or (None)
+    """
+    containerDb = getContainerDbForSchemaName(i_schemaName)
+    if containerDb != None:
+        return containerDb["attachedDatabases"][i_schemaName]
+    else:
+        return None
 
 def tableColumnSpecToTableNamesAndSelectTerms(i_tableColumnSpec, i_schemaName):
     """
@@ -188,10 +289,13 @@ def tableColumnSpecToTableNamesAndSelectTerms(i_tableColumnSpec, i_schemaName):
        (list)
        SQL SELECT terms
     """
+    # Find DB info
+    dbInfo = getDbInfoForSchemaName(i_schemaName)
+
+    #
     dbTableNames = collections.OrderedDict()
     dbSelectTerms = collections.OrderedDict()
-
-    if i_tableColumnSpec["id"] in g_openDatabases[i_schemaName]["fulfillableColumnIds"]:
+    if i_tableColumnSpec["id"] in dbInfo["fulfillableColumnIds"]:
         if "dbTableNames" in i_tableColumnSpec:
             for dbTableName in i_tableColumnSpec["dbTableNames"]:
                 dbTableNames[dbTableName] = True
@@ -312,123 +416,198 @@ def getGameList_getSql(i_tableColumnSpecIds, i_whereExpression, i_sortOperations
       (bool)
 
     Returns:
-     Either (str)
-      "": There are no databases open.
+     Either (list)
+      Each element is:
+       (tuple)
+       Tuple has elements:
+        0:
+         (sqlite3.Connection)
+        1:
+         (str)
      or raise exception (SqlParseError)
       args[0]:
        (str)
        Description of error.
     """
-    if len(g_openDatabases) == 0:
+    attachedDbCount = sum([len(containerDb["attachedDatabases"])  for containerDb in g_containerDbs])
+    if attachedDbCount == 0:
         return ""
 
-    sqlTexts = []
+    connectionsAndSqlTexts = []
 
-    for schemaName in list(g_openDatabases.keys()):
-        #print(schemaName)
+    for containerDb in g_containerDbs:
+        sqlTexts = []
 
-        # Start with fields that are always selected
-        selectTerms = [
-            "'" + schemaName + "' AS \"SchemaName\"",
-            "Games.GA_Id AS [Games.GA_Id]"
-        ]
+        for schemaName in list(containerDb["attachedDatabases"].keys()):
+            #print(schemaName)
 
-        fromTerms = [
-            schemaName + ".Games"
-        ]
+            # Start with fields that are always selected
+            selectTerms = [
+                "'" + schemaName + "' AS \"SchemaName\"",
+                "Games.GA_Id AS [Games.GA_Id]"
+            ]
 
-        # Determine what extra fields to select
-        neededTableNames = collections.OrderedDict()
-        neededSelectTerms = collections.OrderedDict()
+            fromTerms = [
+                schemaName + ".Games"
+            ]
 
-        #  For all visible table columns,
-        #  collect FROM and SELECT terms
-        for tableColumnSpecId in i_tableColumnSpecIds:
-            tableColumnSpec = columns.tableColumnSpec_getById(tableColumnSpecId)
-            newNeededTableNames, newNeededSelectTerms = tableColumnSpecToTableNamesAndSelectTerms(tableColumnSpec, schemaName)
-            for newNeededTableName in newNeededTableNames:
-                neededTableNames[newNeededTableName] = True
-            for newNeededSelectTerm in newNeededSelectTerms:
-                neededSelectTerms[newNeededSelectTerm] = True
+            # Determine what extra fields to select
+            neededTableNames = collections.OrderedDict()
+            neededSelectTerms = collections.OrderedDict()
 
-        #  If needed, parse WHERE expression for column names and add those too
-        if i_whereExpressionMightUseNonVisibleColumns:
-            #columnIdentifiers = sql.sqlWhereExpressionToColumnIdentifiers(i_whereExpression)
-            #for columnIdentifier in columnIdentifiers:
-            #    tableColumnSpec = columns.tableColumnSpec_getByDbIdentifier(columnIdentifier)
-            #    newNeededTableNames, newNeededSelectTerms = tableColumnSpecToTableNamesAndSelectTerms(tableColumnSpec, schemaName)
-            #    neededTableNames |= newNeededTableNames
-            #    neededSelectTerms |= newNeededSelectTerms
-            try:
-                normalizedWhereExpression, newNeededTableNames, newNeededSelectTerms = sql.normalizeSqlWhereExpressionToTableNamesAndSelectTerms(i_whereExpression, schemaName)
-                if normalizedWhereExpression != None:
-                    i_whereExpression = normalizedWhereExpression
-                    for newNeededTableName in newNeededTableNames:
-                        neededTableNames[newNeededTableName] = True
-                    for newNeededSelectTerm in newNeededSelectTerms:
-                        neededSelectTerms[newNeededSelectTerm] = True
-            except sql.SqlParseError as e:
-                raise
+            #  For all visible table columns,
+            #  collect FROM and SELECT terms
+            for tableColumnSpecId in i_tableColumnSpecIds:
+                tableColumnSpec = columns.tableColumnSpec_getById(tableColumnSpecId)
+                newNeededTableNames, newNeededSelectTerms = tableColumnSpecToTableNamesAndSelectTerms(tableColumnSpec, schemaName)
+                for newNeededTableName in newNeededTableNames:
+                    neededTableNames[newNeededTableName] = True
+                for newNeededSelectTerm in newNeededSelectTerms:
+                    neededSelectTerms[newNeededSelectTerm] = True
 
-        # Get terms as lists instead of OrderedDict
-        neededTableNames = list(neededTableNames.keys())
-        neededSelectTerms = list(neededSelectTerms.keys())
+            #  If needed, parse WHERE expression for column names and add those too
+            if i_whereExpressionMightUseNonVisibleColumns:
+                #columnIdentifiers = sql.sqlWhereExpressionToColumnIdentifiers(i_whereExpression)
+                #for columnIdentifier in columnIdentifiers:
+                #    tableColumnSpec = columns.tableColumnSpec_getByDbIdentifier(columnIdentifier)
+                #    newNeededTableNames, newNeededSelectTerms = tableColumnSpecToTableNamesAndSelectTerms(tableColumnSpec, schemaName)
+                #    neededTableNames |= newNeededTableNames
+                #    neededSelectTerms |= newNeededSelectTerms
+                try:
+                    normalizedWhereExpression, newNeededTableNames, newNeededSelectTerms = sql.normalizeSqlWhereExpressionToTableNamesAndSelectTerms(i_whereExpression, schemaName)
+                    if normalizedWhereExpression != None:
+                        i_whereExpression = normalizedWhereExpression
+                        for newNeededTableName in newNeededTableNames:
+                            neededTableNames[newNeededTableName] = True
+                        for newNeededSelectTerm in newNeededSelectTerms:
+                            neededSelectTerms[newNeededSelectTerm] = True
+                except sql.SqlParseError as e:
+                    raise
 
-        # Add the extra fromTerms
-        tableConnections = copy.deepcopy(connectionsFromGamesTable)
-        for neededTableName in neededTableNames:
-            fromTerms += [fromTerm.replace("<schema name>", schemaName)  for fromTerm in getJoinTermsToTable(neededTableName, tableConnections)]
+            # Get terms as lists instead of OrderedDict
+            neededTableNames = list(neededTableNames.keys())
+            neededSelectTerms = list(neededSelectTerms.keys())
 
-        # Add the extra selectTerms
-        for neededSelectTerm in neededSelectTerms:
-            if neededSelectTerm == "Games.GA_Id" or neededSelectTerm == "GA_Id":
-                continue
-            selectTerms.append(neededSelectTerm)
+            # Add the extra fromTerms
+            tableConnections = copy.deepcopy(connectionsFromGamesTable)
+            for neededTableName in neededTableNames:
+                fromTerms += [fromTerm.replace("<schema name>", schemaName)  for fromTerm in getJoinTermsToTable(neededTableName, tableConnections)]
 
-        #
-        # SELECT and FROM
-        sqlTexts.append("SELECT " + ", ".join(selectTerms) + "\nFROM " + " ".join(fromTerms))
+            # Add the extra selectTerms
+            for neededSelectTerm in neededSelectTerms:
+                if neededSelectTerm == "Games.GA_Id" or neededSelectTerm == "GA_Id":
+                    continue
+                selectTerms.append(neededSelectTerm)
 
-        #print(" " + "SELECT " + ", ".join(selectTerms) + "\nFROM " + " ".join(fromTerms))
+            #
+            # SELECT and FROM
+            sqlTexts.append("SELECT " + ", ".join(selectTerms) + "\nFROM " + " ".join(fromTerms))
 
-    #for sqlText in sqlTexts:
-    #    print(sqlText)
+            #print(" " + "SELECT " + ", ".join(selectTerms) + "\nFROM " + " ".join(fromTerms))
 
-    # WHERE
-    i_whereExpression = i_whereExpression.strip()
-    if i_whereExpression != "":
-        sqlTexts = [sqlText + "\nWHERE " + i_whereExpression  for sqlText in sqlTexts]
-        #sqlText += "\nWHERE " + i_whereExpression
+        #for sqlText in sqlTexts:
+        #    print(sqlText)
 
-    sqlText = "\nUNION ALL\n".join(sqlTexts)
+        # WHERE
+        i_whereExpression = i_whereExpression.strip()
+        if i_whereExpression != "":
+            sqlTexts = [sqlText + "\nWHERE " + i_whereExpression  for sqlText in sqlTexts]
+            #sqlText += "\nWHERE " + i_whereExpression
 
-    # ORDER BY
-    if len(i_sortOperations) > 0:
-        sqlText += "\nORDER BY "
+        sqlText = "\nUNION ALL\n".join(sqlTexts)
 
-        orderByTerms = []
-        for columnId, direction in i_sortOperations:
-            tableColumnSpec = columns.tableColumnSpec_getById(columnId)
-            term = '"' + tableColumnSpec["dbIdentifiers"][0] + '"'
-            term += " COLLATE NOCASE"
-            if direction == -1:
-                term += " DESC"
-            orderByTerms.append(term)
-        sqlText += ", ".join(orderByTerms)
+        # ORDER BY
+        if len(i_sortOperations) > 0:
+            sqlText += "\nORDER BY "
+
+            orderByTerms = []
+            for columnId, direction in i_sortOperations:
+                tableColumnSpec = columns.tableColumnSpec_getById(columnId)
+                term = '"' + tableColumnSpec["dbIdentifiers"][0] + '"'
+                term += " COLLATE NOCASE"
+                if direction == -1:
+                    term += " DESC"
+                orderByTerms.append(term)
+            sqlText += ", ".join(orderByTerms)
+
+        connectionsAndSqlTexts.append((containerDb["connection"], sqlText))
 
     #
-    return sqlText
+    return connectionsAndSqlTexts
 
-def getGameList_executeSql(i_sqlText):
+def getGameList_executeSql(i_connectionsAndSqlTexts):
     """
     Params:
-     i_sqlText:
-      (str)
+     i_connectionsAndSqlTexts:
+      (list)
+      As returned from getGameList_getSql().
 
     Returns:
-     (sqlite3.Cursor)
+     (list of sqlite3.Cursor)
     """
-    return g_db.execute(i_sqlText)
+    rv = []
+    for connectionAndSqlText in i_connectionsAndSqlTexts:
+        rv.append(connectionAndSqlText[0].execute(connectionAndSqlText[1]))
+    return rv
+
+def getGameList_executeSqlAndFetchAll(i_connectionsAndSqlTexts, i_sortOperations):
+    """
+    Params:
+     i_connectionsAndSqlTexts:
+      (str)
+     i_sortOperations:
+      (list)
+      See ColumnNameBar.sort_operations
+
+    Returns:
+     (tuple)
+     Tuple has elements:
+      0:
+       (list of str)
+       Column names
+      1:
+       (list)
+       Records
+    """
+    cursors = getGameList_executeSql(i_connectionsAndSqlTexts)
+
+    columnNames = [column[0]  for column in cursors[0].description]
+
+    sortedRecords = []
+    if len(cursors) == 1:
+        sortedRecords.extend(cursors[0].fetchall())
+    elif len(cursors) > 1:
+        # If no sorting,
+        # just concatenate all result sets
+        if len(i_sortOperations) == 0:
+            for cursor in cursors:
+                sortedRecords.extend(cursor.fetchall())
+        # Else if want sorting,
+        # re-sort
+        else:
+            for cursor in cursors:
+                sortedRecords.extend(cursor.fetchall())
+
+            # Convert sort operation column IDs to column numbers
+            sortColumnNosAndDirections = []
+            for columnId, direction in i_sortOperations:
+                tableColumnSpec = columns.tableColumnSpec_getById(columnId)
+                term = tableColumnSpec["dbIdentifiers"][0]
+                sortColumnNosAndDirections.append((columnNames.index(term), direction))
+
+            #
+            sortColumnNosAndDirections.reverse()
+            for sortColumnNo, sortDirection in sortColumnNosAndDirections:
+                def keyFunc(i_record):
+                    value = i_record[sortColumnNo]
+                    if isinstance(value, str):
+                        return value.upper()
+                    else:
+                        return value
+                sortedRecords.sort(key=keyFunc, reverse=(sortDirection == -1))
+
+    #
+    return columnNames, sortedRecords
 
 def getGameRecord(i_schemaName, i_gameId, i_includeRelatedGameNames=False):
     """
@@ -443,7 +622,8 @@ def getGameRecord(i_schemaName, i_gameId, i_includeRelatedGameNames=False):
     Returns:
      (dict)
     """
-    dbInfo = g_openDatabases[i_schemaName]
+    containerDb = getContainerDbForSchemaName(i_schemaName)
+    dbInfo = containerDb["attachedDatabases"][i_schemaName]
 
     # From Games table, select all fields
     fromTerms = [
@@ -499,9 +679,9 @@ def getGameRecord(i_schemaName, i_gameId, i_includeRelatedGameNames=False):
     sql += "\nWHERE Games.GA_Id = " + str(i_gameId)
 
     # Execute
-    g_db.row_factory = sqlite3.Row
+    containerDb["connection"].row_factory = sqlite3.Row
     #print(sql)
-    cursor = g_db.execute(sql)
+    cursor = containerDb["connection"].execute(sql)
 
     row = cursor.fetchone()
     row = sqliteRowToDict(row)
@@ -524,8 +704,9 @@ def getExtrasRecords(i_schemaName, i_gameId):
     sql += "\nORDER BY DisplayOrder"
 
     # Execute
-    g_db.row_factory = sqlite3.Row
-    cursor = g_db.execute(sql)
+    containerDb = getContainerDbForSchemaName(i_schemaName)
+    containerDb["connection"].row_factory = sqlite3.Row
+    cursor = containerDb["connection"].execute(sql)
 
     rows = cursor.fetchall()
     rows = [sqliteRowToDict(row)  for row in rows]

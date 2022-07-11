@@ -530,23 +530,20 @@ class GameTableView(QTableView):
         tableColumnSpecIds = [column["id"]  for column in columns.tableColumn_getBySlice()]
 
         #
-        sqlText = db.getGameList_getSql(tableColumnSpecIds, i_whereExpression, i_sortOperations, i_whereExpressionMightUseNonVisibleColumns)
+        connectionsAndSqlTexts = db.getGameList_getSql(tableColumnSpecIds, i_whereExpression, i_sortOperations, i_whereExpressionMightUseNonVisibleColumns)
         #print(sqlText)
         # If no SQL to execute (because no databases are open)
-        if sqlText == "":
+        if len(connectionsAndSqlTexts) == 0:
             self.dbColumnNames = []
             self.dbRows = []
         # Else if we have some SQL
         else:
             # Execute
             try:
-                cursor = db.getGameList_executeSql(sqlText)
+                self.dbColumnNames, self.dbRows = db.getGameList_executeSqlAndFetchAll(connectionsAndSqlTexts, i_sortOperations)
             except sqlite3.OperationalError as e:
                 # TODO if i_whereExpressionMightUseNonVisibleColumns and error was 'no such column', maybe retry with SELECT * and all tables (see getGameRecord())
                 raise
-
-            self.dbColumnNames = [column[0]  for column in cursor.description]
-            self.dbRows = cursor.fetchall()
 
         self.doneQuery.emit(len(self.dbRows))
 
