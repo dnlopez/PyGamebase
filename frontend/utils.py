@@ -219,6 +219,34 @@ def findFileSequence(i_baseDirPath, i_filePath):
 
     return rv
 
+def findFileInPaths(i_baseDirPaths, i_fileRelativePath):
+    """
+    Find the first occurrence of a file that exists relative to a selection of base directories.
+
+    Params:
+     i_baseDirPaths:
+      (list of str)
+      eg.
+       ["/home/daniel/gamebases/Memotech MTX/Rom", "/home/daniel/gamebases/Memotech MTX/mfloppy", "/home/daniel/gamebases/Memotech MTX/tapes"]
+     i_fileRelativePath:
+      (str)
+      Path to look for within the base dir paths
+      eg.
+       "club004.mfloppy"
+       "Acornsoft/Elite.ssd"
+
+    Returns:
+     Either (str)
+      Full path of a file that exists
+     or (None)
+      The file was not found in any of the base dirs.
+    """
+    for baseDirPath in i_baseDirPaths:
+        possiblePath = os.path.join(baseDirPath, i_fileRelativePath)
+        if os.path.exists(possiblePath):
+            return possiblePath
+    return None
+
 # + }}}
 
 # + Zip files {{{
@@ -1117,7 +1145,7 @@ def getMameMediaSlots(i_mameExecutable, i_machineName):
     outputLine = output.decode("utf-8").split("\n")[2:-1]
     availableDevices = []
     for line in outputLine:
-        print(line)
+        #print(line)
         system, mediaName, brief, extensions = line.split(None, 3)
         availableDevices.append([mediaName, extensions.split()])
     return availableDevices
