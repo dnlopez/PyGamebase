@@ -249,6 +249,28 @@ def findFileInPaths(i_baseDirPaths, i_fileRelativePath):
 
 # + }}}
 
+# + Filesystem {{{
+
+def createTree(i_pathOnDiskOfLeafDir):
+    """
+    Create a folder if it doesn't already exist,
+    including all its parent directories.
+
+    Params:
+     i_pathOnDiskOfLeafDir:
+      (str)
+    """
+    # Allow either forward or back-slashes
+    i_pathOnDiskOfLeafDir = i_pathOnDiskOfLeafDir.replace("/", os.sep)
+
+    partialPath = ""
+    for part in i_pathOnDiskOfLeafDir.split(os.sep):
+        partialPath += part + os.sep
+        if not os.path.isdir(partialPath):
+            os.mkdir(partialPath)
+
+# + }}}
+
 # + Zip files {{{
 
 def extractZip(i_zipFilePath, i_destDirPath, i_membersToExtract=None):
