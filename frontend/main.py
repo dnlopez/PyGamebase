@@ -330,7 +330,6 @@ action.triggered.connect(menu_file_openDatabaseInExternalProgram_onTriggered)
 #fileMenu.addAction("Open")
 #fileMenu.addAction("Save")
 #fileMenu.addSeparator()
-#fileMenu.addAction("Quit")
 
 editMenu = menuBar.addMenu("&Edit")
 editMenu.addAction("Copy")
@@ -1129,6 +1128,14 @@ action = fileMenu.addAction("Show &subprocess output")
 action.triggered.connect(menu_file_showSubprocessOutput_onTriggered)
 
 # + }}}
+
+fileMenu.addSeparator()
+
+action = fileMenu.addAction("&Quit")
+action.setShortcut(QKeySequence("Ctrl+Q"))
+def menu_file_quit_onTriggered():
+    application.quit()
+action.triggered.connect(menu_file_quit_onTriggered)
 
 # Enter Qt application main loop
 exitCode = application.exec_()
