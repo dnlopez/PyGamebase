@@ -101,7 +101,6 @@ class PreferencesWindow(QWidget):
         self.setProperty("class", "preferences")
 
         self.layout = QVBoxLayout()
-        self.layout.setSpacing(0)
         self.setLayout(self.layout)
 
         tabWidget = QTabWidget()
@@ -124,6 +123,13 @@ class PreferencesWindow(QWidget):
         style_vBoxLayout.addWidget(widget_group)
 
         style_vBoxLayout.addStretch()
+
+        self.closeButton = QPushButton("&Close")
+        self.layout.addWidget(self.closeButton, 0, Qt.AlignCenter)
+        self.closeButton.clicked.connect(self.closeButton_onClicked)
+
+    def closeButton_onClicked(self):
+        self.hide()
 
     def setting_onEditingFinished(self):
         settings.preferences["applicationStylesheet"] = self.style_applicationStylesheet_lineEdit.text()

@@ -205,8 +205,10 @@ def filterHistory_goForward():
 import main_window
 mainWindow = main_window.MainWindow(application)
 mainWindow.resize(800, 600)
+# Centre window
 mainWindow.move(QApplication.desktop().rect().center() - mainWindow.rect().center())
 mainWindow.move(QApplication.desktop().rect().center() - mainWindow.rect().center())
+#
 mainWindow.setWindowTitle("PyGamebase")
 
 frontend.mainWindow = mainWindow
@@ -317,7 +319,9 @@ def adapterManager_onAdaptersChanged():
 adapterManager.adaptersChanged.connect(adapterManager_onAdaptersChanged)
 
 def action_manageMultipleGamebases_onTriggered():
+    # Centre window
     adapterManager.move(QApplication.desktop().rect().center() - adapterManager.rect().center())
+    #
     adapterManager.show()
     adapterManager.activateWindow()
 action.triggered.connect(action_manageMultipleGamebases_onTriggered)
@@ -339,6 +343,9 @@ g_preferencesWindow = None
 def editMenu_preferences_onTriggered():
     global g_preferencesWindow
     g_preferencesWindow = preferences_window.PreferencesWindow()
+    # Centre window
+    g_preferencesWindow.move(QApplication.desktop().rect().center() - g_preferencesWindow.rect().center())
+    #
     g_preferencesWindow.show()
 editMenu_preferences_action.triggered.connect(editMenu_preferences_onTriggered)
 
@@ -925,6 +932,7 @@ def viewMenu_detailPaneItems_action_onTriggered():
         g_detailPaneItems = detail_pane.DetailPaneItems()
         g_detailPaneItems.change.connect(detailPaneItems_onChange)
         g_detailPaneItems.resize(600, 600)
+        # Centre window
         g_detailPaneItems.move(QApplication.desktop().rect().center() - g_detailPaneItems.rect().center())
     g_detailPaneItems.show()
     g_detailPaneItems.activateWindow()
@@ -1122,6 +1130,10 @@ def menu_file_showSubprocessOutput_onTriggered(i_checked):
     if subprocessOutput == None:
         subprocessOutput = SubprocessOutput()
 
+    # Centre window
+    subprocessOutput.move(QApplication.desktop().rect().center() - subprocessOutput.rect().center())
+
+    #
     subprocessOutput.show()
 
 action = fileMenu.addAction("Show &subprocess output")

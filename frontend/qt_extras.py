@@ -298,6 +298,13 @@ class PlainTextViewer(QWidget):
         self.plainTextEdit.setFont(font)
         #self.plainTextEdit.document().setDefaultFont(QFont("monospace", 10, QFont.Normal))
 
+        self.closeButton = QPushButton("&Close")
+        self.layout.addWidget(self.closeButton, 0, Qt.AlignCenter)
+        self.closeButton.clicked.connect(self.closeButton_onClicked)
+
+    def closeButton_onClicked(self):
+        self.hide()
+
     def wrapTextCheckBox_onStateChanged(self, i_state):
         if i_state == Qt.Checked:
             self.plainTextEdit.setWordWrapMode(QTextOption.WrapAnywhere)
