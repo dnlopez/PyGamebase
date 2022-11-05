@@ -1096,15 +1096,15 @@ class SubprocessOutput(qt_extras.PlainTextViewer):
             self.refresh_timer.stop()
 
     def updateText(self):
-        if len(utils.tasks) > 0:
-            selectionStartPos = self.plainTextEdit.textCursor().selectionStart()
-            selectionEndPos = self.plainTextEdit.textCursor().selectionEnd()
-
+        if len(utils.tasks) == 0:
+            text = ""
+        else:
             # For AsyncSubprocess
             #print(utils.tasks[-1].getState())
             #mergedOutput = utils.tasks[-1].getMergedOutput()
             #subprocessOutput_log.setPlainText(mergedOutput.decode("utf-8"))
 
+            # Get text to show
             task = utils.tasks[-1]
 
             text = "Run: " + str(task.executableAndArgs)
@@ -1115,14 +1115,37 @@ class SubprocessOutput(qt_extras.PlainTextViewer):
             if task.returncode != None:
                 text += "\n---\nProcess exited with code " + str(task.returncode)
 
+        # If text has changed
+        if len(text) != len(self.text()):
+            # Remember whether the cursor is at the end,
+            # and the position of it and the scrollbars
+            cursorIsAtEnd = self.plainTextEdit.textCursor().atEnd()
+            selectionStartPos = self.plainTextEdit.textCursor().selectionStart()
+            selectionEndPos = self.plainTextEdit.textCursor().selectionEnd()
+            verticalScrollbarValue = self.plainTextEdit.verticalScrollBar().value()
+            horizontalScrollbarValue = self.plainTextEdit.horizontalScrollBar().value()
+            print(cursorIsAtEnd)
+            print(selectionStartPos)
+            print(selectionEndPos)
+
+            # Set text
             self.setText(text)
 
+            # Preserve selection start position,
+            # and if selection end pos / cursor was at end, extend it to new end, else preserve that too
             textCursor = self.plainTextEdit.textCursor()
             textCursor.setPosition(selectionStartPos)
-            textCursor.setPosition(selectionEndPos, QTextCursor.KeepAnchor)
+            if cursorIsAtEnd:
+                textCursor.movePosition(QTextCursor.End, QTextCursor.KeepAnchor)
+            else:
+                textCursor.setPosition(selectionEndPos, QTextCursor.KeepAnchor)
             self.plainTextEdit.setTextCursor(textCursor)
-        else:
-            self.setText("")
+
+            # If cursor wasn't at end,
+            # also preserve the position of the scrollbars
+            if not cursorIsAtEnd:
+                self.plainTextEdit.verticalScrollBar().setValue(verticalScrollbarValue)
+                self.plainTextEdit.horizontalScrollBar().setValue(horizontalScrollbarValue)
 
 subprocessOutput = None
 def menu_file_showSubprocessOutput_onTriggered(i_checked):

@@ -318,3 +318,10 @@ class PlainTextViewer(QWidget):
           (str)
         """
         self.plainTextEdit.setPlainText(i_text)
+
+    def text(self):
+        """
+        Returns:
+         (str)
+        """
+        return self.plainTextEdit.toPlainText()
