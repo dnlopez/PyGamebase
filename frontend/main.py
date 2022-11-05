@@ -84,6 +84,9 @@ while argNo < len(filteredArgv):
             printUsage(sys.stdout)
             sys.exit(0)
 
+        elif arg == "--launch-tasks-synchronously":
+            utils.Task.synchronous = True
+
         # TODO pass through QT options
         else:
             print("ERROR: Unrecognised option: " + arg)

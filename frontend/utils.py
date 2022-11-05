@@ -508,7 +508,7 @@ import threading
 
 class Task():
     """
-    Class to run a subprocess and asynchronously collect its output,
+    Class to run a subprocess and collect its output,
     to show in the frontend's "Subprocess output" window.
 
     After construction, see the following properties:
@@ -532,6 +532,14 @@ class Task():
     """
     stdbufPath = shutil.which("stdbuf")
 
+    synchronous = False
+    # (bool)
+    # False:
+    #  Use a subthread to execute tasks asynchronously.
+    #  This is the original and usual mode.
+    # True:
+    #  Run tasks in the current thread; don't return from the constructor until the program has exited.
+
     def __init__(self, i_viaShell, i_executableAndArguments):
         # Initialize output variables
         self.executableAndArgs = None
@@ -539,9 +547,12 @@ class Task():
         self.output = ""
         self.returncode = None
 
-        # Start a subthread to start program and collect output
-        self.thread = threading.Thread(target=self.thread_main, args=(i_viaShell, i_executableAndArguments))
-        self.thread.start()
+        # Start program and collect output
+        if Task.synchronous:
+            self.thread_main(i_viaShell, i_executableAndArguments)
+        else:
+            self.thread = threading.Thread(target=self.thread_main, args=(i_viaShell, i_executableAndArguments))
+            self.thread.start()
 
     def thread_main(self, i_viaShell, i_executableAndArguments):
         # If possible, turn off buffering in the program's standard streams
