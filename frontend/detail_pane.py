@@ -184,6 +184,14 @@ class DetailPane(QWidget):
     #  i_gameId:
     #   (int)
 
+    adapterRunFunctionFinished = Signal()
+    # Emitted when
+    #  An adapter run...() command is returned from
+
+    externalApplicationOpened = Signal()
+    # Emitted when
+    #  utils.openInDefaultApplication() is returned from
+
     def populateAG(self, i_adapterId, i_gameId):
         """
         Params:
@@ -566,6 +574,8 @@ class DetailPane(QWidget):
                             messageBox.resizeToContent()
                             messageBox.exec()
 
+                        self.parent().parent().adapterRunFunctionFinished.emit()
+
                     # Else if it's a link to a screenshot,
                     # open it with the default application
                     elif url.startswith("screenshot:///"):
@@ -577,6 +587,7 @@ class DetailPane(QWidget):
                         #
                         screenshotPath = urllib.parse.unquote(screenshotPath)
                         frontend_utils.openInDefaultApplication(gamebase.screenshotPath_relativeToAbsolute(i_adapterId, screenshotPath))
+                        self.parent().parent().externalApplicationOpened.emit()
 
                     # If it's a link to a game,
                     # select it in the table view

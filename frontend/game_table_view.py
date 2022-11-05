@@ -666,6 +666,14 @@ class GameTableView(QTableView):
         selectedIndex = self.selectionModel().currentIndex()
         self.selectionModel().setCurrentIndex(self.selectionModel().model().index(selectedIndex.row(), columnNo), QItemSelectionModel.ClearAndSelect)
 
+    adapterRunFunctionFinished = Signal()
+    # Emitted when
+    #  An adapter run...() command is returned from
+
+    externalApplicationOpened = Signal()
+    # Emitted when
+    #  utils.openInDefaultApplication() is returned from
+
     requestDetailPane = Signal(bool, QModelIndex)
     # Params:
     #  i_withKeyboardAction:
@@ -703,6 +711,8 @@ class GameTableView(QTableView):
                 messageBox.resizeToContent()
                 messageBox.exec()
 
+            self.adapterRunFunctionFinished.emit()
+
         elif columnId == "music":
             rowNo = i_modelIndex.row()
             gameId = self.dbRows[rowNo][self.dbColumnNames.index("Games.GA_Id")]
@@ -720,6 +730,8 @@ class GameTableView(QTableView):
                 messageBox.resizeToContent()
                 messageBox.exec()
 
+            self.adapterRunFunctionFinished.emit()
+
         # Screenshot
         elif columnId.startswith("pic[") and columnId.endswith("]"):
             picNo = int(columnId[4:-1])
@@ -730,6 +742,7 @@ class GameTableView(QTableView):
                 zipExtensionPos = screenshotFullPath.lower().find(".zip/")
                 if zipExtensionPos == -1:
                     frontend_utils.openInDefaultApplication(screenshotFullPath)
+                    self.externalApplicationOpened.emit()
                 else:
                     zipFilePath = screenshotFullPath[:zipExtensionPos + 4]
                     memberPath = screenshotFullPath[zipExtensionPos + 5:]
@@ -743,6 +756,7 @@ class GameTableView(QTableView):
 
                     #
                     frontend_utils.openInDefaultApplication(tempDirPath + os.sep + memberPath)
+                    self.externalApplicationOpened.emit()
 
         # Random screenshot
         elif columnId.startswith("random_pic[") and columnId.endswith("]"):
@@ -752,6 +766,7 @@ class GameTableView(QTableView):
             screenshotFullPath = gamebase.dbRow_nthRandomScreenshotFullPath(self.dbRows[rowNo], picNo)
             if screenshotFullPath != None:
                 frontend_utils.openInDefaultApplication(screenshotFullPath)
+                self.externalApplicationOpened.emit()
 
         # Musician photo
         elif columnId == "musician_photo":
@@ -759,6 +774,7 @@ class GameTableView(QTableView):
             photoFullPath = gamebase.dbRow_photoFullPath(self.dbRows[rowNo])
             if photoFullPath != None:
                 frontend_utils.openInDefaultApplication(photoFullPath)
+                self.externalApplicationOpened.emit()
 
         else:
             tableColumnSpec = columns.tableColumnSpec_getById(columnId)

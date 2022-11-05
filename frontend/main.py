@@ -67,10 +67,20 @@ Params:
 Options:
  --help
   Show this help.
+
+ --synchronous-running
+  Run external tasks synchronously.
+  Normally, while an emulator, image viewer or some other launched program is
+  running, you may multitask back to the frontend and continue to interact with it.
+  With this switch, the frontend will wait while a program that it launched runs,
+  and become unresponsive for the duration, but when the program closes and
+  the frontend wakes up again, the frontend will explictly repaint itself.
+  (This is designed to work around quirks of the Raspberry Pi in console mode.)
 ''')
 
 #
 param_gamebaseAdapterFilePaths = []
+param_synchronousRunning = False
 
 import sys
 argNo = 1
@@ -84,7 +94,8 @@ while argNo < len(filteredArgv):
             printUsage(sys.stdout)
             sys.exit(0)
 
-        elif arg == "--launch-tasks-synchronously":
+        elif arg == "--synchronous-running":
+            param_synchronousRunning = True
             utils.Task.synchronous = True
 
         # TODO pass through QT options
@@ -1168,6 +1179,26 @@ action.triggered.connect(menu_file_showSubprocessOutput_onTriggered)
 # + }}}
 
 fileMenu.addSeparator()
+
+# + Explicit repainting {{{
+
+#action = fileMenu.addAction("&Repaint")
+#action.setShortcut(QKeySequence("Ctrl+R"))
+#def menu_file_repaint_onTriggered():
+#    mainWindow.repaint()
+#action.triggered.connect(menu_file_repaint_onTriggered)
+
+# If running synchronously,
+# repaint whenever an external program finishes
+def onExternalDone():
+    mainWindow.repaint()
+if param_synchronousRunning:
+    tableView.adapterRunFunctionFinished.connect(onExternalDone)
+    tableView.externalApplicationOpened.connect(onExternalDone)
+    detailPane.adapterRunFunctionFinished.connect(onExternalDone)
+    detailPane.externalApplicationOpened.connect(onExternalDone)
+
+# + }}}
 
 action = fileMenu.addAction("&Quit")
 action.setShortcut(QKeySequence("Ctrl+Q"))
