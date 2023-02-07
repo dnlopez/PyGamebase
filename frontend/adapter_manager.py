@@ -215,6 +215,10 @@ class AdapterManager(QWidget):
         self.buttonLayout.addWidget(self.reloadItemButton)
         self.reloadItemButton.clicked.connect(self.reloadItemButton_onClicked)
 
+        self.reloadAllItemButton = QPushButton("Reload a&ll")
+        self.buttonLayout.addWidget(self.reloadAllItemButton)
+        self.reloadAllItemButton.clicked.connect(self.reloadAllItemButton_onClicked)
+
         self.removeItemButton = QPushButton("&Remove")
         self.buttonLayout.addWidget(self.removeItemButton)
         self.removeItemButton.clicked.connect(self.removeItemButton_onClicked)
@@ -248,7 +252,7 @@ class AdapterManager(QWidget):
 
     adaptersChanged = Signal()
     # Emitted when
-    #  An adapter is added or removed
+    #  One or more adapters are added, reloaded or removed
 
     def addItemsButton_onClicked(self):
         if selectAndOpenAdapter():
@@ -260,6 +264,13 @@ class AdapterManager(QWidget):
         adapterId = self.adapterTableView.model().data(currentIndex, Qt.DisplayRole)
 
         gamebase.reloadAdapter(adapterId)
+        self.adaptersChanged.emit()
+
+    def reloadAllItemButton_onClicked(self):
+        for adapterId in gamebase.adapters.keys():
+            print(adapterId)
+            gamebase.reloadAdapter(adapterId)
+        self.adaptersChanged.emit()
 
     def removeItemButton_onClicked(self):
         currentIndex = self.adapterTableView.selectionModel().currentIndex()
