@@ -212,6 +212,12 @@ def filterHistory_goForward():
     toolbar_forward_toolButton.setEnabled(g_filterHistory_pos < len(g_filterHistory))
     toolbar_back_toolButton.setEnabled(True)
 
+def filterHistory_copy():
+    text = "["
+    text += ",\n ".join([repr(entry)  for entry in g_filterHistory])
+    text += "]"
+    QGuiApplication.clipboard().setText(text)
+
 # + }}}
 
 
@@ -405,6 +411,9 @@ filterMenu_back_action.setShortcut(QKeySequence("Alt+Left"))
 filterMenu_forward_action = filterMenu.addAction("Go &forward")
 filterMenu_forward_action.triggered.connect(filterHistory_goForward)
 filterMenu_forward_action.setShortcut(QKeySequence("Alt+Right"))
+
+filterMenu_copyHistory_action = filterMenu.addAction("Copy &history")
+filterMenu_copyHistory_action.triggered.connect(filterHistory_copy)
 
 filterMenu.addSeparator()
 
