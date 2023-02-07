@@ -554,7 +554,7 @@ g_tableColumnSpecs = [
         "headingName": "Genre",
         "dbColumnNames": ["Games.GE_Id", "Genres.Genre", "Genres.PG_Id", "PGenres.ParentGenre"],
         "dbTableNames": ["Genres", "PGenres"],
-        "dbSelect": "(PGenres.ParentGenre || ' : ' || Genres.Genre) AS GenreCombined",
+        "dbSelect": "iif(PGenres.ParentGenre IS NOT NULL, (PGenres.ParentGenre || ' : ' || Genres.Genre), Genres.Genre) AS GenreCombined",
         "dbSelectPlaceholder": "NULL AS GenreCombined",
         "dbIdentifiers": ["GenreCombined"],
         "defaultWidth": 100,
