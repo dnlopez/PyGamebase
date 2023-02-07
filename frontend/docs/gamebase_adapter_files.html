@@ -347,9 +347,9 @@ if gemus.fieldContains("languages", "spa"):</p>
 
 <p>MSX.py features an extensive GEMUS script for choosing machine models, extensions and so on that was converted (manually) to Python.
 
-<p>Various files (eg. Apple 2.py) include a function named '<span class="code_identifier">runGameWithMame()</span>' which shows the use of <span class="code_identifier">utils.allocateGameFilesToMameMediaSlots()</span> for dynamically assigning game files to the media options that MAME offers (eg. -cassette, -floppydisk1, -floppydisk2, ...) for a particular machine. The '<span class="code_identifier">availableDevices</span>' lists in this function were converted by hand from the output of "mame apple2e -listmedia" and "mame apple2gs -listmedia". Alternatively, the function <span class="code_identifier">utils.getMameMediaSlots()</span> can generate these on the fly (see amiga.py), but in spawning an extra MAME process, it will make your games slower to start.
+<p>Various files (eg. Apple 2.py) include a function named '<span class="code_identifier">runGameWithMame()</span>' which shows the use of <span class="code_identifier">utils.allocateGameFilesToMameMediaSlots()</span> for dynamically assigning game files by their extension to the media options that MAME offers (eg. -cassette, -floppydisk1, -floppydisk2, ...) for a particular machine. The '<span class="code_identifier">availableDevices</span>' lists in this function were converted by hand from the output of "mame apple2e -listmedia" and "mame apple2gs -listmedia". Alternatively, the function <span class="code_identifier">utils.getMameMediaSlots()</span> can generate these on the fly (see amiga.py), but in spawning an extra MAME process, it will make your games slower to start.
 
-<p>Many files use the <span class="code_identifier">utils.popupMenu()</span> function to prompt the user with a menu in the frontend, typically for choosing an emulator.
+<p>Many adapter files use the <span class="code_identifier">utils.popupMenu()</span> function to prompt the user with a menu in the frontend, typically for choosing an emulator.
 
 
 <h2>Advanced Python usage</h2>
