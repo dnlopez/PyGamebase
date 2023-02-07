@@ -465,10 +465,32 @@ actionGroup.addAction(filterMenu_filterFormat_sql_action)
 
 filterMenu.addSeparator()
 
-filterMenu_filterFormat_copySql_action = filterMenu.addAction("C&opy SQL")
+filterMenu_filterFormat_copySql_action = filterMenu.addAction("C&opy SQL WHERE clause")
 def filterMenu_filterFormat_copySql_onTriggered():
-    QGuiApplication.clipboard().setText(columnFilterBar.getSqlWhereExpression())
+    text = columnFilterBar.getSqlWhereExpression()
+    QGuiApplication.clipboard().setText(text)
 filterMenu_filterFormat_copySql_action.triggered.connect(filterMenu_filterFormat_copySql_onTriggered)
+
+filterMenu_filterFormat_copyCompleteSql_action = filterMenu.addAction("Copy whole SQL statement")
+def filterMenu_filterFormat_copyCompleteSql_onTriggered():
+    if sqlFilterBar.isVisible():
+        sqlWhereExpression = sqlFilterBar.text()
+    else:
+        sqlWhereExpression = columnFilterBar.getSqlWhereExpression()
+    print(sqlWhereExpression)
+
+    text = "\n".join(["\n".join([statement + ";"  for statement in containerDb])  for containerDb in db.getAttachDatabaseStatements()])
+
+    #
+    connectionsAndSqlTexts = tableView.quickGetSql(sqlWhereExpression, columnNameBar.sort_operations)
+    print(connectionsAndSqlTexts)
+    if len(connectionsAndSqlTexts) > 0:
+        text += "\n\n" + "UNION ALL\n".join([connectionsAndSqlText[1]  for connectionsAndSqlText in connectionsAndSqlTexts])
+    #print(text)
+
+    QGuiApplication.clipboard().setText(text)
+filterMenu_filterFormat_copyCompleteSql_action.triggered.connect(filterMenu_filterFormat_copyCompleteSql_onTriggered)
+
 
 viewMenu = menuBar.addMenu("&View")
 viewMenu_toolbar_action = viewMenu.addAction("&Toolbar")

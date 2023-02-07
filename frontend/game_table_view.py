@@ -515,6 +515,34 @@ class GameTableView(QTableView):
     #   (int)
     #   The new row/game count in the list
 
+    def quickGetSql(self, i_sqlWhereExpression, i_sortOperations, i_whereExpressionMightUseNonVisibleColumns=True):
+        """
+        Params:
+         i_whereExpression:
+          (str)
+         i_sortOperations:
+          (list)
+          See ColumnNameBar.sort_operations
+         i_whereExpressionMightUseNonVisibleColumns:
+          (bool)
+
+        Returns:
+         (list)
+         As returned from getGameList_getSql().
+        """
+        # Get IDs of visible table columns
+        tableColumnSpecIds = [column["id"]  for column in columns.tableColumn_getBySlice()]
+
+        #
+        connectionsAndSqlTexts = db.getGameList_getSql(tableColumnSpecIds, i_sqlWhereExpression, i_sortOperations, i_whereExpressionMightUseNonVisibleColumns)
+        #print(connectionsAndSqlTexts)
+        # If no SQL to execute (because no databases are open)
+        #if len(connectionsAndSqlTexts) == 0:
+        # Else if we have some SQL
+        #else:
+        #self.dbColumnNames, self.dbRows = db.getGameList_executeSqlAndFetchAll(connectionsAndSqlTexts, i_sortOperations)
+        return connectionsAndSqlTexts
+
     def queryDb(self, i_whereExpression, i_sortOperations, i_whereExpressionMightUseNonVisibleColumns=True):
         """
         Params:
@@ -531,7 +559,7 @@ class GameTableView(QTableView):
 
         #
         connectionsAndSqlTexts = db.getGameList_getSql(tableColumnSpecIds, i_whereExpression, i_sortOperations, i_whereExpressionMightUseNonVisibleColumns)
-        #print(sqlText)
+        #print(connectionsAndSqlTexts)
         # If no SQL to execute (because no databases are open)
         if len(connectionsAndSqlTexts) == 0:
             self.dbColumnNames = []

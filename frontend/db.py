@@ -237,6 +237,21 @@ def closeDb(i_schemaName):
             del(containerDb["attachedDatabases"][i_schemaName])
             break
 
+def getAttachDatabaseStatements():
+    """
+    Returns:
+     (list of list of str)
+    """
+    containerDbs = []
+
+    for containerDb in g_containerDbs:
+        attachDatabaseStatements = []
+        for schemaName, attachedDbInfo in containerDb["attachedDatabases"].items():
+            attachDatabaseStatements.append("ATTACH DATABASE '" + attachedDbInfo["dbFilePath"].replace("'", "''") + "' AS " + schemaName)
+        containerDbs.append(attachDatabaseStatements)
+
+    return containerDbs
+
 def getContainerDbForSchemaName(i_schemaName):
     """
     Params:
@@ -402,6 +417,237 @@ connectionsFromGamesTable = {
 
 # + Run queries {{{
 
+#def getGameList_getSql(i_tableColumnSpecIds, i_whereExpression, i_sortOperations, i_whereExpressionMightUseNonVisibleColumns=True):
+#    """
+#    Params:
+#     i_tableColumnSpecIds:
+#      (list of str)
+#     i_whereExpression:
+#      (str)
+#     i_sortOperations:
+#      (list)
+#      See ColumnNameBar.sort_operations
+#     i_whereExpressionMightUseNonVisibleColumns:
+#      (bool)
+#
+#    Returns:
+#     Either (list)
+#      Each element is:
+#       (tuple)
+#       Tuple has elements:
+#        0:
+#         (sqlite3.Connection)
+#        1:
+#         (str)
+#     or raise exception (SqlParseError)
+#      args[0]:
+#       (str)
+#       Description of error.
+#    """
+#    attachedDbCount = sum([len(containerDb["attachedDatabases"])  for containerDb in g_containerDbs])
+#    if attachedDbCount == 0:
+#        return []
+#
+#    connectionsAndSqlTexts = []
+#
+#    for containerDb in g_containerDbs:
+#
+#        sqlTexts = []
+#
+#        # For each attached database in this container
+#        for schemaName in list(containerDb["attachedDatabases"].keys()):
+#            #print(schemaName)
+#
+#            # Start with fields/tables that are always selected
+#            selectTerms = [
+#                "'" + schemaName + "' AS \"SchemaName\"",
+#                "Games.GA_Id AS [Games.GA_Id]"
+#            ]
+#            fromTerms = [
+#                schemaName + ".Games"
+#            ]
+#
+#            # + Determine what extra fields to select {{{
+#
+#            neededTableNames = collections.OrderedDict()
+#            neededSelectTerms = collections.OrderedDict()
+#
+#            #  For all visible table columns,
+#            #  collect FROM and SELECT terms
+#            for tableColumnSpecId in i_tableColumnSpecIds:
+#                tableColumnSpec = columns.tableColumnSpec_getById(tableColumnSpecId)
+#                newNeededTableNames, newNeededSelectTerms = tableColumnSpecToTableNamesAndSelectTerms(tableColumnSpec, schemaName)
+#                for newNeededTableName in newNeededTableNames:
+#                    neededTableNames[newNeededTableName] = True
+#                for newNeededSelectTerm in newNeededSelectTerms:
+#                    neededSelectTerms[newNeededSelectTerm] = True
+#
+#            #  If needed, parse WHERE expression for column names and add those too
+#            if i_whereExpressionMightUseNonVisibleColumns:
+#                #columnIdentifiers = sql.sqlWhereExpressionToColumnIdentifiers(i_whereExpression)
+#                #for columnIdentifier in columnIdentifiers:
+#                #    tableColumnSpec = columns.tableColumnSpec_getByDbIdentifier(columnIdentifier)
+#                #    newNeededTableNames, newNeededSelectTerms = tableColumnSpecToTableNamesAndSelectTerms(tableColumnSpec, schemaName)
+#                #    neededTableNames |= newNeededTableNames
+#                #    neededSelectTerms |= newNeededSelectTerms
+#                try:
+#                    normalizedWhereExpression, newNeededTableNames, newNeededSelectTerms = sql.normalizeSqlWhereExpressionToTableNamesAndSelectTerms(i_whereExpression, schemaName)
+#                    if normalizedWhereExpression != None:
+#                        i_whereExpression = normalizedWhereExpression
+#                        for newNeededTableName in newNeededTableNames:
+#                            neededTableNames[newNeededTableName] = True
+#                        for newNeededSelectTerm in newNeededSelectTerms:
+#                            neededSelectTerms[newNeededSelectTerm] = True
+#                except sql.SqlParseError as e:
+#                    raise
+#
+#            # Get terms as lists instead of OrderedDict
+#            neededTableNames = list(neededTableNames.keys())
+#            neededSelectTerms = list(neededSelectTerms.keys())
+#
+#            # + }}}
+#
+#            # Add the extra selectTerms and fromTerms
+#            for neededSelectTerm in neededSelectTerms:
+#                if neededSelectTerm == "Games.GA_Id" or neededSelectTerm == "GA_Id":
+#                    continue
+#                selectTerms.append(neededSelectTerm)
+#            tableConnections = copy.deepcopy(connectionsFromGamesTable)
+#            for neededTableName in neededTableNames:
+#                fromTerms += [fromTerm.replace("<schema name>", schemaName)  for fromTerm in getJoinTermsToTable(neededTableName, tableConnections)]
+#
+#            # Concatenate terms to actual SELECT and FROM clauses
+#            selectAndFromSql = "SELECT " + ", ".join(selectTerms) + "\nFROM " + " ".join(fromTerms)
+#            sqlTexts.append(selectAndFromSql)
+#
+#        #for sqlText in sqlTexts:
+#        #    print(sqlText)
+#
+#        # WHERE
+#        i_whereExpression = i_whereExpression.strip()
+#        if i_whereExpression != "":
+#            sqlTexts = [sqlText + "\nWHERE " + i_whereExpression  for sqlText in sqlTexts]
+#            #sqlText += "\nWHERE " + i_whereExpression
+#
+#        sqlText = "\nUNION ALL\n".join(sqlTexts)
+#
+#        # ORDER BY
+#        if len(i_sortOperations) > 0:
+#            sqlText += "\nORDER BY "
+#
+#            orderByTerms = []
+#            for columnId, direction in i_sortOperations:
+#                tableColumnSpec = columns.tableColumnSpec_getById(columnId)
+#                term = '"' + tableColumnSpec["dbIdentifiers"][0] + '"'
+#                term += " COLLATE NOCASE"
+#                if direction == -1:
+#                    term += " DESC"
+#                orderByTerms.append(term)
+#            sqlText += ", ".join(orderByTerms)
+#
+#        connectionsAndSqlTexts.append((containerDb["connection"], sqlText))
+#
+#    #
+#    return connectionsAndSqlTexts
+
+
+def getGameList_getContainerDbSelectAndFromTerms(i_containerDb, i_tableColumnSpecIds, i_whereExpression, i_whereExpressionMightUseNonVisibleColumns=True):
+    """
+    Params:
+     i_containerDb:
+      (ContainerDb)
+     i_tableColumnSpecIds:
+      (list of str)
+     i_whereExpression:
+      (str)
+     i_whereExpressionMightUseNonVisibleColumns:
+      (bool)
+
+    Returns:
+     Either (tuple)
+      Tuple has elements:
+       0:
+        (list)
+       1:
+        (str)
+        Normalized i_whereExpression
+     or raise exception (SqlParseError)
+      args[0]:
+       (str)
+       Description of error.
+    """
+    attachedDbsSelectAndFromTerms = []
+
+    # For each attached database in the container
+    for schemaName in list(i_containerDb["attachedDatabases"].keys()):
+        #print(schemaName)
+
+        # Start with fields/tables that are always selected
+        selectTerms = [
+            "'" + schemaName + "' AS \"SchemaName\"",
+            "Games.GA_Id AS [Games.GA_Id]"
+        ]
+        fromTerms = [
+            schemaName + ".Games"
+        ]
+
+        # + Determine what extra fields to select {{{
+
+        neededTableNames = collections.OrderedDict()
+        neededSelectTerms = collections.OrderedDict()
+
+        #  For all visible table columns,
+        #  collect FROM and SELECT terms
+        for tableColumnSpecId in i_tableColumnSpecIds:
+            tableColumnSpec = columns.tableColumnSpec_getById(tableColumnSpecId)
+            newNeededTableNames, newNeededSelectTerms = tableColumnSpecToTableNamesAndSelectTerms(tableColumnSpec, schemaName)
+            for newNeededTableName in newNeededTableNames:
+                neededTableNames[newNeededTableName] = True
+            for newNeededSelectTerm in newNeededSelectTerms:
+                neededSelectTerms[newNeededSelectTerm] = True
+
+        #  If needed, parse WHERE expression for column names and add those too
+        if i_whereExpressionMightUseNonVisibleColumns:
+            #columnIdentifiers = sql.sqlWhereExpressionToColumnIdentifiers(i_whereExpression)
+            #for columnIdentifier in columnIdentifiers:
+            #    tableColumnSpec = columns.tableColumnSpec_getByDbIdentifier(columnIdentifier)
+            #    newNeededTableNames, newNeededSelectTerms = tableColumnSpecToTableNamesAndSelectTerms(tableColumnSpec, schemaName)
+            #    neededTableNames |= newNeededTableNames
+            #    neededSelectTerms |= newNeededSelectTerms
+            try:
+                normalizedWhereExpression, newNeededTableNames, newNeededSelectTerms = sql.normalizeSqlWhereExpressionToTableNamesAndSelectTerms(i_whereExpression, schemaName)
+                if normalizedWhereExpression != None:
+                    i_whereExpression = normalizedWhereExpression
+                    for newNeededTableName in newNeededTableNames:
+                        neededTableNames[newNeededTableName] = True
+                    for newNeededSelectTerm in newNeededSelectTerms:
+                        neededSelectTerms[newNeededSelectTerm] = True
+            except sql.SqlParseError as e:
+                raise
+
+        # Get terms as lists instead of OrderedDict
+        neededTableNames = list(neededTableNames.keys())
+        neededSelectTerms = list(neededSelectTerms.keys())
+
+        # + }}}
+
+        # Add the extra selectTerms and fromTerms
+        for neededSelectTerm in neededSelectTerms:
+            if neededSelectTerm == "Games.GA_Id" or neededSelectTerm == "GA_Id":
+                continue
+            selectTerms.append(neededSelectTerm)
+        tableConnections = copy.deepcopy(connectionsFromGamesTable)
+        for neededTableName in neededTableNames:
+            fromTerms += [fromTerm.replace("<schema name>", schemaName)  for fromTerm in getJoinTermsToTable(neededTableName, tableConnections)]
+
+        # Append selectTerms and fromTerms to return array
+        attachedDbsSelectAndFromTerms.append({
+            "selectTerms": selectTerms,
+            "fromTerms": fromTerms
+        })
+
+    return (attachedDbsSelectAndFromTerms, i_whereExpression.strip())
+
 def getGameList_getSql(i_tableColumnSpecIds, i_whereExpression, i_sortOperations, i_whereExpressionMightUseNonVisibleColumns=True):
     """
     Params:
@@ -431,92 +677,33 @@ def getGameList_getSql(i_tableColumnSpecIds, i_whereExpression, i_sortOperations
     """
     attachedDbCount = sum([len(containerDb["attachedDatabases"])  for containerDb in g_containerDbs])
     if attachedDbCount == 0:
-        return ""
+        return []
 
     connectionsAndSqlTexts = []
 
+    # For each container
     for containerDb in g_containerDbs:
-        sqlTexts = []
+        # For each attached db,
+        # get SELECT and FROM terms, while normalizing WHERE expression
+        attachedDbsSelectAndFromTerms, i_whereExpression = getGameList_getContainerDbSelectAndFromTerms(containerDb, i_tableColumnSpecIds, i_whereExpression, i_whereExpressionMightUseNonVisibleColumns)
 
-        for schemaName in list(containerDb["attachedDatabases"].keys()):
-            #print(schemaName)
+        # For each attached db,
+        # concatenate SELECT and FROM terms into the beginnings of actual SQL statements
+        attachedDbsSqlTexts = []
+        for attachedDbSelectAndFromTerms in attachedDbsSelectAndFromTerms:
+            selectAndFromSql = "SELECT " + ", ".join(attachedDbSelectAndFromTerms["selectTerms"]) + "\nFROM " + " ".join(attachedDbSelectAndFromTerms["fromTerms"])
+            attachedDbsSqlTexts.append(selectAndFromSql)
 
-            # Start with fields that are always selected
-            selectTerms = [
-                "'" + schemaName + "' AS \"SchemaName\"",
-                "Games.GA_Id AS [Games.GA_Id]"
-            ]
-
-            fromTerms = [
-                schemaName + ".Games"
-            ]
-
-            # Determine what extra fields to select
-            neededTableNames = collections.OrderedDict()
-            neededSelectTerms = collections.OrderedDict()
-
-            #  For all visible table columns,
-            #  collect FROM and SELECT terms
-            for tableColumnSpecId in i_tableColumnSpecIds:
-                tableColumnSpec = columns.tableColumnSpec_getById(tableColumnSpecId)
-                newNeededTableNames, newNeededSelectTerms = tableColumnSpecToTableNamesAndSelectTerms(tableColumnSpec, schemaName)
-                for newNeededTableName in newNeededTableNames:
-                    neededTableNames[newNeededTableName] = True
-                for newNeededSelectTerm in newNeededSelectTerms:
-                    neededSelectTerms[newNeededSelectTerm] = True
-
-            #  If needed, parse WHERE expression for column names and add those too
-            if i_whereExpressionMightUseNonVisibleColumns:
-                #columnIdentifiers = sql.sqlWhereExpressionToColumnIdentifiers(i_whereExpression)
-                #for columnIdentifier in columnIdentifiers:
-                #    tableColumnSpec = columns.tableColumnSpec_getByDbIdentifier(columnIdentifier)
-                #    newNeededTableNames, newNeededSelectTerms = tableColumnSpecToTableNamesAndSelectTerms(tableColumnSpec, schemaName)
-                #    neededTableNames |= newNeededTableNames
-                #    neededSelectTerms |= newNeededSelectTerms
-                try:
-                    normalizedWhereExpression, newNeededTableNames, newNeededSelectTerms = sql.normalizeSqlWhereExpressionToTableNamesAndSelectTerms(i_whereExpression, schemaName)
-                    if normalizedWhereExpression != None:
-                        i_whereExpression = normalizedWhereExpression
-                        for newNeededTableName in newNeededTableNames:
-                            neededTableNames[newNeededTableName] = True
-                        for newNeededSelectTerm in newNeededSelectTerms:
-                            neededSelectTerms[newNeededSelectTerm] = True
-                except sql.SqlParseError as e:
-                    raise
-
-            # Get terms as lists instead of OrderedDict
-            neededTableNames = list(neededTableNames.keys())
-            neededSelectTerms = list(neededSelectTerms.keys())
-
-            # Add the extra fromTerms
-            tableConnections = copy.deepcopy(connectionsFromGamesTable)
-            for neededTableName in neededTableNames:
-                fromTerms += [fromTerm.replace("<schema name>", schemaName)  for fromTerm in getJoinTermsToTable(neededTableName, tableConnections)]
-
-            # Add the extra selectTerms
-            for neededSelectTerm in neededSelectTerms:
-                if neededSelectTerm == "Games.GA_Id" or neededSelectTerm == "GA_Id":
-                    continue
-                selectTerms.append(neededSelectTerm)
-
-            #
-            # SELECT and FROM
-            sqlTexts.append("SELECT " + ", ".join(selectTerms) + "\nFROM " + " ".join(fromTerms))
-
-            #print(" " + "SELECT " + ", ".join(selectTerms) + "\nFROM " + " ".join(fromTerms))
-
-        #for sqlText in sqlTexts:
-        #    print(sqlText)
-
-        # WHERE
-        i_whereExpression = i_whereExpression.strip()
+        # For each attached db,
+        # append WHERE clause
         if i_whereExpression != "":
-            sqlTexts = [sqlText + "\nWHERE " + i_whereExpression  for sqlText in sqlTexts]
+            attachedDbsSqlTexts = [sqlText + "\nWHERE " + i_whereExpression  for sqlText in attachedDbsSqlTexts]
             #sqlText += "\nWHERE " + i_whereExpression
 
-        sqlText = "\nUNION ALL\n".join(sqlTexts)
+        # Concatenate all attached db SQL statements so far with "UNION ALL"
+        sqlText = "\nUNION ALL\n".join(attachedDbsSqlTexts)
 
-        # ORDER BY
+        # Append ORDER BY clause
         if len(i_sortOperations) > 0:
             sqlText += "\nORDER BY "
 
@@ -554,7 +741,8 @@ def getGameList_executeSqlAndFetchAll(i_connectionsAndSqlTexts, i_sortOperations
     """
     Params:
      i_connectionsAndSqlTexts:
-      (str)
+      (list)
+      As returned from getGameList_getSql().
      i_sortOperations:
       (list)
       See ColumnNameBar.sort_operations
