@@ -1188,6 +1188,12 @@ fileMenu.addSeparator()
 #    mainWindow.repaint()
 #action.triggered.connect(menu_file_repaint_onTriggered)
 
+# Repaint upon receiving SIGUSR1
+def onSIGUSR1(i_signalNo, i_stack):
+    mainWindow.repaint()
+import signal
+signal.signal(signal.SIGUSR1, onSIGUSR1)
+
 # If running synchronously,
 # repaint whenever an external program finishes
 def onExternalDone():
