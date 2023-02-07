@@ -659,8 +659,13 @@ class Gemus():
         """
         Params:
          i_gemusText:
-          (str)
+          Either (str)
+          or (None)
+           Treat the same as "".
         """
+        if i_gemusText == None:
+            i_gemusText = ""
+
         # Split lines, fields and values and store all in self.properties
         self.properties = {}
         lines = i_gemusText.split("\n")
