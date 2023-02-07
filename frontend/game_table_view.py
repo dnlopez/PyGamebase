@@ -863,6 +863,20 @@ class GameTableView(QTableView):
             return
         self.selectionModel().setCurrentIndex(self.selectionModel().model().index(newRowNo, selectedIndex.column()), QItemSelectionModel.ClearAndSelect)
 
+    def selectRandomRow(self):
+        """
+        Params:
+         i_rowNo:
+          (int)
+        """
+        rowCount = self.tableModel.rowCount(None)
+        if rowCount == 0:
+            return
+
+        newRowNo = random.randint(0, rowCount - 1)
+        selectedIndex = self.selectionModel().currentIndex()
+        self.selectionModel().setCurrentIndex(self.selectionModel().model().index(newRowNo, selectedIndex.column()), QItemSelectionModel.ClearAndSelect)
+
     selectionHasChanged = Signal()
 
     def selectionChanged(self, i_selected, i_deselected):  # override from QAbstractItemView

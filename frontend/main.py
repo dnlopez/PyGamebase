@@ -357,6 +357,13 @@ action.triggered.connect(menu_file_openDatabaseInExternalProgram_onTriggered)
 
 editMenu = menuBar.addMenu("&Edit")
 editMenu.addAction("Copy")
+
+editMenu.addSeparator()
+editMenu_selectRandomGame_action = editMenu.addAction("Select &random game")
+def editMenu_selectRandomGame_onTriggered():
+    tableView.selectRandomRow()
+editMenu_selectRandomGame_action.triggered.connect(editMenu_selectRandomGame_onTriggered)
+
 editMenu.addSeparator()
 editMenu_preferences_action = editMenu.addAction("&Preferences...")
 g_preferencesWindow = None
