@@ -247,7 +247,7 @@ mainWindow.urlsDropped.connect(mainWindow_onUrlsDropped)
 
 # Application-wide keyboard shortcuts
 shortcut = QShortcut(QKeySequence("Escape"), mainWindow)
-shortcut.setContext(Qt.ApplicationShortcut)
+#shortcut.setContext(Qt.ApplicationShortcut)
 def escShortcut_onActivated():
     # If table view is not already focused,
     # focus it

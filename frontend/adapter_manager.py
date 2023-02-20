@@ -231,7 +231,7 @@ class AdapterManager(QWidget):
 
         self.closeButton = QPushButton("&Close")
         self.layout.addWidget(self.closeButton, 2, 0, 1, 2, Qt.AlignHCenter)
-        self.closeButton.clicked.connect(self.closeButton_onClicked)
+        self.closeButton.clicked.connect(self.close)
 
         #self.layout.setColumnStretch(0, 2)
         #self.layout.setColumnStretch(1, 0)
@@ -243,11 +243,15 @@ class AdapterManager(QWidget):
         self.layout.setRowStretch(2, 1)
         self.layout.setRowStretch(3, 0)
 
+        #
+        self.escShortcut = QShortcut(QKeySequence("Escape"), self)
+        self.escShortcut.activated.connect(self.close)
+
     def showEvent(self, i_event):
         self.adapterTableView.model().modelReset.emit()
         self.adapterTableView.setFocus()
 
-    def closeButton_onClicked(self):
+    def close(self):
         self.hide()
 
     adaptersChanged = Signal()
