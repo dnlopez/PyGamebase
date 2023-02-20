@@ -244,6 +244,10 @@ class AdapterManager(QWidget):
         self.layout.setRowStretch(3, 0)
 
         #
+        self.ctrlCShortcut = QShortcut(QKeySequence("Ctrl+C"), self)
+        self.ctrlCShortcut.activated.connect(self.clipboardCopy)
+
+        #
         self.escShortcut = QShortcut(QKeySequence("Escape"), self)
         self.escShortcut.activated.connect(self.close)
 
@@ -284,3 +288,8 @@ class AdapterManager(QWidget):
 
         self.adapterTableView.model().modelReset.emit()
         self.adaptersChanged.emit()
+
+    def clipboardCopy(self):
+        currentIndex = self.adapterTableView.selectionModel().currentIndex()
+        adapterId = self.adapterTableView.model().data(currentIndex, Qt.DisplayRole)
+        QApplication.clipboard().setText(gamebase.adapters[adapterId]["module"].__file__)
