@@ -269,13 +269,13 @@ def fixFilenames(i_basePathForGames, i_basePathForScreenshots, i_basePathForSids
            One of
             "No filename"
             "File not found"
-            "No change"
-            "SQL update"
+            "File found, name correct"
+            "File found, name incorrect"
           1:
            (str)
-           If first element is "File not found", the path that was not found,
-           else if first element is "SQL update", the SQL,
-           else "".
+           If first element is "No filename", "",
+           else if first element is "File not found", the path that was not found,
+           else if first element is "File found, name correct" or "File found, name incorrect", an SQL statement to set the filename.
         """
         # If this database row doesn't list a filename,
         # bail because there's nothing we can fix
@@ -288,10 +288,11 @@ def fixFilenames(i_basePathForGames, i_basePathForScreenshots, i_basePathForSids
             return ("File not found", i_row[i_columnNames.index(i_filenameFieldName)])
 
         if (fixedFilename == i_row[i_columnNames.index(i_filenameFieldName)]):
-            return ("No change", "")
+            status = "File found, name correct"
+        else:
+            status = "File found, name incorrect"
 
-        #printAndFlush("changing to: " + fixedFilename)
-        return ("SQL update", "UPDATE " + i_tableName + " SET " + i_filenameFieldName + " = '" + fixedFilename.replace("'", "''") + "' WHERE " + i_tableKeyFieldName + " = " + str(i_row[i_columnNames.index(i_tableKeyFieldName)]) + ';\n')
+        return (status, "UPDATE " + i_tableName + " SET " + i_filenameFieldName + " = '" + fixedFilename.replace("'", "''") + "' WHERE " + i_tableKeyFieldName + " = " + str(i_row[i_columnNames.index(i_tableKeyFieldName)]) + ';\n')
 
     # Fix fields Games.Filename, Games.ScrnshotFilename and Games.SidFilename
     if i_basePathForGames != None or i_basePathForScreenshots != None or i_basePathForSids != None:
@@ -310,16 +311,19 @@ def fixFilenames(i_basePathForGames, i_basePathForScreenshots, i_basePathForSids
                 # If not found in Games path, also try looking in Extras path
                 if updateResult[0] == "File not found" and i_basePathForExtras != None:
                     updateResult = fixFilenameAndUpdateDb(columnNames, row, "Games", "GA_Id", "Filename", i_basePathForExtras)
-                    if updateResult != "":
+                    if updateResult[0] != "File not found":
                         print("Game found in Extras: " + row[columnNames.index("Filename")])
                         gameId = row[columnNames.index("GA_Id")]
                         extraCheckSql = "SELECT * FROM Extras WHERE GA_Id = " + str(gameId) + " AND UPPER(Path) = '" + row[columnNames.index("Filename")].upper().replace("'", "''") + "'"
                         print(extraCheckSql)
                         print(g_db.execute(extraCheckSql).fetchall())
+                        #print(updateResult)
+                        #updateResult = ("File found, name incorrect", updateResult[1])
+
                 #
                 if updateResult[0] == "File not found":
                     printAndFlush("File not found: " + updateResult[1])
-                elif updateResult[0] == "SQL update":
+                elif updateResult[0] == "File found, name incorrect":
                     combinedSql += updateResult[1]
                 #
                 if i_verbose and rowNo % 100 == 0:
@@ -334,7 +338,7 @@ def fixFilenames(i_basePathForGames, i_basePathForScreenshots, i_basePathForSids
                 #
                 if updateResult[0] == "File not found":
                     printAndFlush("File not found: " + updateResult[1])
-                elif updateResult[0] == "SQL update":
+                elif updateResult[0] == "File found, name incorrect":
                     combinedSql += updateResult[1]
                 #
                 if i_verbose and rowNo % 100 == 0:
@@ -350,7 +354,7 @@ def fixFilenames(i_basePathForGames, i_basePathForScreenshots, i_basePathForSids
                 #
                 if updateResult[0] == "File not found":
                     printAndFlush("File not found: " + updateResult[1])
-                elif updateResult[0] == "SQL update":
+                elif updateResult[0] == "File found, name incorrect":
                     combinedSql += updateResult[1]
                 #
                 if i_verbose and rowNo % 100 == 0:
@@ -372,7 +376,7 @@ def fixFilenames(i_basePathForGames, i_basePathForScreenshots, i_basePathForSids
             #
             if updateResult[0] == "File not found":
                 printAndFlush("File not found: " + updateResult[1])
-            elif updateResult[0] == "SQL update":
+            elif updateResult[0] == "File found, name incorrect":
                 combinedSql += updateResult[1]
             #
             if i_verbose and rowNo % 100 == 0:
@@ -394,7 +398,7 @@ def fixFilenames(i_basePathForGames, i_basePathForScreenshots, i_basePathForSids
             #
             if updateResult[0] == "File not found":
                 printAndFlush("File not found: " + updateResult[1])
-            elif updateResult[0] == "SQL update":
+            elif updateResult[0] == "File found, name incorrect":
                 combinedSql += updateResult[1]
             #
             if i_verbose and rowNo % 100 == 0:
