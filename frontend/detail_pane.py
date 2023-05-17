@@ -243,7 +243,7 @@ class DetailPane(QWidget):
         html = ""
 
         if "detailPaneStylesheet" in settings.preferences and settings.preferences["detailPaneStylesheet"] != "":
-            html += '  <link rel="stylesheet" type="text/css" href="file://' + (settings.preferences["detailPaneStylesheet"]).replace("\\", "/") + '">\n'
+            html += '  <link rel="stylesheet" type="text/css" href="file://' + urllib.parse.quote((settings.preferences["detailPaneStylesheet"]).replace("\\", "/")) + '">\n'
 
         def extraIsAnImage(i_extrasRow):
             """
@@ -510,7 +510,7 @@ class DetailPane(QWidget):
                                     #
                                     imgSrc = tempDirPath + os.sep + memberPath
                             else:
-                                imgSrc = 'file://' + gamebase.normalizeDirPathFromAdapter(gamebase.adapters[i_adapterId]["module"].config_extrasBaseDirPath) + "/" + imageRow["Path"]
+                                imgSrc = 'file://' + urllib.parse.quote(gamebase.normalizeDirPathFromAdapter(gamebase.adapters[i_adapterId]["module"].config_extrasBaseDirPath) + "/" + imageRow["Path"])
 
                             html += '<img src="' + imgSrc + '" style="height: 300px;">'
                         #html += '<img src="https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_92x30dp.png" style="height: 300px;">'
