@@ -161,6 +161,34 @@ def danrectToQrect(i_danrect):
 
 # + + }}}
 
+def screenshotPathToPixmap(i_screenshotPath):
+    """
+    Params:
+     i_screenshotPath:
+      (str)
+
+    Returns:
+     Either (QPixmap)
+     or (None)
+    """
+    # If it's an ordinary path to an image (ie. not referencing a zip file member),
+    # simply construct and return the pixmap using that path
+    zipExtensionPos = i_screenshotPath.lower().find(".zip/")
+    if zipExtensionPos == -1:
+        return QPixmap(i_screenshotPath)
+
+    # Else if the path is referencing a zip file member,
+    # extract the file and construct the pixmap from that data
+    zipFilePath = i_screenshotPath[:zipExtensionPos + 4]
+    memberPath = i_screenshotPath[zipExtensionPos + 5:]
+
+    pixmap = QPixmap()
+    try:
+        pixmap.loadFromData(gamebase.getZipMemberBytes(zipFilePath, memberPath))
+        return pixmap
+    except:
+        return None
+
 class MyStyledItemDelegate(QStyledItemDelegate):
     def __init__(self, i_parent=None):
         QStyledItemDelegate.__init__(self, i_parent)
@@ -182,40 +210,29 @@ class MyStyledItemDelegate(QStyledItemDelegate):
 
         column = columns.tableColumn_getByPos(i_index.column())
 
-        # Screenshot
+        # If painting screenshot column
         if column["id"].startswith("pic[") and column["id"].endswith("]"):
             picNo = int(column["id"][4:-1])
 
             screenshotFullPath = gamebase.dbRow_nthScreenshotFullPath(self.parent().dbRows[i_index.row()], picNo)
             if screenshotFullPath != None:
-                zipExtensionPos = screenshotFullPath.lower().find(".zip/")
-                if zipExtensionPos == -1:
-                    pixmap = QPixmap(screenshotFullPath)
-                else:
-                    zipFilePath = screenshotFullPath[:zipExtensionPos + 4]
-                    memberPath = screenshotFullPath[zipExtensionPos + 5:]
-
-                    pixmap = QPixmap()
-                    try:
-                        pixmap.loadFromData(gamebase.getZipMemberBytes(zipFilePath, memberPath))
-                    except:
-                        return
+                pixmap = screenshotPathToPixmap(screenshotFullPath)
                 destRect = danrectToQrect(fitLetterboxed(qrectToDanrect(pixmap.rect()), qrectToDanrect(i_option.rect)))
                 i_painter.setRenderHints(QPainter.SmoothPixmapTransform, True)
                 i_painter.drawPixmap(destRect, pixmap)
 
-        # Random screenshot
+        # Else if painting random screenshot column
         elif column["id"].startswith("random_pic[") and column["id"].endswith("]"):
             picNo = int(column["id"][11:-1])
 
             screenshotFullPath = gamebase.dbRow_nthRandomScreenshotFullPath(self.parent().dbRows[i_index.row()], picNo)
             if screenshotFullPath != None:
-                pixmap = QPixmap(screenshotFullPath)
+                pixmap = screenshotPathToPixmap(screenshotFullPath)
                 destRect = danrectToQrect(fitLetterboxed(qrectToDanrect(pixmap.rect()), qrectToDanrect(i_option.rect)))
                 i_painter.setRenderHints(QPainter.SmoothPixmapTransform, True)
                 i_painter.drawPixmap(destRect, pixmap)
 
-        #
+        # Else if painting schema column
         elif column["id"] == "schema":
             schemaName = self.parent().dbRows[i_index.row()]["SchemaName"]
 
@@ -245,7 +262,7 @@ class MyStyledItemDelegate(QStyledItemDelegate):
                 i_painter.drawText(QRect(0, 0, i_option.rect.height(), i_option.rect.width()), Qt.AlignVCenter|Qt.AlignHCenter|Qt.TextWordWrap, text)
                 i_painter.resetTransform()
 
-        # Musician photo
+        # Else if painting musician photo column
         elif column["id"] == "musician_photo":
             photoFullPath = gamebase.dbRow_photoFullPath(self.parent().dbRows[i_index.row()])
             if photoFullPath != None:
@@ -254,6 +271,8 @@ class MyStyledItemDelegate(QStyledItemDelegate):
                 i_painter.setRenderHints(QPainter.SmoothPixmapTransform, True)
                 i_painter.drawPixmap(destRect, pixmap)
 
+        # Else if painting any other column,
+        # fall back to the default behaviour (ie. will use data() from table model)
         else:
             QStyledItemDelegate.paint(self, i_painter, i_option, i_index)
 
@@ -305,17 +324,21 @@ class MyTableModel(QAbstractTableModel):
         elif column["id"].startswith("pic[") and column["id"].endswith("]"):
             # (Done via delegate)
             #if i_role == Qt.DecorationRole:
-            #    screenshotPath = self.parent().dbRows[i_index.row()][self.parent().dbColumnNames.index("Games.ScrnshotFilename")]
-            #    pixmap = QPixmap(gamebase.normalizeDirPathFromAdapter(gamebase.adapter.config_screenshotsBaseDirPath) + "/" + screenshotPath)
-            #    return pixmap;
+            #    picNo = int(column["id"][4:-1])
+            #
+            #    screenshotFullPath = gamebase.dbRow_nthScreenshotFullPath(self.parent().dbRows[i_index.row()], picNo)
+            #    if screenshotFullPath != None:
+            #        return screenshotPathToPixmap(screenshotFullPath)
             pass
         # Random screenshot
         elif column["id"].startswith("random_pic[") and column["id"].endswith("]"):
             # (Done via delegate)
             #if i_role == Qt.DecorationRole:
-            #    screenshotPath = self.parent().dbRows[i_index.row()][self.parent().dbColumnNames.index("Games.ScrnshotFilename")]
-            #    pixmap = QPixmap(gamebase.normalizeDirPathFromAdapter(gamebase.adapter.config_screenshotsBaseDirPath) + "/" + screenshotPath)
-            #    return pixmap;
+            #    picNo = int(column["id"][11:-1])
+            #
+            #    screenshotFullPath = gamebase.dbRow_nthRandomScreenshotFullPath(self.parent().dbRows[i_index.row()], picNo)
+            #    if screenshotFullPath != None:
+            #        return screenshotPathToPixmap(screenshotFullPath)
             pass
         #
         else:
