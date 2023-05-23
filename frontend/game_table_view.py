@@ -196,7 +196,10 @@ class MyStyledItemDelegate(QStyledItemDelegate):
                     memberPath = screenshotFullPath[zipExtensionPos + 5:]
 
                     pixmap = QPixmap()
-                    pixmap.loadFromData(gamebase.getZipMemberBytes(zipFilePath, memberPath))
+                    try:
+                        pixmap.loadFromData(gamebase.getZipMemberBytes(zipFilePath, memberPath))
+                    except:
+                        return
                 destRect = danrectToQrect(fitLetterboxed(qrectToDanrect(pixmap.rect()), qrectToDanrect(i_option.rect)))
                 i_painter.setRenderHints(QPainter.SmoothPixmapTransform, True)
                 i_painter.drawPixmap(destRect, pixmap)
