@@ -198,6 +198,7 @@ class MyStyledItemDelegate(QStyledItemDelegate):
                     pixmap = QPixmap()
                     pixmap.loadFromData(gamebase.getZipMemberBytes(zipFilePath, memberPath))
                 destRect = danrectToQrect(fitLetterboxed(qrectToDanrect(pixmap.rect()), qrectToDanrect(i_option.rect)))
+                i_painter.setRenderHints(QPainter.SmoothPixmapTransform, True)
                 i_painter.drawPixmap(destRect, pixmap)
 
         # Random screenshot
@@ -208,6 +209,7 @@ class MyStyledItemDelegate(QStyledItemDelegate):
             if screenshotFullPath != None:
                 pixmap = QPixmap(screenshotFullPath)
                 destRect = danrectToQrect(fitLetterboxed(qrectToDanrect(pixmap.rect()), qrectToDanrect(i_option.rect)))
+                i_painter.setRenderHints(QPainter.SmoothPixmapTransform, True)
                 i_painter.drawPixmap(destRect, pixmap)
 
         #
@@ -223,6 +225,7 @@ class MyStyledItemDelegate(QStyledItemDelegate):
             if gamebaseImageFilePath != None:
                 pixmap = QPixmap(gamebaseImageFilePath)
                 destRect = danrectToQrect(fitLetterboxed(qrectToDanrect(pixmap.rect()), qrectToDanrect(i_option.rect.adjusted(8, 8, -8, -8))))
+                i_painter.setRenderHints(QPainter.SmoothPixmapTransform, True)
                 i_painter.drawPixmap(destRect, pixmap)
             # Else draw some text
             else:
@@ -245,6 +248,7 @@ class MyStyledItemDelegate(QStyledItemDelegate):
             if photoFullPath != None:
                 pixmap = QPixmap(photoFullPath)
                 destRect = danrectToQrect(fitLetterboxed(qrectToDanrect(pixmap.rect()), qrectToDanrect(i_option.rect)))
+                i_painter.setRenderHints(QPainter.SmoothPixmapTransform, True)
                 i_painter.drawPixmap(destRect, pixmap)
 
         else:
