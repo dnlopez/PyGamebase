@@ -47,6 +47,9 @@ if "detailPaneItems" not in settings.viewSettings:
 g_detailPaneItems = settings.viewSettings["detailPaneItems"]
 
 g_detailPaneItemsAvailable = set([
+    "Gamebase name",
+    "Gamebase title",
+    "Gamebase image",
     "Name",
     "Year",
     "Publisher",
@@ -318,6 +321,19 @@ class DetailPane(QWidget):
                                 html += '    <a href="screenshot:///' + i_schemaName + '/' + relativePath + '"><img src="' + screenshotUrl + '"></a>\n'
 
                 html += '  </div>'
+                html += '\n\n'
+
+            elif item == "Gamebase name":
+                html += '  <div id="gamebase_name">' + i_schemaName + '</div>'
+                html += '\n\n'
+
+            elif item == "Gamebase title":
+                html += '  <div id="gamebase_title">' + gamebase.gamebaseTitle(i_adapterId) + '</div>'
+                html += '\n\n'
+
+            elif item == "Gamebase image":
+                gamebaseImageFilePath = gamebase.gamebaseImageFilePath(i_adapterId)
+                html += '  <img id="gamebase_image" src="' + gamebaseImageFilePath + '" />'
                 html += '\n\n'
 
             elif item == "Name":

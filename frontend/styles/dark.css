@@ -39,6 +39,18 @@ a {
 }
 
 
+#gamebase_name {
+    float: right;
+}
+#gamebase_title {
+    float: right;
+}
+#gamebase_image {
+    float: right;
+    border: none;
+    max-width: 300px;
+    max-height: 500px;
+}
 #name {
     font-size: 140%;
     display: inline;
