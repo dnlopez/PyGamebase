@@ -699,10 +699,12 @@ class GameTableView(QTableView):
         self.tableModel.modelReset.emit()
 
     def focusInEvent(self, i_event):  # override from QWidget
+        return  # [disabled for now because causes problems jumping back to top-left]
         # If don't have a selection, its row and column both showing up as -1
         # (which can happen eg. after a column is added or deleted),
         # select the top-left cell
         selectedIndex = self.selectionModel().currentIndex()
+        print("focusInEvent()", selectedIndex.row(), selectedIndex.column())
         if selectedIndex.row() == -1 and selectedIndex.column() == -1:
             selectedIndex = self.selectionModel().model().index(0, 0)
             self.selectionModel().setCurrentIndex(selectedIndex, QItemSelectionModel.ClearAndSelect)
