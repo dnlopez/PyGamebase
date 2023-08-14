@@ -244,8 +244,20 @@ class MyStyledItemDelegate(QStyledItemDelegate):
             gamebaseImageFilePath = gamebase.gamebaseImageFilePath(adapterId)
             if gamebaseImageFilePath != None:
                 pixmap = QPixmap(gamebaseImageFilePath)
-                destRect = danrectToQrect(fitLetterboxed(qrectToDanrect(pixmap.rect()), qrectToDanrect(i_option.rect.adjusted(8, 8, -8, -8))))
+
+                # Get the dimensions of the target rectangle, reduced by desired margin
+                targetRect = i_option.rect.adjusted(8, 8, -8, -8)
+
+                # If aspect of source image is different to that of target (ie. portrait vs landscape),
+                # rotate source anti-clockwise by 90 degrees
+                if (pixmap.rect().width() > pixmap.rect().height() and targetRect.width() < targetRect.height()) or \
+                   pixmap.rect().width() < pixmap.rect().height() and targetRect.width() > targetRect.height():
+                    transform = QTransform().rotate(-90)
+                    pixmap = pixmap.transformed(transform)
+
+                destRect = danrectToQrect(fitLetterboxed(qrectToDanrect(pixmap.rect()), qrectToDanrect(targetRect)))
                 i_painter.setRenderHints(QPainter.SmoothPixmapTransform, True)
+
                 i_painter.drawPixmap(destRect, pixmap)
             # Else draw some text
             else:
