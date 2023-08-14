@@ -70,9 +70,38 @@
 #    As exported from a GameBase 64 MDB file. Not currently used by this program.
 
 g_tableColumnSpecs = [
+    # Gamebase
     {
         "id": "schema",
-        "menuPath": ["Gamebase name"],
+        "menuPath": ["Gamebase", "Name"],
+        "headingName": "GB",
+        "dbColumnNames": [],
+        "dbTableNames": [],
+        #"dbSelect": "SchemaName",
+        #"dbSelectPlaceholder": "NULL AS [Games.PlayersSim]",
+        "dbIdentifiers": ["SchemaName"],
+        "defaultWidth": 80,
+        "sortable": True,
+        "filterable": True,
+        "textAlignment": "left",
+    },
+    {
+        "id": "schema_title",
+        "menuPath": ["Gamebase", "Title"],
+        "headingName": "GB",
+        "dbColumnNames": [],
+        "dbTableNames": [],
+        #"dbSelect": "SchemaName",
+        #"dbSelectPlaceholder": "NULL AS [Games.PlayersSim]",
+        "dbIdentifiers": ["SchemaName"],
+        "defaultWidth": 80,
+        "sortable": True,
+        "filterable": True,
+        "textAlignment": "left",
+    },
+    {
+        "id": "schema_image",
+        "menuPath": ["Gamebase", "Image"],
         "headingName": "GB",
         "dbColumnNames": [],
         "dbTableNames": [],

@@ -139,6 +139,20 @@ def gamebaseImageFilePath(i_adapterId):
         return None
     return adapters[i_adapterId]["module"].config_gamebaseImageFilePath
 
+def gamebaseTitle(i_adapterId):
+    """
+    Params:
+     i_adapterId:
+      (str)
+
+    Returns:
+     Either (str)
+     or (None)
+    """
+    if not hasattr(adapters[i_adapterId]["module"], "config_title"):
+        return None
+    return adapters[i_adapterId]["module"].config_title
+
 
 # + Screenshot/photo file/URL resolving {{{
 

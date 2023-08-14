@@ -232,8 +232,8 @@ class MyStyledItemDelegate(QStyledItemDelegate):
                 i_painter.setRenderHints(QPainter.SmoothPixmapTransform, True)
                 i_painter.drawPixmap(destRect, pixmap)
 
-        # Else if painting schema column
-        elif column["id"] == "schema":
+        # Else if painting schema image column
+        elif column["id"] == "schema_image":
             schemaName = self.parent().dbRows[i_index.row()]["SchemaName"]
 
             #i_option.rect.setTop(i_option.rect.top() + 16)
@@ -298,6 +298,15 @@ class MyTableModel(QAbstractTableModel):
 
         column = columns.tableColumn_getByPos(i_index.column())
 
+        # Schema title
+        if column["id"] == "schema_title":
+            if i_role == Qt.DisplayRole or i_role == MyTableModel.FilterRole:
+                schemaName = self.parent().dbRows[i_index.row()]["SchemaName"]
+                adapterId = gamebase.schemaAdapterIds[schemaName]
+                return gamebase.gamebaseTitle(adapterId)
+
+            elif i_role == Qt.TextAlignmentRole:
+                return Qt.AlignCenter
         # Detail
         if column["id"] == "detail":
             if i_role == Qt.DisplayRole or i_role == MyTableModel.FilterRole:
