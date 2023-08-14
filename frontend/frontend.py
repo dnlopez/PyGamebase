@@ -16,7 +16,9 @@ def popupMenu(i_itemTexts):
 
     Returns:
      Either (int)
+      Index of item that was selected
      or (None)
+      No item was selected (ie. the popup was dismissed by pressing Esc or clicking outside it)
     """
     # Create a menu
     # and add item texts as menu actions
