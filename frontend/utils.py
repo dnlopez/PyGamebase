@@ -1221,24 +1221,51 @@ def allocateGameFilesToMameMediaSlots(i_gameFilePaths, io_availableDevices):
 
 # + Popup menu {{{
 
-def popupMenu(i_itemTexts):
+def popupMenu(i_items):
     """
     Popup a menu at the mouse pointer with a selection of text items.
 
     Params:
-     i_itemTexts:
-      (list of str)
+     i_items:
+      (list or tuple of arbitrary length)
+      Each element is:
+       Either (str)
+        Text to show for the menu item.
+        If selected, the function will return this string.
+       or (list or tuple of length 2)
+        Has elements:
+         0:
+          (str)
+          Text to show for the menu item.
+         1:
+          Value for the function to return if this item is selected.
 
     Returns:
      Either (str)
+      For the selected text item,
+      its text string, or other associated value if that item was specified by a 2-element pair as described above.
      or (None)
+      No item was selected (ie. the popup was dismissed by pressing Esc or clicking outside it)
     """
+    def getItemText(i_item):
+        if isinstance(i_item, str):
+            return i_item
+        elif isinstance(i_item, tuple) or isinstance(i_item, list):
+            return i_item[0]
+
+    def getItemRv(i_item):
+        if isinstance(i_item, str):
+            return i_item
+        elif isinstance(i_item, tuple) or isinstance(i_item, list):
+            return i_item[1]
+
     import frontend
-    selectedItemNo = frontend.popupMenu(i_itemTexts)
+    selectedItemNo = frontend.popupMenu(map(getItemText, i_items))
+
     if selectedItemNo == None:
         return None
     else:
-        return i_itemTexts[selectedItemNo]
+        return getItemRv(i_items[selectedItemNo])
 
 # + }}}
 
