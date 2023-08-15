@@ -474,6 +474,36 @@ filterMenu_filterFormat_focus_action = filterMenu.addAction("Focus filter box")
 filterMenu_filterFormat_focus_action.triggered.connect(ctrlFShortcut_onActivated)
 filterMenu_filterFormat_focus_action.setShortcut(QKeySequence("Ctrl+F"))
 
+def ctrlDShortcut_onActivated():
+    # If already cleared,
+    # bail
+    if columnFilterBar.getSqlWhereExpression() == "":
+        return
+
+    #
+    sqlWhereExpression = ""
+
+    initialScrollPosition = tableView.getScrollPosition()
+
+    # Set text in UI
+    if sqlFilterBar.isVisible():
+        sqlFilterBar.setText(sqlWhereExpression)
+    else:
+        oredRows = sql.sqlWhereExpressionToColumnFilters(sqlWhereExpression)
+        columnFilterBar.setFilterValues(oredRows)
+
+        columnFilterBar.repositionFilterEdits()
+        columnFilterBar.repositionTabOrder()
+
+    # Refilter table view
+    tableView.refilter(sqlWhereExpression, columnNameBar.sort_operations)
+
+    filterHistory_add(initialScrollPosition, sqlWhereExpression)
+
+filterMenu_filterFormat_clear_action = filterMenu.addAction("C&lear filters")
+filterMenu_filterFormat_clear_action.triggered.connect(ctrlDShortcut_onActivated)
+filterMenu_filterFormat_clear_action.setShortcut(QKeySequence("Ctrl+D"))
+
 filterMenu.addSeparator()
 
 actionGroup = QActionGroup(filterMenu)
