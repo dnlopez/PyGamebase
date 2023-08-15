@@ -1012,6 +1012,42 @@ class GameTableView(QTableView):
     def scrollBy(self, i_dx, i_dy):
         self.horizontalScrollBar().setValue(self.horizontalScrollBar().value() + i_dx)
 
+    def getScrollPosition(self):
+        """
+        Returns:
+         (tuple)
+         Tuple has elements:
+          0:
+           (int)
+           X scroll position in pixels
+          1:
+           (int)
+           Y scroll position in pixels
+        """
+        return (self.horizontalScrollBar().value(), self.verticalScrollBar().value())
+
+    def setScrollPosition(self, i_x, i_y):
+        """
+        Params:
+         i_x:
+          Either (int)
+           Horizontal position to scroll to in pixels
+          or (None)
+           Don't change horizontal scroll position.
+         i_y:
+          Either (int)
+           Vertical position to scroll to in pixels
+          or (None)
+           Don't change vertical scroll position.
+
+        Returns:
+         -
+        """
+        if i_x != None:
+            self.horizontalScrollBar().setValue(i_x)
+        if i_y != None:
+            self.verticalScrollBar().setValue(i_y)
+
     # + }}}
 
     def updateGeometries(self):  # override from QAbstractItemView

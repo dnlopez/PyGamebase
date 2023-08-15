@@ -125,12 +125,16 @@ if application.styleSheet() == "" and "applicationStylesheet" in settings.prefer
 
 # + Filter history {{{
 
-g_filterHistory = [""]
+g_filterHistory = [{ "scrollPosition": (0, 0), "sqlWhereExpression": ""}]
 g_filterHistory_pos = 1
 
-def filterHistory_add(i_sqlWhereExpression):
+def filterHistory_add(i_initialScrollPosition, i_sqlWhereExpression):
     """
     Params:
+     i_initialScrollPosition:
+      (tuple)
+      The game table view's X and Y scroll position before the filter was applied
+      As returned by tableView.getScrollPosition()
      i_sqlWhereExpression:
       (str)
     """
@@ -138,18 +142,21 @@ def filterHistory_add(i_sqlWhereExpression):
     # do nothing
     global g_filterHistory
     global g_filterHistory_pos
-    if g_filterHistory[g_filterHistory_pos - 1] == i_sqlWhereExpression:
+    if g_filterHistory[g_filterHistory_pos - 1]["sqlWhereExpression"] == i_sqlWhereExpression:
         return
 
-    # Else truncate history at current position and append new item
+    # Else truncate history at current position,
+    # modify last scroll position and append new item with WHERE expression
     del(g_filterHistory[g_filterHistory_pos:])
-    g_filterHistory.append(i_sqlWhereExpression)
+    g_filterHistory[g_filterHistory_pos - 1]["scrollPosition"] = i_initialScrollPosition
+    g_filterHistory.append({ "scrollPosition": (0, 0), "sqlWhereExpression": i_sqlWhereExpression })
     g_filterHistory_pos += 1
 
     # Update back/forward toolbar buttons
     toolbar_back_toolButton.setEnabled(True)
     toolbar_forward_toolButton.setEnabled(False)
 
+g_setScrollPositionTimer = QTimer()
 def filterHistory_goBack():
     global g_filterHistory_pos
 
@@ -158,24 +165,32 @@ def filterHistory_goBack():
     if g_filterHistory_pos == 1:
         return
 
-    #
+    # Decrement history position,
+    # while getting the history entries that we're moving from and to
+    movingFromEntry = g_filterHistory[g_filterHistory_pos - 1]
     g_filterHistory_pos -= 1
+    movingToEntry = g_filterHistory[g_filterHistory_pos - 1]
 
-    #
-    sqlWhereExpression = g_filterHistory[g_filterHistory_pos - 1]
+    # Save current scroll position in the history entry that we're moving away from
+    movingFromEntry["scrollPosition"] = tableView.getScrollPosition()
 
     # Set text in UI
     if sqlFilterBar.isVisible():
-        sqlFilterBar.setText(sqlWhereExpression)
+        sqlFilterBar.setText(movingToEntry["sqlWhereExpression"])
     else:
-        oredRows = sql.sqlWhereExpressionToColumnFilters(sqlWhereExpression)
+        oredRows = sql.sqlWhereExpressionToColumnFilters(movingToEntry["sqlWhereExpression"])
         columnFilterBar.setFilterValues(oredRows)
 
         columnFilterBar.repositionFilterEdits()
         columnFilterBar.repositionTabOrder()
 
-    # Refilter
-    tableView.refilter(sqlWhereExpression, columnNameBar.sort_operations)
+    # In table view refilter and restore scroll position
+    # (doing latter when the program is idle by using a one-shot timer, else it doesn't seem to always work)
+    tableView.refilter(movingToEntry["sqlWhereExpression"], columnNameBar.sort_operations)
+    g_setScrollPositionTimer.setInterval(0)
+    g_setScrollPositionTimer.setSingleShot(True)
+    g_setScrollPositionTimer.timeout.connect(lambda: tableView.setScrollPosition(movingToEntry["scrollPosition"][0], movingToEntry["scrollPosition"][1]))
+    g_setScrollPositionTimer.start()
 
     # Update back/forward toolbar buttons
     toolbar_back_toolButton.setEnabled(g_filterHistory_pos > 1)
@@ -189,24 +204,32 @@ def filterHistory_goForward():
     if g_filterHistory_pos == len(g_filterHistory):
         return
 
-    #
+    # Increment history position,
+    # while getting the history entries that we're moving from and to
+    movingFromEntry = g_filterHistory[g_filterHistory_pos - 1]
     g_filterHistory_pos += 1
+    movingToEntry = g_filterHistory[g_filterHistory_pos - 1]
 
-    #
-    sqlWhereExpression = g_filterHistory[g_filterHistory_pos - 1]
+    # Save current scroll position in the history entry that we're moving away from
+    movingFromEntry["scrollPosition"] = tableView.getScrollPosition()
 
     # Set text in UI
     if sqlFilterBar.isVisible():
-        sqlFilterBar.setText(sqlWhereExpression)
+        sqlFilterBar.setText(movingToEntry["sqlWhereExpression"])
     else:
-        oredRows = sql.sqlWhereExpressionToColumnFilters(sqlWhereExpression)
+        oredRows = sql.sqlWhereExpressionToColumnFilters(movingToEntry["sqlWhereExpression"])
         columnFilterBar.setFilterValues(oredRows)
 
         columnFilterBar.repositionFilterEdits()
         columnFilterBar.repositionTabOrder()
 
-    # Refilter
-    tableView.refilter(sqlWhereExpression, columnNameBar.sort_operations)
+    # In table view refilter and restore scroll position
+    # (doing latter when the program is idle by using a one-shot timer, else it doesn't seem to always work)
+    tableView.refilter(movingToEntry["sqlWhereExpression"], columnNameBar.sort_operations)
+    g_setScrollPositionTimer.setInterval(0)
+    g_setScrollPositionTimer.setSingleShot(True)
+    g_setScrollPositionTimer.timeout.connect(lambda: tableView.setScrollPosition(movingToEntry["scrollPosition"][0], movingToEntry["scrollPosition"][1]))
+    g_setScrollPositionTimer.start()
 
     # Update back/forward toolbar buttons
     toolbar_forward_toolButton.setEnabled(g_filterHistory_pos < len(g_filterHistory))
@@ -825,11 +848,13 @@ def columnFilterBar_onEditingFinished(i_modified, i_columnId):
         tableView.setFocus()
         tableView.selectCellInColumnWithId(i_columnId)
     else:
+        initialScrollPosition = tableView.getScrollPosition()
+
         sqlWhereExpression = columnFilterBar.getSqlWhereExpression()
         if not tableView.refilter(sqlWhereExpression, columnNameBar.sort_operations):
             return
 
-        filterHistory_add(sqlWhereExpression)
+        filterHistory_add(initialScrollPosition, sqlWhereExpression)
 columnFilterBar.editingFinished.connect(columnFilterBar_onEditingFinished)
 
 def columnFilterBar_onRequestHorizontalScroll(i_dx):
@@ -851,11 +876,13 @@ def sqlFilterBar_onEditingFinished(i_modified):
         tableView.setFocus()
         tableView.scrollToSelection()
     else:
+        initialScrollPosition = tableView.getScrollPosition()
+
         sqlWhereExpression = sqlFilterBar.text()
         if not tableView.refilter(sqlWhereExpression, columnNameBar.sort_operations):
             return
 
-        filterHistory_add(sqlWhereExpression)
+        filterHistory_add(initialScrollPosition, sqlWhereExpression)
 sqlFilterBar.editingFinished.connect(sqlFilterBar_onEditingFinished)
 
 # + }}}
