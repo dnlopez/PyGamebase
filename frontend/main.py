@@ -125,16 +125,20 @@ if application.styleSheet() == "" and "applicationStylesheet" in settings.prefer
 
 # + Filter history {{{
 
-g_filterHistory = [{ "scrollPosition": (0, 0), "sqlWhereExpression": ""}]
+g_filterHistory = [{ "scrollPosition": (0, 0), "selectionPosition": (0, 0), "sqlWhereExpression": ""}]
 g_filterHistory_pos = 1
 
-def filterHistory_add(i_initialScrollPosition, i_sqlWhereExpression):
+def filterHistory_add(i_initialScrollPosition, i_initialSelectionPosition, i_sqlWhereExpression):
     """
     Params:
      i_initialScrollPosition:
       (tuple)
       The game table view's X and Y scroll position before the filter was applied
       As returned by tableView.getScrollPosition()
+     i_initialSelectionPosition:
+      (tuple)
+      The game table view's selected row and column number before the filter was applied
+      As returned by tableView.getSelectedCellNo()
      i_sqlWhereExpression:
       (str)
     """
@@ -146,10 +150,11 @@ def filterHistory_add(i_initialScrollPosition, i_sqlWhereExpression):
         return
 
     # Else truncate history at current position,
-    # modify last scroll position and append new item with WHERE expression
+    # modify last scroll/selection position and append new item with WHERE expression
     del(g_filterHistory[g_filterHistory_pos:])
     g_filterHistory[g_filterHistory_pos - 1]["scrollPosition"] = i_initialScrollPosition
-    g_filterHistory.append({ "scrollPosition": (0, 0), "sqlWhereExpression": i_sqlWhereExpression })
+    g_filterHistory[g_filterHistory_pos - 1]["selectionPosition"] = i_initialSelectionPosition
+    g_filterHistory.append({ "scrollPosition": (0, 0), "selectionPosition": (0, 0), "sqlWhereExpression": i_sqlWhereExpression })
     g_filterHistory_pos += 1
 
     # Update back/forward toolbar buttons
@@ -171,8 +176,9 @@ def filterHistory_goBack():
     g_filterHistory_pos -= 1
     movingToEntry = g_filterHistory[g_filterHistory_pos - 1]
 
-    # Save current scroll position in the history entry that we're moving away from
+    # Save current scroll and selection positions in the history entry that we're moving away from
     movingFromEntry["scrollPosition"] = tableView.getScrollPosition()
+    movingFromEntry["selectionPosition"] = tableView.getSelectedCellNo()
 
     # Set text in UI
     if sqlFilterBar.isVisible():
@@ -184,12 +190,15 @@ def filterHistory_goBack():
         columnFilterBar.repositionFilterEdits()
         columnFilterBar.repositionTabOrder()
 
-    # In table view refilter and restore scroll position
+    # In table view refilter and restore selection/scroll positions
     # (doing latter when the program is idle by using a one-shot timer, else it doesn't seem to always work)
     tableView.refilter(movingToEntry["sqlWhereExpression"], columnNameBar.sort_operations)
     g_setScrollPositionTimer.setInterval(0)
     g_setScrollPositionTimer.setSingleShot(True)
-    g_setScrollPositionTimer.timeout.connect(lambda: tableView.setScrollPosition(movingToEntry["scrollPosition"][0], movingToEntry["scrollPosition"][1]))
+    def onTimeout():
+        tableView.selectCellNo(movingToEntry["selectionPosition"][0], movingToEntry["selectionPosition"][1])
+        tableView.setScrollPosition(movingToEntry["scrollPosition"][0], movingToEntry["scrollPosition"][1])
+    g_setScrollPositionTimer.timeout.connect(onTimeout)
     g_setScrollPositionTimer.start()
 
     # Update back/forward toolbar buttons
@@ -210,8 +219,9 @@ def filterHistory_goForward():
     g_filterHistory_pos += 1
     movingToEntry = g_filterHistory[g_filterHistory_pos - 1]
 
-    # Save current scroll position in the history entry that we're moving away from
+    # Save current scroll and selection positions in the history entry that we're moving away from
     movingFromEntry["scrollPosition"] = tableView.getScrollPosition()
+    movingFromEntry["selectionPosition"] = tableView.getSelectedCellNo()
 
     # Set text in UI
     if sqlFilterBar.isVisible():
@@ -223,12 +233,15 @@ def filterHistory_goForward():
         columnFilterBar.repositionFilterEdits()
         columnFilterBar.repositionTabOrder()
 
-    # In table view refilter and restore scroll position
+    # In table view refilter and restore selection/scroll positions
     # (doing latter when the program is idle by using a one-shot timer, else it doesn't seem to always work)
     tableView.refilter(movingToEntry["sqlWhereExpression"], columnNameBar.sort_operations)
     g_setScrollPositionTimer.setInterval(0)
     g_setScrollPositionTimer.setSingleShot(True)
-    g_setScrollPositionTimer.timeout.connect(lambda: tableView.setScrollPosition(movingToEntry["scrollPosition"][0], movingToEntry["scrollPosition"][1]))
+    def onTimeout():
+        tableView.selectCellNo(movingToEntry["selectionPosition"][0], movingToEntry["selectionPosition"][1])
+        tableView.setScrollPosition(movingToEntry["scrollPosition"][0], movingToEntry["scrollPosition"][1])
+    g_setScrollPositionTimer.timeout.connect(onTimeout)
     g_setScrollPositionTimer.start()
 
     # Update back/forward toolbar buttons
@@ -484,6 +497,7 @@ def ctrlDShortcut_onActivated():
     sqlWhereExpression = ""
 
     initialScrollPosition = tableView.getScrollPosition()
+    initialSelectionPosition = tableView.getSelectedCellNo()
 
     # Set text in UI
     if sqlFilterBar.isVisible():
@@ -498,7 +512,7 @@ def ctrlDShortcut_onActivated():
     # Refilter table view
     tableView.refilter(sqlWhereExpression, columnNameBar.sort_operations)
 
-    filterHistory_add(initialScrollPosition, sqlWhereExpression)
+    filterHistory_add(initialScrollPosition, initialSelectionPosition, sqlWhereExpression)
 
 filterMenu_filterFormat_clear_action = filterMenu.addAction("C&lear filters")
 filterMenu_filterFormat_clear_action.triggered.connect(ctrlDShortcut_onActivated)
@@ -879,12 +893,13 @@ def columnFilterBar_onEditingFinished(i_modified, i_columnId):
         tableView.selectCellInColumnWithId(i_columnId)
     else:
         initialScrollPosition = tableView.getScrollPosition()
+        initialSelectionPosition = tableView.getSelectedCellNo()
 
         sqlWhereExpression = columnFilterBar.getSqlWhereExpression()
         if not tableView.refilter(sqlWhereExpression, columnNameBar.sort_operations):
             return
 
-        filterHistory_add(initialScrollPosition, sqlWhereExpression)
+        filterHistory_add(initialScrollPosition, initialSelectionPosition, sqlWhereExpression)
 columnFilterBar.editingFinished.connect(columnFilterBar_onEditingFinished)
 
 def columnFilterBar_onRequestHorizontalScroll(i_dx):
@@ -907,12 +922,13 @@ def sqlFilterBar_onEditingFinished(i_modified):
         tableView.scrollToSelection()
     else:
         initialScrollPosition = tableView.getScrollPosition()
+        initialSelectionPosition = tableView.getSelectedCellNo()
 
         sqlWhereExpression = sqlFilterBar.text()
         if not tableView.refilter(sqlWhereExpression, columnNameBar.sort_operations):
             return
 
-        filterHistory_add(initialScrollPosition, sqlWhereExpression)
+        filterHistory_add(initialScrollPosition, initialSelectionPosition, sqlWhereExpression)
 sqlFilterBar.editingFinished.connect(sqlFilterBar_onEditingFinished)
 
 # + }}}

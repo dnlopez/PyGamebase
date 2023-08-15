@@ -916,6 +916,42 @@ class GameTableView(QTableView):
             return
         self.selectionModel().setCurrentIndex(self.selectionModel().model().index(newRowNo, selectedIndex.column()), QItemSelectionModel.ClearAndSelect)
 
+    def getSelectedCellNo(self):
+        """
+        Returns:
+         (tuple)
+         Tuple has elements:
+          0:
+           (int)
+           Selected ordinal row number
+          1:
+           (int)
+           Selected ordinal column number
+        """
+        selectedIndex = self.selectionModel().currentIndex()
+        return (selectedIndex.row(), selectedIndex.column())
+
+    def selectCellNo(self, i_rowNo, i_columnNo):
+        """
+        Params:
+         i_rowNo:
+          Either (int)
+           Ordinal row number to select
+          or (None)
+           Don't change the selected row
+         i_columnNo:
+          Either (int)
+           Ordinal column number to select
+          or (None)
+           Don't change the selected column
+        """
+        selectedIndex = self.selectionModel().currentIndex()
+        if i_rowNo == None:
+            i_rowNo = selectedIndex.row()
+        if i_columnNo == None:
+            i_columnNo = selectedIndex.column()
+        self.selectionModel().setCurrentIndex(self.selectionModel().model().index(i_rowNo, i_columnNo), QItemSelectionModel.ClearAndSelect)
+
     def selectRandomRow(self):
         """
         Params:
