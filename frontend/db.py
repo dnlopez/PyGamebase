@@ -790,6 +790,8 @@ def getGameList_executeSqlAndFetchAll(i_connectionsAndSqlTexts, i_sortOperations
                     value = i_record[sortColumnNo]
                     if isinstance(value, str):
                         return value.upper()
+                    elif value == None:
+                        return ""
                     else:
                         return value
                 sortedRecords.sort(key=keyFunc, reverse=(sortDirection == -1))
