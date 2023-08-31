@@ -1361,17 +1361,9 @@ g_tableColumns = []
 #  (dict)
 #  Has keys:
 #   id
-#   headingName:
-#    (str)
-#    Used in
-#     heading button, if it's visible
-#     list of fields on right-click menu
 #   width:
 #    (int)
 #    In pixels
-#   sortable
-#   filterable
-#   (sometimes) textAlignment
 
 # + + New column accessors {{{
 
@@ -1406,16 +1398,11 @@ def tableColumn_add(i_id, i_width=None, i_beforeColumnId=None):
 
     newTableColumn = {
         "id": tableColumnSpec["id"],
-        "headingName": tableColumnSpec["headingName"],
-        "sortable": tableColumnSpec["sortable"],
-        "filterable": tableColumnSpec["filterable"]
     }
     if i_width != None:
         newTableColumn["width"] = i_width
     else:
         newTableColumn["width"] = tableColumnSpec["defaultWidth"]
-    if "textAlignment" in tableColumnSpec:
-        newTableColumn["textAlignment"] = tableColumnSpec["textAlignment"]
 
     # Either append column at end or insert it before i_beforeColumnId
     if i_beforeColumnId == None:

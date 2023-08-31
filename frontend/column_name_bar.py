@@ -194,14 +194,16 @@ class ColumnNameBar(QWidget):
         # For each new filterable, visible column
         # that does not already have header widgets
         for columnNo, column in enumerate(columns.tableColumn_getBySlice()):
-            if column["filterable"] and \
+            tableColumnSpec = columns.tableColumnSpec_getById(column["id"])
+            if tableColumnSpec["filterable"] and \
                (column["id"] not in self.columnWidgets):
 
                 # Create an object for its header widgets
                 widgetDict = {}
 
+
                 # Create header button
-                headingButton = ColumnNameBar.HeadingButton(column["headingName"], column["filterable"], self)
+                headingButton = ColumnNameBar.HeadingButton(tableColumnSpec["headingName"], tableColumnSpec["filterable"], self)
                 widgetDict["headingButton"] = headingButton
                 # Set its fixed properties (apart from position)
                 headingButton.setVisible(True)
@@ -220,7 +222,8 @@ class ColumnNameBar(QWidget):
         for columnId in columnIds:
             column = columns.tableColumn_getById(columnId)
             if column != None:
-                if not column["filterable"]:
+                tableColumnSpec = columns.tableColumnSpec_getById(column["id"])
+                if not tableColumnSpec["filterable"]:
                     column = None
             if column == None:
 
@@ -265,7 +268,8 @@ class ColumnNameBar(QWidget):
 
         # If column isn't sortable,
         # bail
-        if not clickedColumn["sortable"]:
+        tableColumnSpec = columns.tableColumnSpec_getById(clickedColumn["id"])
+        if not tableColumnSpec["sortable"]:
             return
 
         # Update list of sort operations
@@ -302,10 +306,11 @@ class ColumnNameBar(QWidget):
             return "₀₁₂₃₄₅₆₇₈₉"[i_digit % 10]
 
         for columnNo, column in enumerate(columns.tableColumn_getBySlice()):
-            if column["filterable"]:
+            tableColumnSpec = columns.tableColumnSpec_getById(column["id"])
+            if tableColumnSpec["filterable"]:
                 headingButton = self.columnWidgets[column["id"]]["headingButton"]
 
-                newCaption = column["headingName"]
+                newCaption = tableColumnSpec["headingName"]
 
                 sortIndex = 1
                 sortDirection = 0
@@ -597,7 +602,8 @@ class ColumnNameBar(QWidget):
         x += self.scrollX  # Adjust for horizontal scroll amount
         y = 0
         for column in columns.tableColumn_getBySlice():
-            if column["filterable"]:
+            tableColumnSpec = columns.tableColumnSpec_getById(column["id"])
+            if tableColumnSpec["filterable"]:
                 self.columnWidgets[column["id"]]["headingButton"].setGeometry(x, y, column["width"], ColumnNameBar.headingButtonHeight)
             x += column["width"]
 
@@ -606,7 +612,8 @@ class ColumnNameBar(QWidget):
 
         # For each heading button
         for column in columns.tableColumn_getBySlice():
-            if column["filterable"]:
+            tableColumnSpec = columns.tableColumnSpec_getById(column["id"])
+            if tableColumnSpec["filterable"]:
                 nextWidget = self.columnWidgets[column["id"]]["headingButton"]
                 if previousWidget != None:
                     self.setTabOrder(previousWidget, nextWidget)

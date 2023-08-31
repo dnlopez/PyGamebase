@@ -103,7 +103,8 @@ class ColumnFilterBar(QWidget):
         # For each new filterable, visible column
         # that does not already have header widgets
         for columnNo, column in enumerate(columns.tableColumn_getBySlice()):
-            if column["filterable"] and \
+            tableColumnSpec = columns.tableColumnSpec_getById(column["id"])
+            if tableColumnSpec["filterable"] and \
                (column["id"] not in self.columnWidgets):
 
                 # Create an object for its header widgets
@@ -131,10 +132,11 @@ class ColumnFilterBar(QWidget):
         for columnId in columnIds:
             column = columns.tableColumn_getById(columnId)
             if column != None:
-                if not column["filterable"]:
+                tableColumnSpec = columns.tableColumnSpec_getById(column["id"])
+                if not tableColumnSpec["filterable"]:
                     column = None
-            if column == None:
 
+            if column == None:
                 # Remove all its widgets from the GUI
                 widgetDict = self.columnWidgets[columnId]
                 for filterEdit in widgetDict["filterEdits"]:
@@ -167,7 +169,8 @@ class ColumnFilterBar(QWidget):
 
         # Add per-column GUI widgets
         for columnNo, column in enumerate(columns.tableColumn_getBySlice()):
-            if column["filterable"]:
+            tableColumnSpec = columns.tableColumnSpec_getById(column["id"])
+            if tableColumnSpec["filterable"]:
                 # Create special line edit widget
                 filterEdit = qt_extras.LineEditWithClearButton(ColumnFilterBar.filterRowHeight, self)
                 # Set its fixed properties (apart from position)
@@ -192,7 +195,8 @@ class ColumnFilterBar(QWidget):
         """
         # Remove per-column widgets
         for columnNo, column in enumerate(columns.tableColumn_getBySlice()):
-            if column["filterable"]:
+            tableColumnSpec = columns.tableColumnSpec_getById(column["id"])
+            if tableColumnSpec["filterable"]:
                 # From the GUI
                 self.columnWidgets[column["id"]]["filterEdits"][i_position].setParent(None)
                 # From member object
@@ -217,7 +221,8 @@ class ColumnFilterBar(QWidget):
           (int)
         """
         for columnNo, column in enumerate(columns.tableColumn_getBySlice()):
-            if column["filterable"]:
+            tableColumnSpec = columns.tableColumnSpec_getById(column["id"])
+            if tableColumnSpec["filterable"]:
                 self.columnWidgets[column["id"]]["filterEdits"][i_position].setText("")
 
     def resetFilterRowCount(self, i_rowCount, i_updateGui=True, i_requery=True):
@@ -316,7 +321,7 @@ class ColumnFilterBar(QWidget):
 
             for column in columns.tableColumn_getBySlice():
                 tableColumnSpec = columns.tableColumnSpec_getById(column["id"])
-                if column["filterable"]:
+                if tableColumnSpec["filterable"]:
                     value = self.columnWidgets[column["id"]]["filterEdits"][filterRowNo].text()
                     value = value.strip()
                     if value != "":
@@ -436,7 +441,8 @@ class ColumnFilterBar(QWidget):
             x = 0
             x += self.scrollX  # Adjust for horizontal scroll amount
             for columnNo, column in enumerate(columns.tableColumn_getBySlice()):
-                if column["filterable"]:
+                tableColumnSpec = columns.tableColumnSpec_getById(column["id"])
+                if tableColumnSpec["filterable"]:
                     self.columnWidgets[column["id"]]["filterEdits"][filterRowNo].setGeometry(x, y, column["width"], ColumnFilterBar.filterRowHeight)
                 x += column["width"]
 
@@ -454,7 +460,8 @@ class ColumnFilterBar(QWidget):
         # For each filter edit
         for filterRowNo, filterRow in enumerate(self.filterRows):
             for column in columns.tableColumn_getBySlice():
-                if column["filterable"]:
+                tableColumnSpec = columns.tableColumnSpec_getById(column["id"])
+                if tableColumnSpec["filterable"]:
                     nextWidget = self.columnWidgets[column["id"]]["filterEdits"][filterRowNo].lineEdit
                     if previousWidget != None:
                         self.setTabOrder(previousWidget, nextWidget)

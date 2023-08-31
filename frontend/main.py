@@ -470,12 +470,13 @@ def ctrlFShortcut_onActivated():
         # target that
         selectedIndex = tableView.selectionModel().currentIndex()
         selectedColumn = columns.tableColumn_getByPos(selectedIndex.column())
-        if tableView.hasFocus() and selectedColumn != None and selectedColumn["filterable"]:
+        if tableView.hasFocus() and selectedColumn != None and columns.tableColumnSpec_getById(selectedColumn["id"])["filterable"]:
             targetColumn = selectedColumn
         # Else target the first visible and filterable column
         else:
             for column in columns.tableColumn_getBySlice():
-                if column["filterable"]:
+                tableColumnSpec = columns.tableColumnSpec_getById(column["id"])
+                if tableColumnSpec["filterable"]:
                     targetColumn = column
                     break
 
@@ -602,6 +603,12 @@ actionGroup.addAction(viewMenu_verticalAction)
 viewMenu.addSeparator()
 
 class TableColumnsMenu(qt_extras.StayOpenMenu):
+    """
+    The menu which lists available table columns,
+    with item checkmarks to indicate which are currently visible, and where clicking on an item toggles the column's visibility.
+    (Note that this class is instantiated multiple times, once for the menu's top level and again for each submenu of grouped columns.
+    This menu is currently shown via the main menu bar's "View -> Table columns", or when right-clicking on a column heading.)
+    """
     # + Init {{{
 
     def __init__(self, i_title=None, i_parent=None):
@@ -635,6 +642,18 @@ class TableColumnsMenu(qt_extras.StayOpenMenu):
             self.addActionForColumn(tableColumnSpec, tableColumnSpec["menuPath"])
 
     def addActionForColumn(self, i_tableColumnSpec, i_menuPath):
+        """
+        Add an action (ie. a menu item) for a specified table column.
+
+        Params:
+         i_tableColumnSpec:
+          (TableColumnSpec)
+         i_menuPath:
+          (list of str)
+          Display names of 0+ submenus followed by the name of the item itself.
+          eg.
+           ['Staff', 'Programmer']
+        """
         # If the column is in a submenu
         if len(i_menuPath) > 1:
             # If don't have the next submenu yet,

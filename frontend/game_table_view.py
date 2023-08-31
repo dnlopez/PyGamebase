@@ -374,9 +374,9 @@ class MyTableModel(QAbstractTableModel):
                         value = str(value) + ": " + tableColumnSpec["enumMap"][value]
                     return value
                 elif i_role == Qt.TextAlignmentRole:
-                    if column["textAlignment"] == "center":
+                    if tableColumnSpec["textAlignment"] == "center":
                         return Qt.AlignCenter
-                    elif column["textAlignment"] == "left":
+                    elif tableColumnSpec["textAlignment"] == "left":
                         return Qt.AlignLeft
             # Game ID field
             if "type" in tableColumnSpec and tableColumnSpec["type"] == "gameId":
@@ -388,18 +388,18 @@ class MyTableModel(QAbstractTableModel):
                         return ""
                     return ">" + str(value)
                 elif i_role == Qt.TextAlignmentRole:
-                    if column["textAlignment"] == "center":
+                    if tableColumnSpec["textAlignment"] == "center":
                         return Qt.AlignCenter
-                    elif column["textAlignment"] == "left":
+                    elif tableColumnSpec["textAlignment"] == "left":
                         return Qt.AlignLeft
             # Other ordinary text field
             else:
                 if i_role == Qt.DisplayRole or i_role == MyTableModel.FilterRole:
                     return self.parent().dbRows[i_index.row()][tableColumnSpec["dbIdentifiers"][0]]
                 elif i_role == Qt.TextAlignmentRole:
-                    if column["textAlignment"] == "center":
+                    if tableColumnSpec["textAlignment"] == "center":
                         return Qt.AlignCenter
-                    elif column["textAlignment"] == "left":
+                    elif tableColumnSpec["textAlignment"] == "left":
                         return Qt.AlignLeft
 
         return None
@@ -408,7 +408,8 @@ class MyTableModel(QAbstractTableModel):
     def headerData(self, i_columnNo, i_orientation, i_role):
         if i_orientation == Qt.Horizontal and i_role == Qt.DisplayRole:
             column = columns.tableColumn_getByPos(i_columnNo)
-            return column["headingName"]
+            tableColumnSpec = tableColumnSpec_getById(column["id"])
+            return tableColumnSpec["headingName"]
 
         return None
 
@@ -982,7 +983,8 @@ class GameTableView(QTableView):
         # If selected column is filterable then add the submenu for filtering
         selectedIndex = self.selectionModel().currentIndex()
         column = columns.tableColumn_getByPos(selectedIndex.column())
-        if column["filterable"]:
+        tableColumnSpec = columns.tableColumnSpec_getById(column["id"])
+        if tableColumnSpec["filterable"]:
             contextMenu.addMenu(self.contextMenu_filter)
             contextMenu.addSeparator()
 
