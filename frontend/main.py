@@ -128,7 +128,8 @@ if application.styleSheet() == "" and "applicationStylesheet" in settings.prefer
 g_filterHistory = [{ "scrollPosition": (0, 0), "selectionPosition": (0, 0), "sqlWhereExpression": ""}]
 g_filterHistory_pos = 1
 
-def filterHistory_add(i_initialScrollPosition, i_initialSelectionPosition, i_sqlWhereExpression):
+def filterHistory_add(i_initialScrollPosition, i_initialSelectionPosition, i_initialTableColumns, i_initialSortOperations,
+                      i_newSqlWhereExpression):
     """
     Params:
      i_initialScrollPosition:
@@ -139,22 +140,37 @@ def filterHistory_add(i_initialScrollPosition, i_initialSelectionPosition, i_sql
       (tuple)
       The game table view's selected row and column number before the filter was applied
       As returned by tableView.getSelectedCellNo()
-     i_sqlWhereExpression:
+     i_initialTableColumns:
+      (list of dict)
+      Details of currently visible table columns before the filter was applied
+      As returned by tableColumn_getAll()
+     i_initialSortOperations:
+      (list of list)
+      Details of current column sort operations before the filter was applied
+     i_newSqlWhereExpression:
       (str)
     """
     # If expression is the same as the last history item at the current position,
     # do nothing
     global g_filterHistory
     global g_filterHistory_pos
-    if g_filterHistory[g_filterHistory_pos - 1]["sqlWhereExpression"] == i_sqlWhereExpression:
+    if g_filterHistory[g_filterHistory_pos - 1]["sqlWhereExpression"] == i_newSqlWhereExpression:
         return
 
     # Else truncate history at current position,
-    # modify last scroll/selection position and append new item with WHERE expression
+    # modify last item's UI state and append new item with current UI state and WHERE expression
     del(g_filterHistory[g_filterHistory_pos:])
     g_filterHistory[g_filterHistory_pos - 1]["scrollPosition"] = i_initialScrollPosition
     g_filterHistory[g_filterHistory_pos - 1]["selectionPosition"] = i_initialSelectionPosition
-    g_filterHistory.append({ "scrollPosition": (0, 0), "selectionPosition": (0, 0), "sqlWhereExpression": i_sqlWhereExpression })
+    g_filterHistory[g_filterHistory_pos - 1]["tableColumns"] = i_initialTableColumns
+    g_filterHistory[g_filterHistory_pos - 1]["sortOperations"] = i_initialSortOperations
+    g_filterHistory.append({
+        "scrollPosition": (0, 0),
+        "selectionPosition": (0, 0),
+        "tableColumns": i_initialTableColumns,
+        "sortOperations": i_initialSortOperations,
+        "sqlWhereExpression": i_newSqlWhereExpression
+    })
     g_filterHistory_pos += 1
 
     # Update back/forward toolbar buttons
@@ -176,9 +192,11 @@ def filterHistory_goBack():
     g_filterHistory_pos -= 1
     movingToEntry = g_filterHistory[g_filterHistory_pos - 1]
 
-    # Save current scroll and selection positions in the history entry that we're moving away from
+    # Save current UI state in the history entry that we're moving away from
     movingFromEntry["scrollPosition"] = tableView.getScrollPosition()
     movingFromEntry["selectionPosition"] = tableView.getSelectedCellNo()
+    movingFromEntry["tableColumns"] = columns.tableColumn_getAll()
+    movingFromEntry["sortOperations"] = columnNameBar.sort_operations
 
     # Set text in UI
     if sqlFilterBar.isVisible():
@@ -190,9 +208,24 @@ def filterHistory_goBack():
         columnFilterBar.repositionFilterEdits()
         columnFilterBar.repositionTabOrder()
 
-    # In table view refilter and restore selection/scroll positions
-    # (doing latter when the program is idle by using a one-shot timer, else it doesn't seem to always work)
+    # In table view
+    #  Restore column sort operations
+    columnNameBar.sort_operations = movingToEntry["sortOperations"]
+    columnNameBar.sort_updateGui()
+    #  Restore columns
+    columns.tableColumn_setAll(movingToEntry["tableColumns"])
+    columnNameBar.recreateWidgets()
+    columnNameBar.repositionHeadingButtons()
+    columnNameBar.repositionTabOrder()
+    columnFilterBar.recreateWidgets()
+    columnFilterBar.repositionFilterEdits()
+    columnFilterBar.repositionTabOrder()
+    #  Refilter
     tableView.refilter(movingToEntry["sqlWhereExpression"], columnNameBar.sort_operations)
+    #
+    tableView.resizeAllColumns([column["width"]  for column in columns.tableColumn_getBySlice()])
+    #  Restore selection/scroll positions
+    #  (when the program is idle by using a one-shot timer, else it doesn't seem to always work)
     g_setScrollPositionTimer.setInterval(0)
     g_setScrollPositionTimer.setSingleShot(True)
     def onTimeout():
@@ -219,9 +252,11 @@ def filterHistory_goForward():
     g_filterHistory_pos += 1
     movingToEntry = g_filterHistory[g_filterHistory_pos - 1]
 
-    # Save current scroll and selection positions in the history entry that we're moving away from
+    # Save current UI state in the history entry that we're moving away from
     movingFromEntry["scrollPosition"] = tableView.getScrollPosition()
     movingFromEntry["selectionPosition"] = tableView.getSelectedCellNo()
+    movingFromEntry["tableColumns"] = columns.tableColumn_getAll()
+    movingFromEntry["sortOperations"] = columnNameBar.sort_operations
 
     # Set text in UI
     if sqlFilterBar.isVisible():
@@ -233,9 +268,24 @@ def filterHistory_goForward():
         columnFilterBar.repositionFilterEdits()
         columnFilterBar.repositionTabOrder()
 
-    # In table view refilter and restore selection/scroll positions
-    # (doing latter when the program is idle by using a one-shot timer, else it doesn't seem to always work)
+    # In table view
+    #  Restore column sort operations
+    columnNameBar.sort_operations = movingToEntry["sortOperations"]
+    columnNameBar.sort_updateGui()
+    #  Restore columns
+    columns.tableColumn_setAll(movingToEntry["tableColumns"])
+    columnNameBar.recreateWidgets()
+    columnNameBar.repositionHeadingButtons()
+    columnNameBar.repositionTabOrder()
+    columnFilterBar.recreateWidgets()
+    columnFilterBar.repositionFilterEdits()
+    columnFilterBar.repositionTabOrder()
+    #  Refilter
     tableView.refilter(movingToEntry["sqlWhereExpression"], columnNameBar.sort_operations)
+    #
+    tableView.resizeAllColumns([column["width"]  for column in columns.tableColumn_getBySlice()])
+    #  Restore selection/scroll positions
+    #  (when the program is idle by using a one-shot timer, else it doesn't seem to always work)
     g_setScrollPositionTimer.setInterval(0)
     g_setScrollPositionTimer.setSingleShot(True)
     def onTimeout():
@@ -513,7 +563,8 @@ def ctrlDShortcut_onActivated():
     # Refilter table view
     tableView.refilter(sqlWhereExpression, columnNameBar.sort_operations)
 
-    filterHistory_add(initialScrollPosition, initialSelectionPosition, sqlWhereExpression)
+    filterHistory_add(initialScrollPosition, initialSelectionPosition, columns.tableColumn_getAll(), columnNameBar.sort_operations,
+                      sqlWhereExpression)
 
 filterMenu_filterFormat_clear_action = filterMenu.addAction("C&lear filters")
 filterMenu_filterFormat_clear_action.triggered.connect(ctrlDShortcut_onActivated)
@@ -918,7 +969,8 @@ def columnFilterBar_onEditingFinished(i_modified, i_columnId):
         if not tableView.refilter(sqlWhereExpression, columnNameBar.sort_operations):
             return
 
-        filterHistory_add(initialScrollPosition, initialSelectionPosition, sqlWhereExpression)
+        filterHistory_add(initialScrollPosition, initialSelectionPosition, columns.tableColumn_getAll(), columnNameBar.sort_operations,
+                          sqlWhereExpression)
 columnFilterBar.editingFinished.connect(columnFilterBar_onEditingFinished)
 
 def columnFilterBar_onRequestHorizontalScroll(i_dx):
@@ -947,7 +999,8 @@ def sqlFilterBar_onEditingFinished(i_modified):
         if not tableView.refilter(sqlWhereExpression, columnNameBar.sort_operations):
             return
 
-        filterHistory_add(initialScrollPosition, initialSelectionPosition, sqlWhereExpression)
+        filterHistory_add(initialScrollPosition, initialSelectionPosition, columns.tableColumn_getAll(), columnNameBar.sort_operations,
+                          sqlWhereExpression)
 sqlFilterBar.editingFinished.connect(sqlFilterBar_onEditingFinished)
 
 # + }}}
@@ -1181,8 +1234,8 @@ if not "tableColumns" in settings.viewSettings:
         },
     ]
 
-for initialColumn in settings.viewSettings["tableColumns"]:
-    columns.tableColumn_add(initialColumn["id"], initialColumn["width"])
+# Show initial table columns
+columns.tableColumn_setAll(settings.viewSettings["tableColumns"])
 
 columnNameBar.initFromColumns()
 columnFilterBar.initFromColumns()

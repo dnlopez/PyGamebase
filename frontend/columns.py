@@ -1367,6 +1367,53 @@ g_tableColumns = []
 
 # + + New column accessors {{{
 
+def tableColumn_setAll(i_columns):
+    """
+    Set all columns at once, replacing existing ones.
+
+    Params:
+     i_columns:
+      (list of dict)
+      Dict has keys:
+       id:
+        (str)
+       width:
+        Either (int)
+         Width for column in pixels
+        or (None) or unspecified
+         Use default width from g_tableColumnSpecs.
+    """
+    global g_tableColumns
+    g_tableColumns = []
+
+    for column in i_columns:
+        tableColumnSpec = tableColumnSpec_getById(column["id"])
+
+        newTableColumn = {
+            "id": tableColumnSpec["id"],
+        }
+        if ("width" in column) and column["width"] != None:
+            newTableColumn["width"] = column["width"]
+        else:
+            newTableColumn["width"] = tableColumnSpec["defaultWidth"]
+
+        g_tableColumns.append(newTableColumn)
+
+import copy
+def tableColumn_getAll():
+    """
+    Get all the existing columns.
+
+    Returns:
+     (list of dict)
+     Dict has keys:
+      id:
+       (str)
+      width:
+       (int)
+    """
+    return copy.deepcopy(g_tableColumns)
+
 def tableColumn_add(i_id, i_width=None, i_beforeColumnId=None):
     """
     Add a column to the live table view.
