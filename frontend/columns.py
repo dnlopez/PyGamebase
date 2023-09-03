@@ -1340,15 +1340,18 @@ def tableColumnSpec_getByDbIdentifier(i_identifier, i_caseInsensitive=False):
       (bool)
 
     Returns:
-     Either (TableColumnSpec)
-     or (None)
+     (list of TableColumnSpec)
     """
+    rv = []
+
     for tableColumnSpec in g_tableColumnSpecs:
         if "dbIdentifiers" in tableColumnSpec:
             for dbIdentifier in tableColumnSpec["dbIdentifiers"]:
                 if dbIdentifier == i_identifier or (i_caseInsensitive and dbIdentifier.upper() == i_identifier.upper()):
-                    return tableColumnSpec
-    return None
+                    rv.append(tableColumnSpec)
+                    break
+
+    return rv
 
 # + }}}
 

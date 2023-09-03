@@ -533,7 +533,7 @@ def interpretColumnOperation(i_node):
         return None, None, None
     return operation, columnName, value
 
-def sqlWhereExpressionToColumnFilters(i_whereExpression, i_skipFailures=False):
+def sqlWhereExpressionToColumnFilters(i_whereExpression, i_skipFailures=False, i_availableColumnIds=None):
     """
     Parse SQL WHERE expression
     and get it as an equivalent set of column names and texts to enter into those boxes on the column filter bar.
@@ -543,6 +543,11 @@ def sqlWhereExpressionToColumnFilters(i_whereExpression, i_skipFailures=False):
       (str)
      i_skipFailures:
       (bool)
+     i_availableColumnIds:
+      Either (list of str)
+       Restrict resulting column IDs to those in this list.
+      or (None)
+       Don't restrict resulting column IDs.
 
     Returns:
      Either (list)
@@ -606,8 +611,15 @@ def sqlWhereExpressionToColumnFilters(i_whereExpression, i_skipFailures=False):
                     return None
 
             # If the column name actually corresponds to a database field
-            tableColumnSpec = columns.tableColumnSpec_getByDbIdentifier(columnName, True)
-            if tableColumnSpec != None:
+            tableColumnSpecs = columns.tableColumnSpec_getByDbIdentifier(columnName, True)
+            # Filter to available column IDs
+            if i_availableColumnIds:
+                tableColumnSpecs = [tableColumnSpec  for tableColumnSpec in tableColumnSpecs  if tableColumnSpec["id"] in i_availableColumnIds]
+            # If found a column ID we're happy with,
+            # add it to andedFields
+            if len(tableColumnSpecs) > 0:
+                tableColumnSpec = tableColumnSpecs[0]
+
                 widgetText = None
                 strValue = str(value)
                 if operator == "LIKE":
@@ -764,8 +776,10 @@ def normalizeSqlWhereExpressionToTableNamesAndSelectTerms(i_whereExpression, i_s
             if io_node.type == "identifier":
                 # If recognize the column,
                 # normalize the identifier, modifying the node
-                tableColumnSpec = columns.tableColumnSpec_getByDbIdentifier(io_node.value, True)
-                if tableColumnSpec != None:
+                tableColumnSpecs = columns.tableColumnSpec_getByDbIdentifier(io_node.value, True)
+                if len(tableColumnSpecs) > 0:
+                    tableColumnSpec = tableColumnSpecs[0]
+
                     # Normalize identifier name in the parsed SQL
                     io_node.value = '"' + tableColumnSpec["dbIdentifiers"][0] + '"'
                     # Collect needed FROM and SELECT terms

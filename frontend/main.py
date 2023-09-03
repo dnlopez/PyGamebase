@@ -202,7 +202,8 @@ def filterHistory_goBack():
     if sqlFilterBar.isVisible():
         sqlFilterBar.setText(movingToEntry["sqlWhereExpression"])
     else:
-        oredRows = sql.sqlWhereExpressionToColumnFilters(movingToEntry["sqlWhereExpression"])
+        availableColumnIds = [column["id"]  for column in columns.tableColumn_getAll()]
+        oredRows = sql.sqlWhereExpressionToColumnFilters(movingToEntry["sqlWhereExpression"], False, availableColumnIds)
         columnFilterBar.setFilterValues(oredRows)
 
         columnFilterBar.repositionFilterEdits()
@@ -262,7 +263,8 @@ def filterHistory_goForward():
     if sqlFilterBar.isVisible():
         sqlFilterBar.setText(movingToEntry["sqlWhereExpression"])
     else:
-        oredRows = sql.sqlWhereExpressionToColumnFilters(movingToEntry["sqlWhereExpression"])
+        availableColumnIds = [column["id"]  for column in columns.tableColumn_getAll()]
+        oredRows = sql.sqlWhereExpressionToColumnFilters(movingToEntry["sqlWhereExpression"], False, availableColumnIds)
         columnFilterBar.setFilterValues(oredRows)
 
         columnFilterBar.repositionFilterEdits()
