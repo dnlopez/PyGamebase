@@ -333,7 +333,8 @@ class DetailPane(QWidget):
 
             elif item == "Gamebase image":
                 gamebaseImageFilePath = gamebase.gamebaseImageFilePath(i_adapterId)
-                html += '  <img id="gamebase_image" src="' + gamebaseImageFilePath + '" />'
+                if gamebaseImageFilePath != None:
+                    html += '  <img id="gamebase_image" src="' + gamebaseImageFilePath + '" />'
                 html += '\n\n'
 
             elif item == "Name":
