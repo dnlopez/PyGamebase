@@ -273,6 +273,23 @@ def createTree(i_pathOnDiskOfLeafDir):
 
 # + Zip files {{{
 
+def testZip(i_zipFilePath):
+    """
+    Params:
+     i_zipFilePath:
+      (str)
+      Path of ZIP file.
+
+    Returns:
+     (bool)
+    """
+    import zipfile
+    archive = zipfile.ZipFile(i_zipFilePath)
+    # [error here if file not found]
+
+    #
+    return archive.testzip() == None
+
 def extractZip(i_zipFilePath, i_destDirPath, i_membersToExtract=None):
     """
     Params:
