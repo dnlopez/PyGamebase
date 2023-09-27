@@ -3,6 +3,7 @@
 import sys
 import os.path
 import importlib
+import re
 
 # + Load {{{
 
@@ -285,32 +286,68 @@ def dbRow_supplementaryScreenshotRelativePaths(i_row, i_simulateCount=None):
     if True:#!i_row.supplementaryScreenshotPaths:
         supplementaryScreenshotPaths = []
 
+        # Choose screenshot naming scheme
+        if hasattr(adapters[adapterId]["module"], "config_screenshotNamingScheme"):
+            screenshotNamingScheme = adapters[adapterId]["module"].config_screenshotNamingScheme
+        else:
+            screenshotNamingScheme = "gamebase"
+
         # Get titleshot relative path
         titleshotRelativePath = dbRow_firstScreenshotRelativePath(i_row)
         if titleshotRelativePath != None:
             # Search disk for further image files similarly-named but with a numeric suffix
             screenshotStem, imageExtension = os.path.splitext(titleshotRelativePath)
 
-            if i_simulateCount == None:
-                screenshotNo = 1
-                while True:
-                    screenshotRelativePath = screenshotStem + "_" + str(screenshotNo) + imageExtension
-                    screenshotAbsolutePath = screenshotPath_relativeToAbsolute(adapterId, screenshotRelativePath)
-                    if screenshotAbsolutePath == None or not os.path.exists(screenshotAbsolutePath):
-                        break
+            if screenshotNamingScheme == "gamebase":
+                if i_simulateCount == None:
+                    screenshotNo = 1
 
-                    supplementaryScreenshotPaths.append(screenshotRelativePath)
+                    while True:
+                        screenshotRelativePath = screenshotStem + "_" + str(screenshotNo) + imageExtension
+                        screenshotAbsolutePath = screenshotPath_relativeToAbsolute(adapterId, screenshotRelativePath)
+                        if screenshotAbsolutePath == None or not os.path.exists(screenshotAbsolutePath):
+                            break
 
-                    screenshotNo += 1
+                        supplementaryScreenshotPaths.append(screenshotRelativePath)
 
-                #i_row.supplementaryScreenshotPaths = supplementaryScreenshotPaths
-            else:
-                for screenshotNo in range(1, i_simulateCount + 1):
-                    screenshotRelativePath = screenshotStem + "_" + str(screenshotNo) + imageExtension
+                        screenshotNo += 1
 
-                    supplementaryScreenshotPaths.append(screenshotRelativePath)
+                    #i_row.supplementaryScreenshotPaths = supplementaryScreenshotPaths
+                else:
+                    for screenshotNo in range(1, i_simulateCount + 1):
+                        screenshotRelativePath = screenshotStem + "_" + str(screenshotNo) + imageExtension
 
-                return supplementaryScreenshotPaths;
+                        supplementaryScreenshotPaths.append(screenshotRelativePath)
+
+                    return supplementaryScreenshotPaths;
+
+            elif screenshotNamingScheme == "eXo":
+                if i_simulateCount == None:
+                    m = re.search(r"(.*)\-([0-9]+)$", screenshotStem)
+                    if m == None:
+                        screenshotNo = 1
+                    else:
+                        screenshotStem = m.group(1)
+                        screenshotNo = int(m.group(2)) + 1
+
+                    while True:
+                        screenshotRelativePath = screenshotStem + "-" + f"{screenshotNo:02}" + imageExtension
+                        screenshotAbsolutePath = screenshotPath_relativeToAbsolute(adapterId, screenshotRelativePath)
+                        if screenshotAbsolutePath == None or not os.path.exists(screenshotAbsolutePath):
+                            break
+
+                        supplementaryScreenshotPaths.append(screenshotRelativePath)
+
+                        screenshotNo += 1
+
+                    #i_row.supplementaryScreenshotPaths = supplementaryScreenshotPaths
+                else:
+                    for screenshotNo in range(2, i_simulateCount + 1):
+                        screenshotRelativePath = screenshotStem + "-" + f"{screenshotNo:02}" + imageExtension
+
+                        supplementaryScreenshotPaths.append(screenshotRelativePath)
+
+                    return supplementaryScreenshotPaths;
 
     # Return it from cache
     #return i_row.
