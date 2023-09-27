@@ -992,8 +992,223 @@ class Gemus():
 
 # + Config files {{{
 
-def setIniValue(i_filePath, i_sectionName, i_keyName, i_value,
-                i_keyValueDelimiter = "=", i_sectionNameCaseSensitive = True, i_keyNameCaseSensitive = False):
+def iniLines_setValue(io_lines, i_sectionName, i_keyName, i_value,
+                      i_keyValueDelimiter = "=", i_sectionNameCaseSensitive = True, i_keyNameCaseSensitive = False):
+    """
+    Set a key=value pair in a Windows .INI-style array of lines.
+
+    Params:
+     io_lines:
+      (list of str)
+     i_sectionName:
+      (str)
+      Name of INI file section to work in.
+      If the section doesn't exist in the file, it will be created.
+     i_keyName:
+      (str)
+      Name of key in key=value pair.
+      If a line with this key already exists in the file, that line will be changed,
+      else a new line will be added.
+     i_value:
+      (str)
+      Value of key=value pair.
+     i_keyValueDelimiter:
+      (str)
+      String that seperates a key and a value.
+     i_sectionNameCaseSensitive:
+      (bool)
+     i_keyNameCaseSensitive:
+      (bool)
+
+    Returns:
+     Function return value:
+      io_lines
+     io_lines:
+      (list of str)
+      The list will have been modified.
+    """
+
+    def getKeyAndValue(i_line):
+        keyAndValue = i_line.split(i_keyValueDelimiter, 1)
+        if len(keyAndValue) < 2:
+            return None, None
+        return keyAndValue[0].strip(), keyAndValue[1].strip()
+
+    # Find target section
+    lineNo = 0
+    while lineNo < len(io_lines):
+        line = io_lines[lineNo]
+
+        strippedLine = line.strip()
+        if strippedLine.startswith("[") and strippedLine.endswith("]"):
+            sectionName = strippedLine[1:-1]
+            if (i_sectionNameCaseSensitive and sectionName == i_sectionName) or (not i_sectionNameCaseSensitive and sectionName.upper() == i_sectionName.upper()):
+                break
+
+        lineNo += 1
+    # If didn't 'break', ie. didn't find the target section
+    # add a new section
+    else:
+        io_lines.append("\n")
+        lineNo += 1
+        io_lines.append("[" + i_sectionName + "]\n")
+
+    # For each line in target section
+    lineNo += 1
+    updated = False
+    while lineNo < len(io_lines):
+        line = io_lines[lineNo]
+
+        # If found another section,
+        # break
+        strippedLine = line.strip()
+        if strippedLine.startswith("[") and strippedLine.endswith("]"):
+            break
+
+        # If found the right key,
+        # replace the value and break
+        keyName, value = getKeyAndValue(strippedLine)
+        if keyName != None and ((i_keyNameCaseSensitive and keyName == i_keyName) or \
+                                (not i_keyNameCaseSensitive and keyName.upper() == i_keyName.upper())):
+            io_lines[lineNo] = i_keyName + i_keyValueDelimiter + i_value + "\n"
+            updated = True
+            break
+
+        lineNo += 1
+
+    # If section or file ended without finding existing value to change,
+    # rewind back over any blank lines, and insert a new key=value
+    if not updated:
+        lineNo -= 1
+        while io_lines[lineNo].strip() == "":
+            lineNo -= 1
+        io_lines.insert(lineNo + 1, i_keyName + i_keyValueDelimiter + i_value + "\n")
+
+    #
+    return io_lines
+
+def iniLines_getSection(i_lines, i_sectionName,
+                        i_sectionNameCaseSensitive = True):
+    """
+    Get the full content of a section in a Windows .INI-style array of lines.
+
+    Params:
+     i_lines:
+      (list of str)
+     i_sectionName:
+      (str)
+      Name of INI file section to get the contents of.
+     i_sectionNameCaseSensitive:
+      (bool)
+
+    Returns:
+     Either (list of str)
+      Lines of the section's content
+     or (None)
+      A section with the specified name was not found.
+    """
+
+    # Find target section
+    lineNo = 0
+    while lineNo < len(i_lines):
+        line = i_lines[lineNo]
+
+        strippedLine = line.strip()
+        if strippedLine.startswith("[") and strippedLine.endswith("]"):
+            sectionName = strippedLine[1:-1]
+            if (i_sectionNameCaseSensitive and sectionName == i_sectionName) or (not i_sectionNameCaseSensitive and sectionName.upper() == i_sectionName.upper()):
+                break
+
+        lineNo += 1
+    # If didn't 'break', ie. didn't find the target section
+    # return indicating that
+    else:
+        return None
+
+    # Take note of start line of content
+    # and advance to next section or end of data
+    lineNo += 1
+    startLineNo = lineNo
+    while lineNo < len(i_lines):
+        line = i_lines[lineNo]
+
+        # If found another section,
+        # break
+        strippedLine = line.strip()
+        if strippedLine.startswith("[") and strippedLine.endswith("]"):
+            break
+
+        lineNo += 1
+
+    # Return content
+    return i_lines[startLineNo : lineNo]
+
+def cfgLines_setValue(i_filePath, i_keyName, i_value,
+                      i_keyValueDelimiter = "=", i_keyNameCaseSensitive = False):
+    """
+    Set a key=value pair in an array of lines which simply has one of them per line (almost a Windows .INI-style file, but without sections).
+
+    Params:
+     io_lines:
+      (list of str)
+     i_keyName:
+      (str)
+      Name of key in key=value pair.
+      If a line with this key already exists in the file, that line will be changed,
+      else a new line will be added.
+     i_value:
+      (str)
+      Value of key=value pair.
+     i_keyValueDelimiter:
+      (str)
+      String that seperates a key and a value.
+     i_keyNameCaseSensitive:
+      (bool)
+
+    Returns:
+     Function return value:
+      io_lines
+     io_lines:
+      (list of str)
+      The list will have been modified.
+    """
+
+    def getKeyAndValue(i_line):
+        keyAndValue = i_line.split(i_keyValueDelimiter, 1)
+        if len(keyAndValue) < 2:
+            return None, None
+        return keyAndValue[0].strip(), keyAndValue[1].strip()
+
+    # For each line
+    lineNo = 0
+    while lineNo < len(io_lines):
+        line = io_lines[lineNo]
+
+        # If found the right key,
+        # replace the value and break
+        keyName, value = getKeyAndValue(line)
+        if keyName != None and ((i_keyNameCaseSensitive and keyName == i_keyName) or \
+                                (not i_keyNameCaseSensitive and keyName.upper() == i_keyName.upper())):
+            io_lines[lineNo] = i_keyName + i_keyValueDelimiter + i_value + "\n"
+            break
+
+        lineNo += 1
+    # If didn't 'break', ie. didn't find the target key
+    # rewind back over any blank lines, and insert a new key=value
+    else:
+        lineNo -= 1
+        while io_lines[lineNo].strip() == "":
+            lineNo -= 1
+        io_lines.insert(lineNo + 1, i_keyName + i_keyValueDelimiter + i_value + "\n")
+
+
+    #
+    return io_lines
+
+
+
+def iniFile_setValue(i_filePath, i_sectionName, i_keyName, i_value,
+                     i_keyValueDelimiter = "=", i_sectionNameCaseSensitive = True, i_keyNameCaseSensitive = False):
     """
     Set a key=value pair in a Windows .INI-style file.
 
@@ -1024,74 +1239,22 @@ def setIniValue(i_filePath, i_sectionName, i_keyName, i_value,
      i_keyNameCaseSensitive:
       (bool)
     """
-    # Read lines of file
+    # Read lines from file
     with open(i_filePath, "r") as handle:
         lines = handle.readlines()
 
+    # Set value
+    lines = iniLines_setValue(lines, i_sectionName, i_keyName, i_value,
+                              i_keyValueDelimiter, i_sectionNameCaseSensitive, i_keyNameCaseSensitive)
 
-    def getKeyAndValue(i_line):
-        keyAndValue = i_line.split(i_keyValueDelimiter, 1)
-        if len(keyAndValue) < 2:
-            return None, None
-        return keyAndValue[0].strip(), keyAndValue[1].strip()
-
-    # Find target section
-    lineNo = 0
-    while lineNo < len(lines):
-        line = lines[lineNo]
-
-        strippedLine = line.strip()
-        if strippedLine.startswith("[") and strippedLine.endswith("]"):
-            sectionName = strippedLine[1:-1]
-            if (i_sectionNameCaseSensitive and sectionName == i_sectionName) or (not i_sectionNameCaseSensitive and sectionName.upper() == i_sectionName.upper()):
-                break
-
-        lineNo += 1
-    # If didn't 'break', ie. didn't find the target section
-    # add a new section
-    else:
-        lines.append("\n")
-        lineNo += 1
-        lines.append("[" + i_sectionName + "]\n")
-
-    # For each line in target section
-    lineNo += 1
-    updated = False
-    while lineNo < len(lines):
-        line = lines[lineNo]
-
-        # If found another section,
-        # break
-        strippedLine = line.strip()
-        if strippedLine.startswith("[") and strippedLine.endswith("]"):
-            break
-
-        # If found the right key,
-        # replace the value and break
-        keyName, value = getKeyAndValue(strippedLine)
-        if keyName != None and ((i_keyNameCaseSensitive and keyName == i_keyName) or \
-                                (not i_keyNameCaseSensitive and keyName.upper() == i_keyName.upper())):
-            lines[lineNo] = i_keyName + i_keyValueDelimiter + i_value + "\n"
-            updated = True
-            break
-
-        lineNo += 1
-
-    # If section or file ended without finding existing value to change,
-    # rewind back over any blank lines, and insert a new key=value
-    if not updated:
-        lineNo -= 1
-        while lines[lineNo].strip() == "":
-            lineNo -= 1
-        lines.insert(lineNo + 1, i_keyName + i_keyValueDelimiter + i_value + "\n")
-
-
-    # Write file back
+    # Write lines back to file
     with open(i_filePath, "w") as handle:
         handle.writelines(lines)
 
-def setCfgValue(i_filePath, i_keyName, i_value,
-                i_keyValueDelimiter = "=", i_keyNameCaseSensitive = False):
+setIniValue = iniFile_setValue  # alternate name
+
+def cfgFile_setValue(i_filePath, i_keyName, i_value,
+                     i_keyValueDelimiter = "=", i_keyNameCaseSensitive = False):
     """
     Set a key=value pair in a file which simply has one of them per line (almost a Windows .INI-style file, but without sections).
 
@@ -1117,43 +1280,19 @@ def setCfgValue(i_filePath, i_keyName, i_value,
      i_keyNameCaseSensitive:
       (bool)
     """
-    # Read lines of file
+    # Read lines from file
     with open(i_filePath, "r") as handle:
         lines = handle.readlines()
 
+    # Set value
+    lines = cfgLines_setValue(lines, i_keyName, i_value,
+                              i_keyValueDelimiter, i_keyNameCaseSensitive)
 
-    def getKeyAndValue(i_line):
-        keyAndValue = i_line.split(i_keyValueDelimiter, 1)
-        if len(keyAndValue) < 2:
-            return None, None
-        return keyAndValue[0].strip(), keyAndValue[1].strip()
-
-    # For each line
-    lineNo = 0
-    while lineNo < len(lines):
-        line = lines[lineNo]
-
-        # If found the right key,
-        # replace the value and break
-        keyName, value = getKeyAndValue(line)
-        if keyName != None and ((i_keyNameCaseSensitive and keyName == i_keyName) or \
-                                (not i_keyNameCaseSensitive and keyName.upper() == i_keyName.upper())):
-            lines[lineNo] = i_keyName + i_keyValueDelimiter + i_value + "\n"
-            break
-
-        lineNo += 1
-    # If didn't 'break', ie. didn't find the target key
-    # rewind back over any blank lines, and insert a new key=value
-    else:
-        lineNo -= 1
-        while lines[lineNo].strip() == "":
-            lineNo -= 1
-        lines.insert(lineNo + 1, i_keyName + i_keyValueDelimiter + i_value + "\n")
-
-
-    # Write file back
+    # Write lines back to file
     with open(i_filePath, "w") as handle:
         handle.writelines(lines)
+
+setCfgValue = cfgFile_setValue  # alternate name
 
 # + }}}
 
