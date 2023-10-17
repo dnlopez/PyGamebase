@@ -414,36 +414,49 @@ class DetailPane(QWidget):
                     html += '\n\n'
 
             elif item == "Web links":
-                # Insert weblink(s)
+                # Collect weblinks
+                weblinks = []
                 if "Games.WebLink_Name" in gameRow and gameRow["Games.WebLink_Name"] != None:
+                    weblinks.append((gameRow["Games.WebLink_Name"], gameRow["Games.WebLink_URL"]))
+                if "Games.V_WebLink_Name" in gameRow and gameRow["Games.V_WebLink_Name"] != None:
+                    weblinks.append((gameRow["Games.V_WebLink_Name"], gameRow["Games.V_WebLink_URL"]))
+
+                # Insert weblink(s)
+                if len(weblinks) > 0:
                     html += '  <p id="weblinks">\n'
 
-                    html += "    " + gameRow["Games.WebLink_Name"] + ": "
-                    url = gameRow["Games.WebLink_URL"]
-                    html += '<a href="' + url + '">'
-                    html += url
-                    html += '</a>\n'
-                    #link.addEventListener("click", function (i_event) {
-                    #    i_event.preventDefault();
-                    #    electron.shell.openExternal(this.href);
-                    #});
+                    for weblinkNo, weblink in enumerate(weblinks):
+                        html += "    "
 
-                    # If it's a World Of Spectrum link then insert a corresponding Spectrum Computing link
-                    if gameRow["Games.WebLink_Name"] == "WOS":
-                        # Separator
-                        html += '    <span style="margin-left: 8px; margin-right: 8px; border-left: 1px dotted #666;"></span>'
-                        # Label
-                        html += 'Spectrum Computing: '
-                        # Link
-                        url = url.replace("http://www.worldofspectrum.org/infoseekid.cgi?id=", "https://spectrumcomputing.co.uk/entry/")
+                        if weblinkNo > 0:
+                            html += '<span style="margin-left: 8px; margin-right: 8px; border-left: 1px dotted #666;"></span>'
+
+                        html += weblink[0] + ": "
+                        url = weblink[1]
                         html += '<a href="' + url + '">'
                         html += url
-                        html += '</a>'
-                        html += '</span>\n'
+                        html += '</a>\n'
                         #link.addEventListener("click", function (i_event) {
                         #    i_event.preventDefault();
                         #    electron.shell.openExternal(this.href);
                         #});
+
+                        # If it's a World Of Spectrum link then insert a corresponding Spectrum Computing link
+                        if weblink[0] == "WOS":
+                            # Separator
+                            html += '    <span style="margin-left: 8px; margin-right: 8px; border-left: 1px dotted #666;"></span>'
+                            # Label
+                            html += 'Spectrum Computing: '
+                            # Link
+                            url = url.replace("http://www.worldofspectrum.org/infoseekid.cgi?id=", "https://spectrumcomputing.co.uk/entry/")
+                            html += '<a href="' + url + '">'
+                            html += url
+                            html += '</a>'
+                            html += '</span>\n'
+                            #link.addEventListener("click", function (i_event) {
+                            #    i_event.preventDefault();
+                            #    electron.shell.openExternal(this.href);
+                            #});
 
                     html += '  </p>'
                     html += '\n\n'
